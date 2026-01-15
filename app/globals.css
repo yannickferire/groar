@@ -50,16 +50,6 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-bricolage), sans-serif;
-  font-weight: 600;
-  letter-spacing: -2px;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  &.font-sans {
-    font-family: var(--font-dm-mono), monospace;
-    letter-spacing: normal;
-    font-weight: 400;
-  }
 }
 
 @layer components {
