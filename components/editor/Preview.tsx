@@ -1,9 +1,34 @@
 "use client";
 
-import { EditorSettings } from "../Editor";
+import { EditorSettings, PeriodType, METRIC_LABELS } from "../Editor";
+import { formatMetricValue } from "@/lib/metrics";
 
 type PreviewProps = {
   settings: EditorSettings;
+};
+
+const getDateLabel = (periodType: PeriodType): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+
+  const startOfYear = new Date(year, 0, 1);
+  const dayOfYear = Math.ceil((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+  const totalDays = isLeapYear ? 366 : 365;
+
+  switch (periodType) {
+    case "day":
+      return `${dayOfYear.toString().padStart(2, "0")}/${totalDays} – ${year}`;
+    case "week":
+      const weekNumber = Math.ceil(dayOfYear / 7);
+      return `${weekNumber.toString().padStart(2, "0")}/52 – ${year}`;
+    case "month":
+      const month = now.getMonth() + 1;
+      return `${month.toString().padStart(2, "0")}/12 – ${year}`;
+    case "year":
+      return `${year}`;
+  }
 };
 
 export default function Preview({ settings }: PreviewProps) {
@@ -13,49 +38,53 @@ export default function Preview({ settings }: PreviewProps) {
         className="relative aspect-square rounded-xl overflow-hidden flex items-center justify-center"
         style={{ backgroundColor: settings.backgroundColor }}
       >
+        <header className="absolute top-[3%] left-0 right-0 px-[3%] flex justify-between items-center">
+          <p
+            className="text-xs opacity-60"
+            style={{ color: settings.textColor }}
+          >
+            {settings.handle}
+          </p>
+          <p
+            className="text-xs opacity-60"
+            style={{ color: settings.textColor }}
+          >
+            {getDateLabel(settings.periodType)}
+          </p>
+        </header>
 
         <div
-          className="text-center p-8"
+          className="flex flex-col items-center gap-2"
           style={{ color: settings.textColor }}
         >
-          {settings.layout === "default" && (
-            <div className="flex flex-col gap-2">
-              <p className="text-4xl font-bold">12.5K</p>
-              <p className="text-sm opacity-70">Followers</p>
-            </div>
-          )}
-
-          {settings.layout === "minimal" && (
-            <p className="text-6xl font-bold">12.5K</p>
-          )}
-
-          {settings.layout === "detailed" && (
-            <div className="flex flex-col gap-4">
-              <div className="flex gap-8">
-                <div className="flex flex-col gap-1">
-                  <p className="text-3xl font-bold">12.5K</p>
-                  <p className="text-xs opacity-70">Followers</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-3xl font-bold">842</p>
-                  <p className="text-xs opacity-70">Following</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-3xl font-bold">156</p>
-                  <p className="text-xs opacity-70">Posts</p>
-                </div>
-              </div>
-              <p className="text-sm opacity-50">@username</p>
-            </div>
-          )}
+          <p className="text-6xl font-bold tracking-tight">
+            {settings.periodType} {settings.periodNumber}
+          </p>
+          <div className="flex flex-col items-center gap-1">
+            {settings.metrics.map((metric, index) => (
+              <p
+                key={metric.type}
+                className={index === 0 ? "text-2xl flex items-center gap-2" : "text-lg opacity-80"}
+              >
+                {index === 0 && (
+                  <span
+                    className="inline-block w-6 h-6 rounded"
+                    style={{ backgroundColor: settings.accentColor }}
+                  />
+                )}
+                {formatMetricValue(metric.type, metric.value)} {METRIC_LABELS[metric.type].toLowerCase()}
+              </p>
+            ))}
+          </div>
         </div>
-        <footer className="absolute bottom-[5%]">
+
+        <footer className="absolute bottom-[3%]">
           <p
-          className="text-xs opacity-60"
-          style={{ color: settings.textColor }}
-        >
-          made with gro.ar 🐯
-        </p>
+            className="text-xs opacity-60"
+            style={{ color: settings.textColor }}
+          >
+            made with 🐯 gro.ar
+          </p>
         </footer>
       </div>
     </div>

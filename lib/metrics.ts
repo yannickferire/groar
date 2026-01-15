@@ -1,0 +1,80 @@
+import { MetricType } from "@/components/Editor";
+
+/**
+ * Format a number back to display format (e.g., 10000 -> "10k")
+ */
+export const formatMetricInput = (value: number, metricType: MetricType): string => {
+  if (metricType === "engagementRate") {
+    return value.toString();
+  }
+  if (value >= 1000000) {
+    const formatted = (value / 1000000).toFixed(1);
+    return formatted.endsWith('.0') ? `${Math.round(value / 1000000)}M` : `${formatted}M`;
+  }
+  if (value >= 1000) {
+    const formatted = (value / 1000).toFixed(1);
+    return formatted.endsWith('.0') ? `${Math.round(value / 1000)}k` : `${formatted}k`;
+  }
+  return value.toString();
+};
+
+/**
+ * Parse values like "10k", "1.5M", "100" into numbers
+ */
+export const parseMetricInput = (input: string, metricType: MetricType): number | null => {
+  const trimmed = input.trim().toLowerCase();
+  if (trimmed === "" || trimmed === "-") return 0;
+
+  // For engagement rate, allow decimals but cap at 100
+  if (metricType === "engagementRate") {
+    const num = parseFloat(trimmed);
+    if (isNaN(num)) return null;
+    return Math.min(100, Math.max(0, num));
+  }
+
+  const match = trimmed.match(/^(-?\d+\.?\d*)\s*(k|m|b)?$/);
+  if (!match) return null;
+
+  const num = parseFloat(match[1]);
+  const suffix = match[2];
+
+  if (isNaN(num)) return null;
+
+  switch (suffix) {
+    case "k":
+      return Math.round(num * 1000);
+    case "m":
+      return Math.round(num * 1000000);
+    case "b":
+      return Math.round(num * 1000000000);
+    default:
+      return Math.round(num);
+  }
+};
+
+/**
+ * Format a number for display in preview (e.g., 10000 -> "10.0K")
+ */
+export const formatNumber = (value: number): string => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}K`;
+  }
+  return value.toString();
+};
+
+/**
+ * Format a metric value for display based on its type
+ */
+export const formatMetricValue = (type: MetricType, value: number): string => {
+  if (type === "followers") {
+    const sign = value >= 0 ? "+" : "";
+    return `${sign}${formatNumber(value)}`;
+  }
+  if (type === "engagementRate") {
+    return `${value}%`;
+  }
+  return formatNumber(value);
+};

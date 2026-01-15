@@ -5,7 +5,7 @@ export default function Hero() {
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 mx-auto">
       <h2 className="text-6xl font-bold tracking-tight">Make your social metrics <span className="highlighted">Roaaar</span></h2>
       <p className="text-lg max-w-2xl mx-auto">
-        <span className="opacity-60">Turn cold data analytics<br />into high-signal visuals for</span> <XLogo />
+        <span className="opacity-60">Turn cold data analytics<br />into high-signal visuals for</span> <XLogo /><span className="sr-only">Twitter (known as X)</span>
       </p>
     </section>
   );
