@@ -20,7 +20,7 @@ export default function Editor() {
   const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
 
   return (
-    <section className="w-full max-w-6xl mx-auto mt-6 flex flex-col md:flex-row gap-4 rounded-4xl bg-foreground/7 p-4">
+    <section className="w-full max-w-6xl mx-auto mt-6 flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
       <Sidebar settings={settings} onSettingsChange={setSettings} />
       <Preview settings={settings} />
     </section>

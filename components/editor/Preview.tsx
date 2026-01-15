@@ -10,7 +10,7 @@ export default function Preview({ settings }: PreviewProps) {
   return (
     <div className="flex-1 flex flex-col gap-4">
       <div
-        className="relative aspect-video rounded-xl overflow-hidden flex items-center justify-center"
+        className="relative aspect-square rounded-xl overflow-hidden flex items-center justify-center"
         style={{ backgroundColor: settings.backgroundColor }}
       >
 
@@ -49,6 +49,14 @@ export default function Preview({ settings }: PreviewProps) {
             </div>
           )}
         </div>
+        <footer className="absolute bottom-[5%]">
+          <p
+          className="text-xs opacity-60"
+          style={{ color: settings.textColor }}
+        >
+          made with gro.ar 🐯
+        </p>
+        </footer>
       </div>
     </div>
   );

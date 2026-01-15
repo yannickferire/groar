@@ -25,7 +25,7 @@ export default function Sidebar({ settings, onSettingsChange }: SidebarProps) {
   };
 
   return (
-    <aside className="w-full md:w-72 flex flex-col gap-6 p-4 border rounded-xl bg-card">
+    <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-xl bg-card">
       <h3 className="text-xl text-center font-semibold">Settings</h3>
 
       <div className="flex flex-col gap-4">
