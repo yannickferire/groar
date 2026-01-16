@@ -19,7 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { GripVertical, Plus, X } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Menu01Icon, Add01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, PaintBrush01Icon } from "@hugeicons/core-free-icons";
 import {
   DndContext,
   closestCenter,
@@ -52,6 +53,40 @@ type SortableMetricItemProps = {
   canRemove: boolean;
   canDrag: boolean;
 };
+
+function PeriodNumberInput({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  const [inputValue, setInputValue] = useState(value.toString());
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputValue(val);
+
+    const parsed = parseInt(val, 10);
+    if (!isNaN(parsed) && parsed >= 0) {
+      onChange(parsed);
+    }
+  };
+
+  const handleBlur = () => {
+    // If empty or invalid, reset to current value
+    const parsed = parseInt(inputValue, 10);
+    if (isNaN(parsed) || parsed < 0) {
+      setInputValue(value.toString());
+    }
+  };
+
+  return (
+    <Input
+      id="periodNumber"
+      type="text"
+      inputMode="numeric"
+      value={inputValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className="w-16 text-center"
+    />
+  );
+}
 
 function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDrag }: SortableMetricItemProps) {
   const [inputValue, setInputValue] = useState(metric.value.toString());
@@ -99,7 +134,7 @@ function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDra
         {...attributes}
         {...listeners}
       >
-        <GripVertical className="h-4 w-4" />
+        <HugeiconsIcon icon={Menu01Icon} size={16} />
       </button>
       <Input
         type="text"
@@ -119,7 +154,7 @@ function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDra
         disabled={!canRemove}
         className="shrink-0"
       >
-        <X className="h-4 w-4" />
+        <HugeiconsIcon icon={Cancel01Icon} size={16} />
       </Button>
     </div>
   );
@@ -172,7 +207,10 @@ export default function Sidebar({ settings, onSettingsChange }: SidebarProps) {
     <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-xl bg-card">
       {/* Main Info */}
       <div className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Main Info</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+          <HugeiconsIcon icon={UserAccountIcon} size={16} />
+          Main Info
+        </h3>
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="handle">X Handle</Label>
@@ -202,16 +240,9 @@ export default function Sidebar({ settings, onSettingsChange }: SidebarProps) {
                 <SelectItem value="year">Year</SelectItem>
               </SelectContent>
             </Select>
-            <Input
-              id="periodNumber"
-              type="text"
-              inputMode="numeric"
+            <PeriodNumberInput
               value={settings.periodNumber}
-              onChange={(e) => {
-                const parsed = parseInt(e.target.value, 10);
-                updateSetting("periodNumber", isNaN(parsed) ? 1 : Math.max(1, parsed));
-              }}
-              className="w-16 text-center"
+              onChange={(value) => updateSetting("periodNumber", value)}
             />
           </div>
         </div>
@@ -220,7 +251,10 @@ export default function Sidebar({ settings, onSettingsChange }: SidebarProps) {
 
       {/* Metrics */}
       <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Metrics</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+          <HugeiconsIcon icon={Analytics01Icon} size={16} />
+          Metrics
+        </h3>
 
         <DndContext
           sensors={sensors}
@@ -248,7 +282,7 @@ export default function Sidebar({ settings, onSettingsChange }: SidebarProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full justify-start text-muted-foreground">
-                <Plus className="h-4 w-4 mr-2" />
+                <HugeiconsIcon icon={Add01Icon} size={16} className="mr-2" />
                 Add metric
               </Button>
             </DropdownMenuTrigger>
@@ -265,7 +299,10 @@ export default function Sidebar({ settings, onSettingsChange }: SidebarProps) {
 
       {/* Style */}
       <div className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Style</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+          <HugeiconsIcon icon={PaintBrush01Icon} size={16} />
+          Style
+        </h3>
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="backgroundColor">Background Color</Label>

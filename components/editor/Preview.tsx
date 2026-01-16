@@ -1,7 +1,17 @@
 "use client";
 
-import { EditorSettings, PeriodType, METRIC_LABELS } from "../Editor";
+import { EditorSettings, PeriodType, MetricType, METRIC_LABELS } from "../Editor";
 import { formatMetricValue } from "@/lib/metrics";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserAdd01Icon, EyeIcon, Comment01Icon, Activity01Icon } from "@hugeicons/core-free-icons";
+import { IconSvgElement } from "@hugeicons/react";
+
+const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
+  followers: UserAdd01Icon,
+  impressions: EyeIcon,
+  replies: Comment01Icon,
+  engagementRate: Activity01Icon,
+};
 
 type PreviewProps = {
   settings: EditorSettings;
@@ -58,20 +68,19 @@ export default function Preview({ settings }: PreviewProps) {
           style={{ color: settings.textColor }}
         >
           <p className="text-6xl font-bold tracking-tight">
-            {settings.periodType} {settings.periodNumber}
+            <span className="font-heading">{settings.periodType}</span> {settings.periodNumber}
           </p>
-          <div className="flex flex-col items-center gap-1">
+          <div className="flex flex-col items-center gap-2">
             {settings.metrics.map((metric, index) => (
               <p
                 key={metric.type}
-                className={index === 0 ? "text-2xl flex items-center gap-2" : "text-lg opacity-80"}
+                className={index === 0 ? "text-3xl flex items-center gap-3 font-semibold" : "text-lg opacity-80 flex items-center gap-3.5 font-medium"}
               >
-                {index === 0 && (
-                  <span
-                    className="inline-block w-6 h-6 rounded"
-                    style={{ backgroundColor: settings.accentColor }}
-                  />
-                )}
+                <HugeiconsIcon
+                  icon={METRIC_ICONS[metric.type]}
+                  size={index === 0 ? 32 : 24}
+                  color="currentColor"
+                />
                 {formatMetricValue(metric.type, metric.value)} {METRIC_LABELS[metric.type].toLowerCase()}
               </p>
             ))}
