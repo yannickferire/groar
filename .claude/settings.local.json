@@ -11,7 +11,8 @@
       "Bash(wc:*)",
       "Bash(npm run build:*)",
       "Bash(/usr/local/bin/npm run build)",
-      "Bash(/opt/homebrew/bin/npm run build)"
+      "Bash(/opt/homebrew/bin/npm run build)",
+      "Bash(npm install:*)"
     ]
   }
 }

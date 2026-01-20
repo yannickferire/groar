@@ -6,6 +6,7 @@ import Sidebar from "./editor/Sidebar";
 import Preview from "./editor/Preview";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 import { useToast } from "@/components/ui/toast";
+import { FadeIn } from "@/components/ui/motion";
 
 // Solid color preset - always first in the list
 const SOLID_COLOR_PRESET: BackgroundPreset = {
@@ -96,15 +97,17 @@ export default function Editor() {
   }, [settings.handle, showToast]);
 
   return (
-    <section className="w-full max-w-6xl mx-auto mt-6 flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
-      <Sidebar
-        settings={settings}
-        onSettingsChange={setSettings}
-        backgrounds={ALL_BACKGROUNDS}
-        onExport={handleExport}
-        isExporting={isExporting}
-      />
-      <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} />
-    </section>
+    <FadeIn delay={0.6} duration={0.7}>
+      <section className="w-full max-w-6xl mx-auto mt-6 flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
+        <Sidebar
+          settings={settings}
+          onSettingsChange={setSettings}
+          backgrounds={ALL_BACKGROUNDS}
+          onExport={handleExport}
+          isExporting={isExporting}
+        />
+        <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} />
+      </section>
+    </FadeIn>
   );
 }
