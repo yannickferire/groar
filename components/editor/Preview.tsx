@@ -1,8 +1,9 @@
 "use client";
 
 import { forwardRef } from "react";
-import { EditorSettings, PeriodType, MetricType, METRIC_LABELS, BackgroundPreset } from "../Editor";
+import { EditorSettings, MetricType, METRIC_LABELS, BackgroundPreset } from "../Editor";
 import { formatMetricValue } from "@/lib/metrics";
+import { getDateLabel } from "@/lib/date";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserAdd01Icon, EyeIcon, Comment01Icon, Activity01Icon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
@@ -18,30 +19,6 @@ const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
 type PreviewProps = {
   settings: EditorSettings;
   backgrounds: BackgroundPreset[];
-};
-
-const getDateLabel = (periodType: PeriodType): string => {
-  const now = new Date();
-  const year = now.getFullYear();
-
-  const startOfYear = new Date(year, 0, 1);
-  const dayOfYear = Math.ceil((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-  const totalDays = isLeapYear ? 366 : 365;
-
-  switch (periodType) {
-    case "day":
-      return `${dayOfYear.toString().padStart(2, "0")}/${totalDays} – ${year}`;
-    case "week":
-      const weekNumber = Math.ceil(dayOfYear / 7);
-      return `${weekNumber.toString().padStart(2, "0")}/52 – ${year}`;
-    case "month":
-      const month = now.getMonth() + 1;
-      return `${month.toString().padStart(2, "0")}/12 – ${year}`;
-    case "year":
-      return `${year}`;
-  }
 };
 
 const textShadow = "0 1px 2px rgba(0,0,0,0.15)";

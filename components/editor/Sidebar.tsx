@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import Image from "next/image";
 import { EditorSettings, PeriodType, MetricType, Metric, METRIC_LABELS, BackgroundPreset } from "../Editor";
 import { parseMetricInput } from "@/lib/metrics";
+import { normalizeHandle, isValidHexColor } from "@/lib/validation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -88,11 +89,12 @@ function PeriodNumberInput({ value, onChange }: { value: number; onChange: (valu
       onChange={handleChange}
       onBlur={handleBlur}
       className="w-16 text-center bg-white"
+      aria-label="Period number"
     />
   );
 }
 
-function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDrag }: SortableMetricItemProps) {
+const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDrag }: SortableMetricItemProps) {
   const [inputValue, setInputValue] = useState(metric.value.toString());
 
   const {
@@ -135,10 +137,11 @@ function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDra
         type="button"
         className={`touch-none ${canDrag ? "cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground" : "cursor-not-allowed text-muted-foreground/30"}`}
         disabled={!canDrag}
+        aria-label={`Reorder ${METRIC_LABELS[metric.type]}`}
         {...attributes}
         {...listeners}
       >
-        <HugeiconsIcon icon={Menu01Icon} size={18} strokeWidth={1.5} />
+        <HugeiconsIcon icon={Menu01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
       </button>
       <Input
         type="text"
@@ -147,8 +150,9 @@ function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDra
         value={inputValue}
         onChange={handleInputChange}
         className="w-32 text-center bg-white"
+        aria-label={`${METRIC_LABELS[metric.type]} value`}
       />
-      <span className="text-sm text-muted-foreground whitespace-nowrap flex-1">
+      <span className="text-sm text-muted-foreground whitespace-nowrap flex-1" aria-hidden="true">
         {METRIC_LABELS[metric.type].toLowerCase()}
       </span>
       <Button
@@ -157,12 +161,13 @@ function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDra
         onClick={() => onRemove(metric.type)}
         disabled={!canRemove}
         className="shrink-0"
+        aria-label={`Remove ${METRIC_LABELS[metric.type]}`}
       >
-        <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={1.5} />
+        <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
       </Button>
     </div>
   );
-}
+});
 
 export default function Sidebar({ settings, onSettingsChange, backgrounds, onExport, isExporting }: SidebarProps) {
   const sensors = useSensors(
@@ -172,58 +177,58 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
     })
   );
 
-  const updateSetting = <K extends keyof EditorSettings>(
+  const updateSetting = useCallback(<K extends keyof EditorSettings>(
     key: K,
     value: EditorSettings[K]
   ) => {
     onSettingsChange({ ...settings, [key]: value });
-  };
+  }, [settings, onSettingsChange]);
 
-  const selectPreset = (presetId: string) => {
+  const selectPreset = useCallback((presetId: string) => {
     updateSetting("background", {
       presetId,
       solidColor: settings.background.solidColor || "#f59e0b"
     });
-  };
+  }, [updateSetting, settings.background.solidColor]);
 
-  const updateSolidColor = (color: string) => {
+  const updateSolidColor = useCallback((color: string) => {
     updateSetting("background", { ...settings.background, solidColor: color });
-  };
+  }, [updateSetting, settings.background]);
 
-  const addMetric = (type: MetricType) => {
+  const addMetric = useCallback((type: MetricType) => {
     const newMetric: Metric = { type, value: 0 };
     updateSetting("metrics", [...settings.metrics, newMetric]);
-  };
+  }, [updateSetting, settings.metrics]);
 
-  const removeMetric = (type: MetricType) => {
+  const removeMetric = useCallback((type: MetricType) => {
     updateSetting("metrics", settings.metrics.filter(m => m.type !== type));
-  };
+  }, [updateSetting, settings.metrics]);
 
-  const updateMetricValue = (type: MetricType, value: number) => {
+  const updateMetricValue = useCallback((type: MetricType, value: number) => {
     updateSetting("metrics", settings.metrics.map(m =>
       m.type === type ? { ...m, value } : m
     ));
-  };
+  }, [updateSetting, settings.metrics]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       const oldIndex = settings.metrics.findIndex(m => m.type === active.id);
       const newIndex = settings.metrics.findIndex(m => m.type === over.id);
       updateSetting("metrics", arrayMove(settings.metrics, oldIndex, newIndex));
     }
-  };
+  }, [updateSetting, settings.metrics]);
 
-  const availableMetrics = ALL_METRICS.filter(
+  const availableMetrics = useMemo(() => ALL_METRICS.filter(
     type => !settings.metrics.some(m => m.type === type)
-  );
+  ), [settings.metrics]);
 
   return (
     <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-xl bg-card min-h-full">
       {/* Main Info */}
       <div className="flex flex-col gap-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <HugeiconsIcon icon={UserAccountIcon} size={18} strokeWidth={1.5} />
+          <HugeiconsIcon icon={UserAccountIcon} size={18} strokeWidth={1.5} aria-hidden="true" />
           Main Info
         </h3>
 
@@ -235,6 +240,7 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
             placeholder="@username"
             value={settings.handle}
             onChange={(e) => updateSetting("handle", e.target.value)}
+            onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
             className="bg-white"
           />
         </div>
@@ -266,8 +272,9 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
                 size="icon"
                 onClick={() => updateSetting("period", null)}
                 className="shrink-0"
+                aria-label="Remove period"
               >
-                <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={1.5} />
+                <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -277,7 +284,7 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
             className="w-full justify-start text-muted-foreground bg-white"
             onClick={() => updateSetting("period", { type: "week", number: 1 })}
           >
-            <HugeiconsIcon icon={Calendar03Icon} size={18} strokeWidth={1.5} className="mr-2" />
+            <HugeiconsIcon icon={Calendar03Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
             Add period
           </Button>
         )}
@@ -286,7 +293,7 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
       {/* Metrics */}
       <div className="flex flex-col gap-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.5} />
+          <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
           Metrics
         </h3>
 
@@ -316,7 +323,7 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white">
-                <HugeiconsIcon icon={ChartLineData02Icon} size={18} strokeWidth={1.5} className="mr-2" />
+                <HugeiconsIcon icon={ChartLineData02Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
                 Add metric
               </Button>
             </DropdownMenuTrigger>
@@ -334,7 +341,7 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
       {/* Style */}
       <div className="flex flex-col gap-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <HugeiconsIcon icon={PaintBrush01Icon} size={18} strokeWidth={1.5} />
+          <HugeiconsIcon icon={PaintBrush01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
           Style
         </h3>
 
@@ -377,12 +384,19 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
                 value={settings.background.solidColor || "#f59e0b"}
                 onChange={(e) => updateSolidColor(e.target.value)}
                 className="w-9 h-9 p-0 cursor-pointer border-input overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
+                aria-label="Background color picker"
               />
               <Input
                 type="text"
                 value={settings.background.solidColor || "#f59e0b"}
                 onChange={(e) => updateSolidColor(e.target.value)}
+                onBlur={(e) => {
+                  if (!isValidHexColor(e.target.value)) {
+                    updateSolidColor("#f59e0b");
+                  }
+                }}
                 className="flex-1 bg-white"
+                aria-label="Background color hex value"
               />
             </div>
           )}
@@ -397,12 +411,19 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
               value={settings.textColor}
               onChange={(e) => updateSetting("textColor", e.target.value)}
               className="w-9 h-9 p-0 cursor-pointer border-input overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
+              aria-label="Text color picker"
             />
             <Input
               type="text"
               value={settings.textColor}
               onChange={(e) => updateSetting("textColor", e.target.value)}
+              onBlur={(e) => {
+                if (!isValidHexColor(e.target.value)) {
+                  updateSetting("textColor", "#ffffff");
+                }
+              }}
               className="flex-1 bg-white"
+              aria-label="Text color hex value"
             />
           </div>
         </div>

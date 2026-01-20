@@ -1,24 +1,6 @@
 import { MetricType } from "@/components/Editor";
 
 /**
- * Format a number back to display format (e.g., 10000 -> "10k")
- */
-export const formatMetricInput = (value: number, metricType: MetricType): string => {
-  if (metricType === "engagementRate") {
-    return value.toString();
-  }
-  if (value >= 1000000) {
-    const formatted = (value / 1000000).toFixed(1);
-    return formatted.endsWith('.0') ? `${Math.round(value / 1000000)}M` : `${formatted}M`;
-  }
-  if (value >= 1000) {
-    const formatted = (value / 1000).toFixed(1);
-    return formatted.endsWith('.0') ? `${Math.round(value / 1000)}k` : `${formatted}k`;
-  }
-  return value.toString();
-};
-
-/**
  * Parse values like "10k", "1.5M", "100" into numbers
  */
 export const parseMetricInput = (input: string, metricType: MetricType): number | null => {

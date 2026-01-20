@@ -5,6 +5,7 @@ import { toPng } from "html-to-image";
 import Sidebar from "./editor/Sidebar";
 import Preview from "./editor/Preview";
 import { BACKGROUNDS } from "@/lib/backgrounds";
+import { useToast } from "@/components/ui/toast";
 
 // Solid color preset - always first in the list
 const SOLID_COLOR_PRESET: BackgroundPreset = {
@@ -69,6 +70,7 @@ export default function Editor() {
   const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
   const [isExporting, setIsExporting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
 
   const handleExport = useCallback(async () => {
     if (!previewRef.current) return;
@@ -84,12 +86,14 @@ export default function Editor() {
       link.download = `groar-${settings.handle.replace("@", "")}-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
+      showToast("Image downloaded successfully!");
     } catch (error) {
       console.error("Export failed:", error);
+      showToast("Export failed. Please try again.", "error");
     } finally {
       setIsExporting(false);
     }
-  }, [settings.handle]);
+  }, [settings.handle, showToast]);
 
   return (
     <section className="w-full max-w-6xl mx-auto mt-6 flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
