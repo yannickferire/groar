@@ -28,7 +28,7 @@ const features = [
 
 export default function Premium() {
   return (
-    <section className="w-full max-w-4xl mx-auto py-16">
+    <section className="w-full max-w-4xl mx-auto py-4">
       <div className="relative overflow-hidden rounded-3xl bg-foreground text-background p-8 md:p-12">
         <div className="absolute top-4 right-4 flex items-center gap-1.5 text-xs font-medium bg-primary/20 text-primary px-3 py-1 rounded-full">
           <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />

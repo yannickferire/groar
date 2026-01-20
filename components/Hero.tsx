@@ -10,8 +10,8 @@ export default function Hero() {
         Turn cold data analytics into high-signal visuals.<br className="hidden md:block" />
         Share your wins and watch the engagement grow.
       </p>
-      <p className="text-sm text-muted-foreground">
-        Available on <XLogo className="mx-1" /><span className="sr-only">X (Twitter)</span> · More platforms coming soon
+      <p className="-mt-2 text-sm text-muted-foreground flex items-center justify-center gap-1">
+        For now only available for <XLogo className="mx-1" /><span className="sr-only">X (ex Twitter)</span>
       </p>
     </section>
   );

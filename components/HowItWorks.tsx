@@ -21,7 +21,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="w-full max-w-4xl mx-auto py-12">
+    <section className="w-full max-w-4xl mx-auto py-4">
       <div className="text-center mb-8">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
           Create in seconds

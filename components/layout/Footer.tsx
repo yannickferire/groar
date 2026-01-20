@@ -2,8 +2,8 @@ import Logo from "./Logo";
 
 export default function Footer() {
   return (
-    <footer className="w-full max-w-6xl mx-auto border-t border-border">
-      <div className="py-8 flex flex-col md:flex-row items-center justify-between gap-6">
+    <footer className="w-full max-w-6xl mx-auto border-t border-border mt-24">
+      <div className="py-8 flex flex-col md:flex-row items-start justify-between gap-6">
         <div className="flex flex-col items-center md:items-start gap-2">
           <Logo />
           <p className="text-sm text-muted-foreground">
@@ -12,7 +12,6 @@ export default function Footer() {
             into shareable visuals
           </p>
         </div>
-
         <a
           href="https://x.com/yannick_ferire"
           target="_blank"

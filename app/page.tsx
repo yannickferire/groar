@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen px-4">
       <Header />
-      <main className="flex-1 flex flex-col gap-8">
+      <main className="flex-1 flex flex-col gap-12 md:gap-16">
         <Hero />
         <Editor />
         <HowItWorks />
