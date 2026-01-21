@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { toPng } from "html-to-image";
 import Sidebar from "./editor/Sidebar";
 import Preview from "./editor/Preview";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
+
+const STORAGE_KEY = "groar-editor-settings";
 
 // Solid color preset - always first in the list
 const SOLID_COLOR_PRESET: BackgroundPreset = {
@@ -67,21 +69,81 @@ const defaultSettings: EditorSettings = {
   textColor: "#ffffff",
 };
 
+function loadSettings(): EditorSettings {
+  if (typeof window === "undefined") return defaultSettings;
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Validate the structure
+      if (parsed.handle && parsed.metrics && parsed.background && parsed.textColor) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Invalid JSON, use defaults
+  }
+  return defaultSettings;
+}
+
+function saveSettings(settings: EditorSettings) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // localStorage not available
+  }
+}
+
 export default function Editor() {
   const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
   const [isExporting, setIsExporting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    setSettings(loadSettings());
+  }, []);
+
+  // Save settings to localStorage when they change (debounced)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      saveSettings(settings);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [settings]);
+
   const handleExport = useCallback(async () => {
     if (!previewRef.current) return;
 
     setIsExporting(true);
+    let injectedWatermark: HTMLElement | null = null;
+
     try {
+      // Check if watermark exists and is visible
+      const existingWatermark = previewRef.current.querySelector(".groar-watermark") as HTMLElement;
+      const isWatermarkVisible = existingWatermark &&
+        existingWatermark.offsetParent !== null &&
+        getComputedStyle(existingWatermark).display !== "none" &&
+        getComputedStyle(existingWatermark).visibility !== "hidden";
+
+      // If watermark is missing or hidden, inject one
+      if (!isWatermarkVisible) {
+        injectedWatermark = document.createElement("footer");
+        injectedWatermark.style.cssText = "position: absolute; bottom: 3%; left: 0; right: 0; z-index: 10; display: flex; justify-content: center;";
+        injectedWatermark.innerHTML = `<p style="color: ${settings.textColor}; text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 0.875rem; white-space: nowrap;"><span style="opacity: 0.6;">made with</span> 🐯 <span style="opacity: 0.6;">gro.ar</span></p>`;
+        previewRef.current.appendChild(injectedWatermark);
+      }
+
       const dataUrl = await toPng(previewRef.current, {
         pixelRatio: 2,
         cacheBust: true,
       });
+
+      // Remove injected watermark if we added one
+      if (injectedWatermark) {
+        injectedWatermark.remove();
+      }
 
       const link = document.createElement("a");
       link.download = `groar-${settings.handle.replace("@", "")}-${Date.now()}.png`;
@@ -90,11 +152,15 @@ export default function Editor() {
       showToast("Image downloaded successfully!");
     } catch (error) {
       console.error("Export failed:", error);
+      // Clean up injected watermark on error
+      if (injectedWatermark) {
+        injectedWatermark.remove();
+      }
       showToast("Export failed. Please try again.", "error");
     } finally {
       setIsExporting(false);
     }
-  }, [settings.handle, showToast]);
+  }, [settings.handle, settings.textColor, showToast]);
 
   return (
     <FadeIn delay={0.6} duration={0.7}>

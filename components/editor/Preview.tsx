@@ -82,9 +82,9 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
           </div>
         </div>
 
-        <footer className="absolute bottom-[3%] z-10">
+        <footer className="absolute bottom-[3%] z-10 groar-watermark">
           <p
-            className="text-xs whitespace-nowrap"
+            className="text-sm whitespace-nowrap"
             style={{ color: settings.textColor, textShadow }}
           >
             <span className="opacity-60">made with</span> 🐯 <span className="opacity-60">gro.ar</span>
