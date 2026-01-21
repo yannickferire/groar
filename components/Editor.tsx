@@ -98,7 +98,7 @@ export default function Editor() {
 
   return (
     <FadeIn delay={0.6} duration={0.7}>
-      <section className="w-full max-w-6xl mx-auto mt-6 flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
+      <section id="editor" className="w-full max-w-6xl mx-auto mt-6 flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
         <Sidebar
           settings={settings}
           onSettingsChange={setSettings}

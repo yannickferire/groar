@@ -64,10 +64,60 @@ input.gooey:focus {
 }
 
 .highlighted {
-  background: linear-gradient(90deg, var(--primary) 0%, var(--chart-2) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 100%);
+  position: relative;
+}
+
+.gradient-primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.gradient-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.1) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.gradient-primary-reverse {
+  background: linear-gradient(315deg, var(--primary) 0%, var(--chart-2) 100%);
+  position: relative;
+}
+
+.gradient-primary-reverse::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.gradient-primary-reverse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.1) 100%);
+  pointer-events: none;
+  border-radius: inherit;
 }
 
 :root {
@@ -151,7 +201,9 @@ input.gooey:focus {
 .bg-fade {
   position: relative;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 5%, transparent) 0%, transparent 100%);
-  box-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--primary) 20%, transparent);
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--primary) 25%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--primary) 5%, transparent);
 }
 
 .bg-fade::before,
@@ -159,10 +211,11 @@ input.gooey:focus {
   content: "";
   position: absolute;
   top: var(--radius-4xl);
-  bottom: 0;
+  bottom: 20px;
   width: 1px;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 20%, transparent) 0%, transparent 100%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 25%, transparent) 0%, transparent 100%);
   pointer-events: none;
+  z-index: 10;
 }
 
 .bg-fade::before {
@@ -171,4 +224,25 @@ input.gooey:focus {
 
 .bg-fade::after {
   right: 0;
+}
+
+.border-fade {
+  position: relative;
+  border: none;
+  background: var(--card);
+}
+
+.border-fade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 50%, transparent) 0%, color-mix(in srgb, var(--primary) 10%, transparent) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
 }

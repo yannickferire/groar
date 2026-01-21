@@ -77,20 +77,24 @@ export function FadeInView({
   );
 }
 
-type StaggerContainerProps = HTMLMotionProps<"div"> & {
+type StaggerContainerProps<T extends keyof JSX.IntrinsicElements = "div"> = HTMLMotionProps<T> & {
   children: ReactNode;
   staggerDelay?: number;
   delayChildren?: number;
+  as?: T;
 };
 
-export function StaggerContainer({
+export function StaggerContainer<T extends keyof JSX.IntrinsicElements = "div">({
   children,
   staggerDelay = 0.12,
   delayChildren = 0,
+  as,
   ...props
-}: StaggerContainerProps) {
+}: StaggerContainerProps<T>) {
+  const Component = as ? (motion as Record<string, typeof motion.div>)[as] : motion.div;
+
   return (
-    <motion.div
+    <Component
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.5 }}
@@ -103,25 +107,27 @@ export function StaggerContainer({
           },
         },
       }}
-      {...props}
+      {...(props as HTMLMotionProps<"div">)}
     >
       {children}
-    </motion.div>
+    </Component>
   );
 }
 
-type StaggerItemProps = HTMLMotionProps<"div"> & {
+type StaggerItemProps<T extends keyof JSX.IntrinsicElements = "div"> = HTMLMotionProps<T> & {
   children: ReactNode;
   direction?: "up" | "down" | "left" | "right" | "none";
   distance?: number;
+  as?: T;
 };
 
-export function StaggerItem({
+export function StaggerItem<T extends keyof JSX.IntrinsicElements = "div">({
   children,
   direction = "up",
   distance = 24,
+  as,
   ...props
-}: StaggerItemProps) {
+}: StaggerItemProps<T>) {
   const directions = {
     up: { translateY: distance },
     down: { translateY: -distance },
@@ -130,17 +136,19 @@ export function StaggerItem({
     none: {},
   };
 
+  const Component = as ? (motion as Record<string, typeof motion.div>)[as] : motion.div;
+
   return (
-    <motion.div
+    <Component
       variants={{
         hidden: { opacity: 0, ...directions[direction] },
         visible: { opacity: 1, translateX: 0, translateY: 0 },
       }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       style={{ willChange: "opacity, transform" }}
-      {...props}
+      {...(props as HTMLMotionProps<"div">)}
     >
       {children}
-    </motion.div>
+    </Component>
   );
 }

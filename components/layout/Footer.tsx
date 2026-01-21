@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Logo from "./Logo";
 import { FadeInView } from "@/components/ui/motion";
 
@@ -16,14 +17,24 @@ export default function Footer() {
               into shareable visuals
             </p>
           </div>
-          <a
-            href="https://x.com/yannick_ferire"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            @yannick_ferire
-          </a>
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6">
+            <div className="flex gap-4 text-sm text-muted-foreground">
+              <Link href="/privacy" className="hover:text-foreground transition-colors">
+                Privacy
+              </Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">
+                Terms
+              </Link>
+            </div>
+            <a
+              href="https://x.com/yannick_ferire"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              @yannick_ferire
+            </a>
+          </div>
         </div>
       </footer>
     </FadeInView>

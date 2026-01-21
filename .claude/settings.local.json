@@ -12,7 +12,11 @@
       "Bash(npm run build:*)",
       "Bash(/usr/local/bin/npm run build)",
       "Bash(/opt/homebrew/bin/npm run build)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(source ~/.bash_profile)",
+      "Bash(/Users/yannickferire/.nvm/versions/node/v22.21.1/bin/npm run build)",
+      "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:$PATH\")"
     ]
   }
 }

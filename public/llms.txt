@@ -1,0 +1,29 @@
+# Groar
+
+> Turn your social media metrics into shareable visuals
+
+Groar is a web application that transforms social media analytics into beautiful, shareable images. Users can create visual representations of their growth metrics to share on social platforms.
+
+## Features
+
+- Create shareable visuals from social media metrics
+- Support for followers, impressions, replies, and engagement rate
+- Customizable backgrounds and text colors
+- Export as high-quality PNG images
+- Currently supports X (formerly Twitter)
+
+## Target Users
+
+- Content creators
+- Social media managers
+- Influencers
+- Anyone wanting to showcase their social media growth
+
+## Creator
+
+Built by Yannick Ferire (@yannick_ferire on X)
+
+## Links
+
+- Website: https://gro.ar
+- Creator: https://x.com/yannick_ferire

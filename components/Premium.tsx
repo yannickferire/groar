@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Analytics01Icon, Clock01Icon, Setting06Icon, ColorsIcon, SparklesIcon, Mail01Icon, FlashIcon, MoreHorizontalIcon } from "@hugeicons/core-free-icons";
+import { Analytics01Icon, Clock01Icon, Setting06Icon, ColorsIcon, SparklesIcon, Mail01Icon, FlashIcon, MoreHorizontalIcon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FadeInView, StaggerContainer, StaggerItem } from "@/components/ui/motion";
@@ -40,7 +41,39 @@ const features = [
   },
 ];
 
+type FormStatus = "idle" | "loading" | "success" | "error";
+
 export default function Premium() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<FormStatus>("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || status === "loading") return;
+
+    setStatus("loading");
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to subscribe");
+      }
+
+      setStatus("success");
+      setEmail("");
+    } catch {
+      setStatus("error");
+      setErrorMessage("Something went wrong. Please try again.");
+    }
+  };
+
   return (
     <FadeInView direction="up" distance={32}>
       <section className="w-full max-w-4xl mx-auto py-4">
@@ -75,26 +108,42 @@ export default function Premium() {
             </StaggerContainer>
 
             <div className="pt-6 border-t border-background/10">
-              <p className="text-sm text-background/60 mb-3">Get notified when we launch</p>
-              <form className="flex gap-2 max-w-md">
-                <div className="relative flex-1">
-                  <HugeiconsIcon
-                    icon={Mail01Icon}
-                    size={18}
-                    strokeWidth={1.5}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    className="pl-10 bg-background/10 border-background/20 text-background placeholder:text-background/40"
-                  />
+              <p className="text-sm text-background/60 mb-3">Be the first to know when Premium launches</p>
+              {status === "success" ? (
+                <div className="flex items-center gap-2 text-primary">
+                  <HugeiconsIcon icon={CheckmarkCircle02Icon} size={20} strokeWidth={1.5} aria-hidden="true" />
+                  <span className="text-sm font-medium">You&apos;re in! We&apos;ll let you know when Premium is ready.</span>
                 </div>
-                <Button type="submit" variant="default">
-                  Notify me
-                </Button>
-              </form>
+              ) : (
+                <form onSubmit={handleSubmit} className="flex flex-col gap-2 max-w-md">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <HugeiconsIcon
+                        icon={Mail01Icon}
+                        size={18}
+                        strokeWidth={1.5}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <Input
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={status === "loading"}
+                        className="pl-10 bg-background/10 border-background/20 text-background placeholder:text-background/40 disabled:opacity-50"
+                      />
+                    </div>
+                    <Button type="submit" variant="defaultReverse" disabled={status === "loading" || !email} className="disabled:opacity-100 disabled:cursor-not-allowed">
+                      {status === "loading" ? "..." : "Get early access"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-background/60">Early subscribers get 20% off for life</p>
+                  {status === "error" && (
+                    <p className="text-sm text-red-400">{errorMessage}</p>
+                  )}
+                </form>
+              )}
             </div>
           </div>
 

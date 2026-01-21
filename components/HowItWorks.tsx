@@ -1,12 +1,12 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Edit02Icon, PaintBrush01Icon, Download04Icon } from "@hugeicons/core-free-icons";
+import { Analytics01Icon, PaintBrush01Icon, Download04Icon } from "@hugeicons/core-free-icons";
 import { FadeInView, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 
 const steps = [
   {
-    icon: Edit02Icon,
+    icon: Analytics01Icon,
     title: "Enter your metrics",
     description: "Add your handle and input your analytics data.",
   },
@@ -36,14 +36,15 @@ export default function HowItWorks() {
         </div>
       </FadeInView>
 
-      <StaggerContainer className="flex flex-col md:flex-row items-stretch gap-4" staggerDelay={0.15}>
+      <StaggerContainer as="ul" className="flex flex-col md:flex-row items-stretch gap-4" staggerDelay={0.15}>
         {steps.map((step, index) => (
           <StaggerItem
+            as="li"
             key={index}
-            className="flex-1 relative p-4 rounded-xl border border-border bg-card"
+            className="flex-1 relative p-4 rounded-3xl border-fade"
           >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <HugeiconsIcon icon={step.icon} size={24} strokeWidth={1.5} className="text-primary" />
               </div>
               <div className="flex-1 min-w-0">

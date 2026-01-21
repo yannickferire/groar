@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
@@ -16,9 +17,73 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gro.ar";
+
 export const metadata: Metadata = {
-  title: "Groar",
-  description: "Grow your social accounts and make it roar",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Groar - Make your social metrics roar",
+    template: "%s | Groar",
+  },
+  description:
+    "Turn your social media metrics into beautiful, shareable visuals. Track your growth and showcase your wins.",
+  keywords: [
+    "social media",
+    "metrics",
+    "analytics",
+    "visuals",
+    "growth",
+    "twitter",
+    "x",
+    "followers",
+    "engagement",
+  ],
+  authors: [{ name: "Yannick Ferire", url: "https://x.com/yannick_ferire" }],
+  creator: "Yannick Ferire",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "Groar",
+    title: "Groar - Make your social metrics roar",
+    description:
+      "Turn your social media metrics into beautiful, shareable visuals. Track your growth and showcase your wins.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Groar - Make your social metrics roar",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Groar - Make your social metrics roar",
+    description:
+      "Turn your social media metrics into beautiful, shareable visuals. Track your growth and showcase your wins.",
+    images: ["/og-image.png"],
+    creator: "@yannick_ferire",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
@@ -32,6 +97,7 @@ export default function RootLayout({
         className={`${bricolage.variable} ${dmMono.variable} antialiased`}
       >
         <ToastProvider>{children}</ToastProvider>
+        <Analytics />
       </body>
     </html>
   );

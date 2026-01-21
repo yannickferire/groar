@@ -224,7 +224,7 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
   ), [settings.metrics]);
 
   return (
-    <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-xl bg-card min-h-full">
+    <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-3xl bg-card min-h-full">
       {/* Main Info */}
       <div className="flex flex-col gap-4">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
@@ -353,7 +353,7 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
                 key={preset.id}
                 type="button"
                 onClick={() => selectPreset(preset.id)}
-                className={`aspect-video rounded-md overflow-hidden border transition-all relative ${
+                className={`aspect-video rounded-xl overflow-hidden border transition-all relative ${
                   settings.background.presetId === preset.id
                     ? "ring-2 ring-foreground/50 ring-offset-2 ring-offset-background"
                     : "border-border hover:ring-1 hover:ring-foreground/20"

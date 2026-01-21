@@ -28,7 +28,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
     <div className="flex-1 flex flex-col gap-4">
       <div
         ref={ref}
-        className="relative aspect-square rounded-xl overflow-hidden flex items-center justify-center"
+        className="relative aspect-square rounded-3xl overflow-hidden flex items-center justify-center"
       >
         <BackgroundCanvas
           settings={settings.background}
