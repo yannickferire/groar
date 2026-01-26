@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { BackgroundSettings, BackgroundPreset } from "../Editor";
 
 type BackgroundCanvasProps = {
@@ -26,18 +25,29 @@ export default function BackgroundCanvas({ settings, backgrounds, className }: B
     );
   }
 
-  // Image background
+  // Gradient background
+  if (preset.gradient) {
+    return (
+      <div
+        className={`absolute inset-0 ${className || ""}`}
+        style={{ background: preset.gradient }}
+      />
+    );
+  }
+
+  // Image background - use CSS background-image for better html-to-image compatibility
   if (!preset.image) {
     return null;
   }
 
   return (
-    <Image
-      src={preset.image}
-      alt={preset.name}
-      fill
-      className={`object-cover ${className || ""}`}
-      priority
+    <div
+      className={`absolute inset-0 ${className || ""}`}
+      style={{
+        backgroundImage: `url(${preset.image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     />
   );
 }

@@ -14,9 +14,12 @@ function generateBackgrounds() {
       const ext = path.extname(file).toLowerCase();
       return imageExtensions.includes(ext);
     })
+    .sort() // Sort alphabetically to respect numeric prefixes
     .map((file) => {
-      const name = path.basename(file, path.extname(file));
-      // Convert filename to display name (e.g., "noisy-lights" -> "Noisy Lights")
+      const rawName = path.basename(file, path.extname(file));
+      // Remove numeric prefix (e.g., "01-tokyo-streets" -> "tokyo-streets")
+      const name = rawName.replace(/^\d+-/, "");
+      // Convert filename to display name (e.g., "tokyo-streets" -> "Tokyo Streets")
       const displayName = name
         .split("-")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

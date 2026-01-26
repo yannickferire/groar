@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, HTMLMotionProps } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, JSX } from "react";
 
 type FadeInProps = HTMLMotionProps<"div"> & {
   children: ReactNode;

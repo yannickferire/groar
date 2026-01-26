@@ -4,13 +4,16 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { toPng } from "html-to-image";
 import Sidebar from "./editor/Sidebar";
 import Preview from "./editor/Preview";
+import StyleControls from "./editor/StyleControls";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
 
 const STORAGE_KEY = "groar-editor-settings";
+const EXPORT_WIDTH = 1200;
+const EXPORT_HEIGHT = 675;
 
-// Solid color preset - always first in the list
+// Solid color preset (displayed last in StyleControls)
 const SOLID_COLOR_PRESET: BackgroundPreset = {
   id: "solid-color",
   name: "Solid Color",
@@ -41,6 +44,7 @@ export type BackgroundPreset = {
   name: string;
   image?: string;
   color?: string;
+  gradient?: string;
 };
 
 export type BackgroundSettings = {
@@ -66,7 +70,7 @@ const defaultSettings: EditorSettings = {
   period: { type: "week", number: 1 },
   metrics: [{ type: "followers", value: 56 }],
   background: { presetId: BACKGROUNDS[0]?.id || "solid-color", solidColor: "#f59e0b" },
-  textColor: "#ffffff",
+  textColor: "#faf7e9",
 };
 
 function loadSettings(): EditorSettings {
@@ -131,12 +135,13 @@ export default function Editor() {
       if (!isWatermarkVisible) {
         injectedWatermark = document.createElement("footer");
         injectedWatermark.style.cssText = "position: absolute; bottom: 3%; left: 0; right: 0; z-index: 10; display: flex; justify-content: center;";
-        injectedWatermark.innerHTML = `<p style="color: ${settings.textColor}; text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 0.875rem; white-space: nowrap;"><span style="opacity: 0.6;">made with</span> 🐯 <span style="opacity: 0.6;">gro.ar</span></p>`;
+        injectedWatermark.innerHTML = `<p style="color: ${settings.textColor}; text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 0.875rem; white-space: nowrap;"><span style="opacity: 0.6;">made with</span> 🐯 <span style="opacity: 0.6;">groar</span></p>`;
         previewRef.current.appendChild(injectedWatermark);
       }
 
       const dataUrl = await toPng(previewRef.current, {
-        pixelRatio: 2,
+        canvasWidth: EXPORT_WIDTH,
+        canvasHeight: EXPORT_HEIGHT,
         cacheBust: true,
       });
 
@@ -164,16 +169,34 @@ export default function Editor() {
 
   return (
     <FadeIn delay={0.6} duration={0.7}>
-      <section id="editor" className="w-full max-w-6xl mx-auto mt-6 flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
-        <Sidebar
-          settings={settings}
-          onSettingsChange={setSettings}
-          backgrounds={ALL_BACKGROUNDS}
-          onExport={handleExport}
-          isExporting={isExporting}
+      <div className="relative w-full max-w-6xl mx-auto mt-6">
+        {/* Top horizontal glow */}
+        <div
+          className="absolute -top-24 left-1/2 w-[140%] h-48 rounded-[100%] blur-3xl pointer-events-none animate-[glowRise_0.8s_ease-out_0.95s_forwards]"
+          style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.5 } as React.CSSProperties}
         />
-        <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} />
-      </section>
+        {/* Center vertical glow */}
+        <div
+          className="absolute top-0 left-1/2 w-full h-[140%] rounded-[100%] blur-3xl pointer-events-none animate-[glowRise_0.8s_ease-out_0.95s_forwards]"
+          style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.2 } as React.CSSProperties}
+        />
+        <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
+          <Sidebar
+            settings={settings}
+            onSettingsChange={setSettings}
+            onExport={handleExport}
+            isExporting={isExporting}
+          />
+          <div className="flex-1 flex flex-col gap-5">
+            <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} />
+            <StyleControls
+              settings={settings}
+              onSettingsChange={setSettings}
+              backgrounds={ALL_BACKGROUNDS}
+            />
+          </div>
+        </section>
+      </div>
     </FadeIn>
   );
 }

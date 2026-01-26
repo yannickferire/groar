@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useCallback, useMemo, memo } from "react";
-import Image from "next/image";
-import { EditorSettings, PeriodType, MetricType, Metric, METRIC_LABELS, BackgroundPreset } from "../Editor";
+import { useState, useCallback, useMemo, memo, useEffect } from "react";
+import { EditorSettings, PeriodType, MetricType, Metric, METRIC_LABELS } from "../Editor";
 import { parseMetricInput } from "@/lib/metrics";
-import { normalizeHandle, isValidHexColor } from "@/lib/validation";
+import { normalizeHandle } from "@/lib/validation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, PaintBrush01Icon, Calendar03Icon, ChartLineData02Icon, Download04Icon } from "@hugeicons/core-free-icons";
+import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Calendar03Icon, ChartLineData02Icon, Download04Icon } from "@hugeicons/core-free-icons";
 import {
   DndContext,
   closestCenter,
@@ -44,7 +43,6 @@ import { CSS } from "@dnd-kit/utilities";
 type SidebarProps = {
   settings: EditorSettings;
   onSettingsChange: (settings: EditorSettings) => void;
-  backgrounds: BackgroundPreset[];
   onExport: () => void;
   isExporting: boolean;
 };
@@ -96,6 +94,11 @@ function PeriodNumberInput({ value, onChange }: { value: number; onChange: (valu
 
 const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDrag }: SortableMetricItemProps) {
   const [inputValue, setInputValue] = useState(metric.value.toString());
+
+  // Sync local state when metric value changes (e.g., from localStorage)
+  useEffect(() => {
+    setInputValue(metric.value.toString());
+  }, [metric.value]);
 
   const {
     attributes,
@@ -169,7 +172,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
   );
 });
 
-export default function Sidebar({ settings, onSettingsChange, backgrounds, onExport, isExporting }: SidebarProps) {
+export default function Sidebar({ settings, onSettingsChange, onExport, isExporting }: SidebarProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -183,17 +186,6 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
   ) => {
     onSettingsChange({ ...settings, [key]: value });
   }, [settings, onSettingsChange]);
-
-  const selectPreset = useCallback((presetId: string) => {
-    updateSetting("background", {
-      presetId,
-      solidColor: settings.background.solidColor || "#f59e0b"
-    });
-  }, [updateSetting, settings.background.solidColor]);
-
-  const updateSolidColor = useCallback((color: string) => {
-    updateSetting("background", { ...settings.background, solidColor: color });
-  }, [updateSetting, settings.background]);
 
   const addMetric = useCallback((type: MetricType) => {
     const newMetric: Metric = { type, value: 0 };
@@ -336,97 +328,6 @@ export default function Sidebar({ settings, onSettingsChange, backgrounds, onExp
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-      </div>
-
-      {/* Style */}
-      <div className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <HugeiconsIcon icon={PaintBrush01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
-          Style
-        </h3>
-
-        <div className="flex flex-col gap-2">
-          <Label>Background</Label>
-          <div className="grid grid-cols-4 gap-2">
-            {backgrounds.slice(0, 4).map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => selectPreset(preset.id)}
-                className={`aspect-video rounded-xl overflow-hidden border transition-all relative ${
-                  settings.background.presetId === preset.id
-                    ? "ring-2 ring-foreground/50 ring-offset-2 ring-offset-background"
-                    : "border-border hover:ring-1 hover:ring-foreground/20"
-                }`}
-                title={preset.name}
-              >
-                {preset.color ? (
-                  <div
-                    className="w-full h-full"
-                    style={{ backgroundColor: settings.background.solidColor || preset.color }}
-                  />
-                ) : preset.image ? (
-                  <Image
-                    src={preset.image}
-                    alt={preset.name}
-                    width={80}
-                    height={45}
-                    className="w-full h-full object-cover"
-                  />
-                ) : null}
-              </button>
-            ))}
-          </div>
-          {settings.background.presetId === "solid-color" && (
-            <div className="flex gap-2">
-              <Input
-                type="color"
-                value={settings.background.solidColor || "#f59e0b"}
-                onChange={(e) => updateSolidColor(e.target.value)}
-                className="w-9 h-9 p-0 cursor-pointer border-input overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
-                aria-label="Background color picker"
-              />
-              <Input
-                type="text"
-                value={settings.background.solidColor || "#f59e0b"}
-                onChange={(e) => updateSolidColor(e.target.value)}
-                onBlur={(e) => {
-                  if (!isValidHexColor(e.target.value)) {
-                    updateSolidColor("#f59e0b");
-                  }
-                }}
-                className="flex-1 bg-white"
-                aria-label="Background color hex value"
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="textColor">Text Color</Label>
-          <div className="flex gap-2">
-            <Input
-              id="textColor"
-              type="color"
-              value={settings.textColor}
-              onChange={(e) => updateSetting("textColor", e.target.value)}
-              className="w-9 h-9 p-0 cursor-pointer border-input overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
-              aria-label="Text color picker"
-            />
-            <Input
-              type="text"
-              value={settings.textColor}
-              onChange={(e) => updateSetting("textColor", e.target.value)}
-              onBlur={(e) => {
-                if (!isValidHexColor(e.target.value)) {
-                  updateSetting("textColor", "#ffffff");
-                }
-              }}
-              className="flex-1 bg-white"
-              aria-label="Text color hex value"
-            />
-          </div>
-        </div>
       </div>
 
       {/* Export */}

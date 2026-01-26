@@ -202,8 +202,8 @@ input.gooey:focus {
   position: relative;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--foreground) 5%, transparent) 0%, transparent 100%);
   box-shadow:
-    inset 0 1px 0 0 color-mix(in srgb, var(--primary) 25%, transparent),
-    inset 0 -1px 0 0 color-mix(in srgb, var(--primary) 5%, transparent);
+    inset 0 1px 0 0 color-mix(in srgb, var(--primary) 40%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .bg-fade::before,
@@ -213,7 +213,7 @@ input.gooey:focus {
   top: var(--radius-4xl);
   bottom: 20px;
   width: 1px;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 25%, transparent) 0%, transparent 100%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 40%, transparent) 0%, transparent 100%);
   pointer-events: none;
   z-index: 10;
 }
@@ -238,11 +238,22 @@ input.gooey:focus {
   inset: 0;
   padding: 1px;
   border-radius: inherit;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 50%, transparent) 0%, color-mix(in srgb, var(--primary) 10%, transparent) 100%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 70%, transparent) 0%, color-mix(in srgb, var(--primary) 20%, transparent) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
+}
+
+@keyframes glowRise {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(40px);
+  }
+  to {
+    opacity: var(--fade-opacity, 0.5);
+    transform: translateX(-50%) translateY(0);
+  }
 }
