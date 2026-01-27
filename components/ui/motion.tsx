@@ -77,21 +77,21 @@ export function FadeInView({
   );
 }
 
-type StaggerContainerProps<T extends keyof JSX.IntrinsicElements = "div"> = HTMLMotionProps<T> & {
+type StaggerContainerProps = HTMLMotionProps<"div"> & {
   children: ReactNode;
   staggerDelay?: number;
   delayChildren?: number;
-  as?: T;
+  as?: keyof JSX.IntrinsicElements;
 };
 
-export function StaggerContainer<T extends keyof JSX.IntrinsicElements = "div">({
+export function StaggerContainer({
   children,
   staggerDelay = 0.12,
   delayChildren = 0,
   as,
   ...props
-}: StaggerContainerProps<T>) {
-  const Component = as ? (motion as Record<string, typeof motion.div>)[as] : motion.div;
+}: StaggerContainerProps) {
+  const Component = as ? (motion as unknown as Record<string, typeof motion.div>)[as] : motion.div;
 
   return (
     <Component
@@ -114,20 +114,20 @@ export function StaggerContainer<T extends keyof JSX.IntrinsicElements = "div">(
   );
 }
 
-type StaggerItemProps<T extends keyof JSX.IntrinsicElements = "div"> = HTMLMotionProps<T> & {
+type StaggerItemProps = HTMLMotionProps<"div"> & {
   children: ReactNode;
   direction?: "up" | "down" | "left" | "right" | "none";
   distance?: number;
-  as?: T;
+  as?: keyof JSX.IntrinsicElements;
 };
 
-export function StaggerItem<T extends keyof JSX.IntrinsicElements = "div">({
+export function StaggerItem({
   children,
   direction = "up",
   distance = 24,
   as,
   ...props
-}: StaggerItemProps<T>) {
+}: StaggerItemProps) {
   const directions = {
     up: { translateY: distance },
     down: { translateY: -distance },
@@ -136,7 +136,7 @@ export function StaggerItem<T extends keyof JSX.IntrinsicElements = "div">({
     none: {},
   };
 
-  const Component = as ? (motion as Record<string, typeof motion.div>)[as] : motion.div;
+  const Component = as ? (motion as unknown as Record<string, typeof motion.div>)[as] : motion.div;
 
   return (
     <Component
