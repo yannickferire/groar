@@ -17,7 +17,7 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gro.ar";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
