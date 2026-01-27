@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { toPng } from "html-to-image";
+import { toJpeg } from "html-to-image";
 import Sidebar from "./editor/Sidebar";
 import Preview from "./editor/Preview";
 import StyleControls from "./editor/StyleControls";
@@ -139,9 +139,10 @@ export default function Editor() {
         previewRef.current.appendChild(injectedWatermark);
       }
 
-      const dataUrl = await toPng(previewRef.current, {
+      const dataUrl = await toJpeg(previewRef.current, {
         canvasWidth: EXPORT_WIDTH,
         canvasHeight: EXPORT_HEIGHT,
+        quality: 0.92,
         cacheBust: true,
       });
 
@@ -151,7 +152,7 @@ export default function Editor() {
       }
 
       const link = document.createElement("a");
-      link.download = `groar-${settings.handle.replace("@", "")}-${Date.now()}.png`;
+      link.download = `groar-${settings.handle.replace("@", "")}-${Date.now()}.jpg`;
       link.href = dataUrl;
       link.click();
       showToast("Image downloaded successfully!");
