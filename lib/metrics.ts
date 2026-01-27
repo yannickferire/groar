@@ -4,7 +4,9 @@ import { MetricType } from "@/components/Editor";
  * Parse values like "10k", "1.5M", "100" into numbers
  */
 export const parseMetricInput = (input: string, metricType: MetricType): number | null => {
-  const trimmed = input.trim().toLowerCase();
+  // Strip thousands separators (commas and dots used as grouping)
+  // Dots followed by exactly 3 digits are treated as thousands separators (e.g., 1.500 -> 1500)
+  const trimmed = input.trim().replace(/,/g, "").replace(/\.(?=\d{3}(?:\D|$))/g, "").toLowerCase();
   if (trimmed === "" || trimmed === "-") return 0;
 
   // For engagement rate, allow decimals but cap at 100

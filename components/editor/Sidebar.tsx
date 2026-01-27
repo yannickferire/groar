@@ -130,6 +130,14 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
     }
   };
 
+  const handleBlur = () => {
+    // Clean up display: remove leading zeros and commas
+    const parsed = parseMetricInput(inputValue, metric.type);
+    if (parsed !== null) {
+      setInputValue(parsed.toString());
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -152,6 +160,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
         placeholder="0"
         value={inputValue}
         onChange={handleInputChange}
+        onBlur={handleBlur}
         className="w-32 text-center bg-white"
         aria-label={`${METRIC_LABELS[metric.type]} value`}
       />
