@@ -18,7 +18,8 @@
       "Bash(/Users/yannickferire/.nvm/versions/node/v22.21.1/bin/npm run build)",
       "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:$PATH\")",
       "Bash(curl:*)",
-      "Bash(xargs basename:*)"
+      "Bash(xargs basename:*)",
+      "Bash(tree:*)"
     ]
   }
 }

@@ -47,7 +47,8 @@ type SidebarProps = {
   isExporting: boolean;
 };
 
-const ALL_METRICS: MetricType[] = ["followers", "impressions", "replies", "engagementRate"];
+const ALL_METRICS: MetricType[] = ["followers", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
+const MAX_METRICS = 5;
 
 type SortableMetricItemProps = {
   metric: Metric;
@@ -293,10 +294,17 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
 
       {/* Metrics */}
       <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
-          Metrics
-        </h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+            <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
+            Metrics
+          </h3>
+          {settings.metrics.length >= MAX_METRICS && (
+            <span className="text-xs text-primary italic">
+              5 max — remove to add
+            </span>
+          )}
+        </div>
 
         <DndContext
           sensors={sensors}
@@ -321,21 +329,28 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         </DndContext>
 
         {availableMetrics.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white">
-                <HugeiconsIcon icon={ChartLineData02Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
-                Add metric
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-full">
-              {availableMetrics.map((type) => (
-                <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
-                  {METRIC_LABELS[type]}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          settings.metrics.length >= MAX_METRICS ? (
+            <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white" disabled>
+              <HugeiconsIcon icon={ChartLineData02Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
+              Add metric
+            </Button>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white">
+                  <HugeiconsIcon icon={ChartLineData02Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
+                  Add metric
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-full">
+                {availableMetrics.map((type) => (
+                  <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
+                    {METRIC_LABELS[type]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
         )}
       </div>
 

@@ -5,7 +5,7 @@ import { EditorSettings, MetricType, METRIC_LABELS, BackgroundPreset } from "../
 import { formatMetricValue } from "@/lib/metrics";
 import { getDateLabel } from "@/lib/date";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserLove01Icon, EyeIcon, Comment01Icon, Activity01Icon } from "@hugeicons/core-free-icons";
+import { UserLove01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import BackgroundCanvas from "./BackgroundCanvas";
 
@@ -14,6 +14,11 @@ const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
   impressions: EyeIcon,
   replies: Comment01Icon,
   engagementRate: Activity01Icon,
+  engagement: Tap01Icon,
+  profileVisits: UserCircleIcon,
+  likes: FavouriteIcon,
+  reposts: RepeatIcon,
+  bookmarks: Bookmark01Icon,
 };
 
 type PreviewProps = {

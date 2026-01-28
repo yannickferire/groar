@@ -26,7 +26,7 @@ const ALL_BACKGROUNDS = [SOLID_COLOR_PRESET, ...BACKGROUNDS];
 
 export type PeriodType = "day" | "week" | "month" | "year";
 
-export type MetricType = "followers" | "impressions" | "replies" | "engagementRate";
+export type MetricType = "followers" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks";
 
 export type Metric = {
   type: MetricType;
@@ -38,6 +38,11 @@ export const METRIC_LABELS: Record<MetricType, string> = {
   impressions: "Impressions",
   replies: "Replies",
   engagementRate: "Engagement Rate",
+  engagement: "Engagement",
+  profileVisits: "Profile Visits",
+  likes: "Likes",
+  reposts: "Reposts",
+  bookmarks: "Bookmarks",
 };
 
 export type BackgroundPreset = {
