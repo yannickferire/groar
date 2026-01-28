@@ -16,7 +16,9 @@
       "Bash(pnpm add:*)",
       "Bash(source ~/.bash_profile)",
       "Bash(/Users/yannickferire/.nvm/versions/node/v22.21.1/bin/npm run build)",
-      "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:$PATH\")"
+      "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:$PATH\")",
+      "Bash(curl:*)",
+      "Bash(xargs basename:*)"
     ]
   }
 }

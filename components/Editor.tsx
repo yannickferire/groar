@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { toJpeg } from "html-to-image";
 import Sidebar from "./editor/Sidebar";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Preview from "./editor/Preview";
 import StyleControls from "./editor/StyleControls";
 import { BACKGROUNDS } from "@/lib/backgrounds";
@@ -167,6 +168,10 @@ export default function Editor() {
       setIsExporting(false);
     }
   }, [settings.handle, settings.textColor, showToast]);
+
+  useKeyboardShortcuts(
+    useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
+  );
 
   return (
     <FadeIn delay={0.6} duration={0.7}>
