@@ -61,6 +61,11 @@ type SortableMetricItemProps = {
 function PeriodNumberInput({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   const [inputValue, setInputValue] = useState(value.toString());
 
+  // Sync local state when value changes (e.g., from localStorage)
+  useEffect(() => {
+    setInputValue(value.toString());
+  }, [value]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
