@@ -104,7 +104,11 @@ function saveSettings(settings: EditorSettings) {
   }
 }
 
-export default function Editor() {
+type EditorProps = {
+  isPremium?: boolean;
+};
+
+export default function Editor({ isPremium = false }: EditorProps) {
   const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
   const [isExporting, setIsExporting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -178,6 +182,29 @@ export default function Editor() {
     useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
   );
 
+  const editorContent = (
+    <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
+      <Sidebar
+        settings={settings}
+        onSettingsChange={setSettings}
+        onExport={handleExport}
+        isExporting={isExporting}
+      />
+      <div className="flex-1 flex flex-col gap-5">
+        <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} isPremium={isPremium} />
+        <StyleControls
+          settings={settings}
+          onSettingsChange={setSettings}
+          backgrounds={ALL_BACKGROUNDS}
+        />
+      </div>
+    </section>
+  );
+
+  if (isPremium) {
+    return editorContent;
+  }
+
   return (
     <FadeIn delay={0.6} duration={0.7}>
       <div className="relative w-full max-w-6xl mx-auto mt-6">
@@ -191,22 +218,7 @@ export default function Editor() {
           className="absolute top-0 left-1/2 w-full h-[140%] rounded-[100%] blur-3xl pointer-events-none animate-[glowRise_0.8s_ease-out_0.95s_forwards]"
           style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.2 } as React.CSSProperties}
         />
-        <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3">
-          <Sidebar
-            settings={settings}
-            onSettingsChange={setSettings}
-            onExport={handleExport}
-            isExporting={isExporting}
-          />
-          <div className="flex-1 flex flex-col gap-5">
-            <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} />
-            <StyleControls
-              settings={settings}
-              onSettingsChange={setSettings}
-              backgrounds={ALL_BACKGROUNDS}
-            />
-          </div>
-        </section>
+        {editorContent}
       </div>
     </FadeIn>
   );

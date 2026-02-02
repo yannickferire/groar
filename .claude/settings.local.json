@@ -19,7 +19,12 @@
       "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:$PATH\")",
       "Bash(curl:*)",
       "Bash(xargs basename:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(ls:*)",
+      "Bash(/usr/local/bin/npx tsc --noEmit)",
+      "Bash(echo:*)",
+      "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:/usr/bin:$PATH\":*)",
+      "Bash(npx next build:*)"
     ]
   }
 }

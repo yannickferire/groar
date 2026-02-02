@@ -24,11 +24,12 @@ const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
 type PreviewProps = {
   settings: EditorSettings;
   backgrounds: BackgroundPreset[];
+  isPremium?: boolean;
 };
 
 const textShadow = "0 1px 2px rgba(0,0,0,0.15)";
 
-const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ settings, backgrounds }, ref) {
+const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ settings, backgrounds, isPremium = false }, ref) {
   // Icon sizes as percentage of container width (based on 1200px reference)
   const iconSizes = {
     primaryWithPeriod: "4.5cqi",   // ~54px at 1200px
@@ -108,14 +109,16 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
           </div>
         </div>
 
-        <footer className="absolute bottom-[3%] z-10 groar-watermark">
-          <p
-            className="whitespace-nowrap"
-            style={{ color: settings.textColor, textShadow, fontSize: "2cqi" }}
-          >
-            <span className="opacity-60">made with</span> 🐯 <span className="opacity-60">groar</span>
-          </p>
-        </footer>
+        {!isPremium && (
+          <footer className="absolute bottom-[3%] z-10 groar-watermark">
+            <p
+              className="whitespace-nowrap"
+              style={{ color: settings.textColor, textShadow, fontSize: "2cqi" }}
+            >
+              <span className="opacity-60">made with</span> 🐯 <span className="opacity-60">groar</span>
+            </p>
+          </footer>
+        )}
         </div>
       </div>
     </div>
