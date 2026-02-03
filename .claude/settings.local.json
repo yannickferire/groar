@@ -24,7 +24,9 @@
       "Bash(/usr/local/bin/npx tsc --noEmit)",
       "Bash(echo:*)",
       "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:/usr/bin:$PATH\":*)",
-      "Bash(npx next build:*)"
+      "Bash(npx next build:*)",
+      "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:/usr/bin:/bin:$PATH\")",
+      "WebFetch(domain:www.better-auth.com)"
     ]
   }
 }

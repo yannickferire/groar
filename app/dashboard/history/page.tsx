@@ -1,36 +1,88 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Clock01Icon, Image01Icon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
+import ExportsEmptyState from "@/components/dashboard/ExportsEmptyState";
+
+type Export = {
+  id: string;
+  imageUrl: string;
+  metrics: Record<string, unknown>;
+  createdAt: string;
+};
 
 export default function HistoryPage() {
-  return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">History</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Your recently created visuals.
-        </p>
-      </div>
+  const [exports, setExports] = useState<Export[]>([]);
+  const [loading, setLoading] = useState(true);
 
-      {/* Empty state */}
-      <div className="rounded-2xl border-fade p-12 flex flex-col items-center justify-center text-center gap-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <HugeiconsIcon icon={Clock01Icon} size={28} strokeWidth={1.5} />
-          <HugeiconsIcon icon={Image01Icon} size={28} strokeWidth={1.5} />
-        </div>
+  const fetchExports = useCallback(async () => {
+    try {
+      const res = await fetch("/api/exports");
+      const data = await res.json();
+      setExports(data.exports || []);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchExports();
+  }, [fetchExports]);
+
+  const hasExports = exports.length > 0;
+
+  return (
+    <div className="w-full max-w-5xl mx-auto space-y-10">
+      <div className="flex items-center justify-between">
         <div>
-          <p className="font-medium font-heading">No visuals yet</p>
+          <h1 className="text-2xl font-heading font-bold">History</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Your created visuals will appear here.
+            Your created visuals.
           </p>
         </div>
-        <Button asChild variant="default">
-          <Link href="/dashboard">Create your first visual</Link>
-        </Button>
+        {hasExports && (
+          <Button asChild variant="default">
+            <Link href="/dashboard/editor">
+              <HugeiconsIcon icon={AddSquareIcon} size={18} strokeWidth={2} />
+              Create new
+            </Link>
+          </Button>
+        )}
       </div>
+
+      {loading ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="rounded-2xl overflow-hidden">
+              <div className="aspect-video bg-sidebar" />
+            </div>
+          ))}
+        </div>
+      ) : hasExports ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {exports.map((exp) => (
+            <div
+              key={exp.id}
+              className="rounded-2xl border-fade overflow-hidden"
+            >
+              <div className="aspect-video relative">
+                <Image
+                  src={exp.imageUrl}
+                  alt="Export"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ExportsEmptyState />
+      )}
     </div>
   );
 }

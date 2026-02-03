@@ -230,6 +230,11 @@ input.gooey:focus {
   position: relative;
   border: none;
   background: var(--card);
+  transition: background-color 0.15s ease;
+}
+
+.border-fade.hover-effect:hover {
+  background: color-mix(in srgb, var(--muted) 50%, var(--card));
 }
 
 .border-fade::before {

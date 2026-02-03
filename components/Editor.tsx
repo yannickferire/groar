@@ -10,6 +10,19 @@ import { BACKGROUNDS } from "@/lib/backgrounds";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
 
+// Convert data URL to File for upload
+function dataURLtoFile(dataUrl: string, filename: string): File {
+  const arr = dataUrl.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
+
 const STORAGE_KEY = "groar-editor-settings";
 const EXPORT_WIDTH = 1200;
 const EXPORT_HEIGHT = 675;
@@ -165,6 +178,31 @@ export default function Editor({ isPremium = false }: EditorProps) {
       link.download = `groar-${settings.handle.replace("@", "")}-${Date.now()}.jpg`;
       link.href = dataUrl;
       link.click();
+
+      // Save to database if logged in (premium)
+      if (isPremium) {
+        try {
+          const file = dataURLtoFile(dataUrl, `export-${Date.now()}.jpg`);
+          const formData = new FormData();
+          formData.append("image", file);
+          formData.append("metrics", JSON.stringify({
+            handle: settings.handle,
+            period: settings.period,
+            metrics: settings.metrics,
+            background: settings.background,
+            textColor: settings.textColor,
+          }));
+
+          await fetch("/api/exports", {
+            method: "POST",
+            body: formData,
+          });
+        } catch (saveError) {
+          // Don't show error to user - export still succeeded
+          console.error("Failed to save export:", saveError);
+        }
+      }
+
       showToast("Image downloaded successfully!");
     } catch (error) {
       console.error("Export failed:", error);
@@ -176,7 +214,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
     } finally {
       setIsExporting(false);
     }
-  }, [settings.handle, settings.textColor, showToast]);
+  }, [settings, isPremium, showToast]);
 
   useKeyboardShortcuts(
     useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
