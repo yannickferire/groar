@@ -1,12 +1,8 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { Pool } from "pg";
+import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 // POST: Save a new export
 export async function POST(request: NextRequest) {
@@ -77,14 +73,19 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await pool.query(
-    `SELECT id, "imageUrl", "metrics", "createdAt"
-     FROM export
-     WHERE "userId" = $1
-     ORDER BY "createdAt" DESC
-     LIMIT 50`,
-    [session.user.id]
-  );
+  try {
+    const result = await pool.query(
+      `SELECT id, "imageUrl", "metrics", "createdAt"
+       FROM export
+       WHERE "userId" = $1
+       ORDER BY "createdAt" DESC
+       LIMIT 50`,
+      [session.user.id]
+    );
 
-  return NextResponse.json({ exports: result.rows });
+    return NextResponse.json({ exports: result.rows });
+  } catch (error) {
+    console.error("Exports fetch error:", error);
+    return NextResponse.json({ error: "Failed to fetch exports" }, { status: 500 });
+  }
 }

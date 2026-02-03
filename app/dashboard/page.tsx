@@ -71,7 +71,7 @@ export default function DashboardPage() {
         <Link href="/dashboard/plan" className="rounded-2xl border-fade hover-effect p-5">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Current plan</p>
           {loading ? (
-            <div className="h-9 w-12 rounded bg-muted animate-pulse mt-1" />
+            <div className="h-9 w-12 rounded bg-sidebar mt-1" />
           ) : (
             <p className="text-3xl font-heading font-bold mt-1">{PLAN_LABELS[plan]}</p>
           )}
@@ -79,7 +79,7 @@ export default function DashboardPage() {
         <Link href="/dashboard/history" className="rounded-2xl border-fade hover-effect p-5">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total exports</p>
           {loading ? (
-            <div className="h-9 w-12 rounded bg-muted animate-pulse mt-1" />
+            <div className="h-9 w-12 rounded bg-sidebar mt-1" />
           ) : (
             <p className="text-3xl font-heading font-bold mt-1">{exportCount}</p>
           )}
@@ -87,7 +87,7 @@ export default function DashboardPage() {
         <Link href="/dashboard/connections" className="rounded-2xl border-fade hover-effect p-5">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Connections</p>
           {loading ? (
-            <div className="h-9 w-12 rounded bg-muted animate-pulse mt-1" />
+            <div className="h-9 w-12 rounded bg-sidebar mt-1" />
           ) : (
             <div className="flex items-center gap-2 mt-1">
               <p className="text-3xl font-heading font-bold">{connectionCount}</p>

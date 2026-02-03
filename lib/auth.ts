@@ -1,9 +1,5 @@
 import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "@/lib/db";
 
 export const auth = betterAuth({
   database: pool,
@@ -31,7 +27,7 @@ export const auth = betterAuth({
         after: async (account) => {
           if (account.providerId === "twitter" && account.accessToken) {
             try {
-              // Appel à l'API Twitter pour récupérer le username
+              // Fetch username from Twitter API
               const response = await fetch("https://api.twitter.com/2/users/me", {
                 headers: {
                   Authorization: `Bearer ${account.accessToken}`,
@@ -43,7 +39,7 @@ export const auth = betterAuth({
                 const username = data.data?.username;
 
                 if (username) {
-                  // Mettre à jour le user avec le xUsername
+                  // Update user with xUsername
                   await pool.query(
                     `UPDATE "user" SET "xUsername" = $1 WHERE id = $2`,
                     [username, account.userId]

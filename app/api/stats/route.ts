@@ -1,9 +1,5 @@
-import { Pool } from "pg";
+import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 // GET: Global stats for landing page (public)
 export async function GET() {

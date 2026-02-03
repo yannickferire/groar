@@ -1,11 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { Pool } from "pg";
+import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
 
 export async function DELETE(
   _request: NextRequest,

@@ -127,7 +127,7 @@ export default function ConnectionsPage() {
               {platform.icon}
               <p className="font-medium font-heading flex-1">{platform.label}</p>
               {loading ? (
-                <div className="h-5 w-28 rounded-full bg-muted animate-pulse" />
+                <div className="h-5 w-28 rounded-full bg-sidebar" />
               ) : count > 0 ? (
                 <Badge variant="outline" className="border-emerald-500/30 text-emerald-500 bg-emerald-500/10">
                   <HugeiconsIcon icon={Link01Icon} size={12} strokeWidth={2} />
@@ -178,7 +178,7 @@ export default function ConnectionsPage() {
             {/* Add account button or upgrade link */}
             <div className="px-6 py-3 border-t border-border/50">
               {loading ? (
-                <div className="h-8 w-32 rounded-md bg-muted animate-pulse" />
+                <div className="h-8 w-32 rounded-md bg-sidebar" />
               ) : canAdd ? (
                 <Button
                   variant="ghost"
