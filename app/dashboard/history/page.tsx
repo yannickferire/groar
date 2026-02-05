@@ -5,8 +5,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { AddSquareIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
 import ExportsEmptyState from "@/components/dashboard/ExportsEmptyState";
+import ExportCard, { ExportCardSkeleton } from "@/components/dashboard/ExportCard";
 
 type Export = {
   id: string;
@@ -15,9 +15,13 @@ type Export = {
   createdAt: string;
 };
 
+const INITIAL_COUNT = 12;
+const LOAD_MORE_COUNT = 12;
+
 export default function HistoryPage() {
   const [exports, setExports] = useState<Export[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
 
   const fetchExports = useCallback(async () => {
     try {
@@ -33,7 +37,13 @@ export default function HistoryPage() {
     fetchExports();
   }, [fetchExports]);
 
+  const loadMore = () => {
+    setVisibleCount((prev) => Math.min(prev + LOAD_MORE_COUNT, exports.length));
+  };
+
   const hasExports = exports.length > 0;
+  const visibleExports = exports.slice(0, visibleCount);
+  const hasMore = visibleCount < exports.length;
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-10">
@@ -55,31 +65,32 @@ export default function HistoryPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="rounded-2xl overflow-hidden">
-              <div className="aspect-video bg-sidebar" />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
+          {[...Array(INITIAL_COUNT)].map((_, i) => (
+            <ExportCardSkeleton key={i} />
           ))}
         </div>
       ) : hasExports ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {exports.map((exp) => (
-            <div
-              key={exp.id}
-              className="rounded-2xl border-fade overflow-hidden"
-            >
-              <div className="aspect-video relative">
-                <Image
-                  src={exp.imageUrl}
-                  alt="Export"
-                  fill
-                  className="object-cover"
-                />
-              </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
+            {visibleExports.map((exp) => (
+              <ExportCard
+                key={exp.id}
+                id={exp.id}
+                imageUrl={exp.imageUrl}
+                handle={(exp.metrics as { handle?: string }).handle}
+                createdAt={exp.createdAt}
+              />
+            ))}
+          </div>
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <Button variant="outline" onClick={loadMore}>
+                Load more
+              </Button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       ) : (
         <ExportsEmptyState />
       )}

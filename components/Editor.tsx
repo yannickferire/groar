@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { toJpeg } from "html-to-image";
 import Sidebar from "./editor/Sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -9,6 +10,7 @@ import StyleControls from "./editor/StyleControls";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Convert data URL to File for upload
 function dataURLtoFile(dataUrl: string, filename: string): File {
@@ -122,15 +124,43 @@ type EditorProps = {
 };
 
 export default function Editor({ isPremium = false }: EditorProps) {
+  const searchParams = useSearchParams();
+  const importId = searchParams.get("import");
+
   const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
   const [isExporting, setIsExporting] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!importId);
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
-  // Load settings from localStorage on mount
+  // Load settings from localStorage on mount, or from import if specified
   useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
+    if (importId) {
+      setIsLoading(true);
+      fetch(`/api/exports/${importId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.export?.metrics) {
+            const imported = data.export.metrics as EditorSettings;
+            setSettings({
+              handle: imported.handle || defaultSettings.handle,
+              period: imported.period ?? defaultSettings.period,
+              metrics: imported.metrics || defaultSettings.metrics,
+              background: imported.background || defaultSettings.background,
+              textColor: imported.textColor || defaultSettings.textColor,
+            });
+          }
+        })
+        .catch(() => {
+          setSettings(loadSettings());
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setSettings(loadSettings());
+    }
+  }, [importId]);
 
   // Save settings to localStorage when they change (debounced)
   useEffect(() => {
@@ -229,7 +259,26 @@ export default function Editor({ isPremium = false }: EditorProps) {
         isExporting={isExporting}
       />
       <div className="flex-1 flex flex-col gap-5">
-        <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} isPremium={isPremium} />
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              key="skeleton"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="aspect-video rounded-3xl bg-sidebar"
+            />
+          ) : (
+            <motion.div
+              key="preview"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} isPremium={isPremium} />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <StyleControls
           settings={settings}
           onSettingsChange={setSettings}

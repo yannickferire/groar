@@ -5,10 +5,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { AddSquareIcon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
 import ExportsEmptyState from "@/components/dashboard/ExportsEmptyState";
+import ExportCard, { ExportCardSkeleton } from "@/components/dashboard/ExportCard";
 import { getUserPlan } from "@/lib/plans";
 import XLogo from "@/components/icons/XLogo";
+import { authClient } from "@/lib/auth-client";
 
 type Export = {
   id: string;
@@ -28,10 +29,14 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const { data: session } = authClient.useSession();
   const [exports, setExports] = useState<Export[]>([]);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const plan = getUserPlan();
+
+  // Get first name from session
+  const firstName = session?.user?.name?.split(" ")[0];
 
   const fetchData = useCallback(async () => {
     try {
@@ -62,7 +67,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-heading font-bold">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Welcome back. Here&apos;s an overview of your activity.
+          Welcome back{firstName ? `, ${firstName}` : ""}. Here&apos;s an overview of your activity.
         </p>
       </div>
 
@@ -92,7 +97,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 mt-1">
               <p className="text-3xl font-heading font-bold">{connectionCount}</p>
               {hasXConnection && (
-                <XLogo className="w-5! h-5!" />
+                <XLogo className="w-4 h-4" />
               )}
             </div>
           )}
@@ -100,13 +105,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent exports */}
-      <div className="space-y-4">
+      <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <h2 className="text-lg font-heading font-semibold">Recent exports</h2>
             <Link
               href="/dashboard/history"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 -top-px relative"
             >
               View all
               <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
@@ -123,29 +128,21 @@ export default function DashboardPage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden">
-                <div className="aspect-video bg-sidebar" />
-              </div>
+              <ExportCardSkeleton key={i} />
             ))}
           </div>
         ) : hasExports ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
             {exports.slice(0, 8).map((exp) => (
-              <div
+              <ExportCard
                 key={exp.id}
-                className="rounded-2xl border-fade overflow-hidden"
-              >
-                <div className="aspect-video relative">
-                  <Image
-                    src={exp.imageUrl}
-                    alt="Export"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
+                id={exp.id}
+                imageUrl={exp.imageUrl}
+                handle={(exp.metrics as { handle?: string }).handle}
+                createdAt={exp.createdAt}
+              />
             ))}
           </div>
         ) : (

@@ -2,6 +2,7 @@
 
 import XLogo from "@/components/icons/XLogo";
 import { FadeIn } from "@/components/ui/motion";
+import LovedBy from "@/components/LovedBy";
 
 export default function Hero() {
   return (
@@ -16,6 +17,9 @@ export default function Hero() {
           Turn cold data analytics into high-signal visuals.<br className="hidden md:block" />
           Share your wins and watch the engagement grow.
         </p>
+      </FadeIn>
+      <FadeIn delay={0.45} duration={0.6}>
+        <LovedBy />
       </FadeIn>
       <FadeIn delay={0.5} duration={0.6}>
         <p className="-mt-2 text-sm text-muted-foreground flex items-center justify-center gap-1">

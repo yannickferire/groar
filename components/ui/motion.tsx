@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, HTMLMotionProps } from "framer-motion";
-import { ReactNode, JSX } from "react";
+import { motion, HTMLMotionProps, useMotionValue, useTransform, useInView, animate } from "framer-motion";
+import { ReactNode, JSX, useEffect, useRef } from "react";
 
 type FadeInProps = HTMLMotionProps<"div"> & {
   children: ReactNode;
@@ -150,5 +150,43 @@ export function StaggerItem({
     >
       {children}
     </Component>
+  );
+}
+
+type AnimatedCounterProps = {
+  value: number;
+  duration?: number;
+  formatter?: (value: number) => string;
+  className?: string;
+};
+
+export function AnimatedCounter({
+  value,
+  duration = 1.5,
+  formatter = (n) => n.toLocaleString("fr-FR"),
+  className,
+}: AnimatedCounterProps) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.5 });
+
+  const motionValue = useMotionValue(0);
+  const display = useTransform(motionValue, (current) =>
+    formatter(Math.round(current))
+  );
+
+  useEffect(() => {
+    if (inView) {
+      const controls = animate(motionValue, value, {
+        duration,
+        ease: "easeOut",
+      });
+      return () => controls.stop();
+    }
+  }, [inView, motionValue, value, duration]);
+
+  return (
+    <motion.span ref={ref} className={className}>
+      {display}
+    </motion.span>
   );
 }
