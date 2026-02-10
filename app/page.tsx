@@ -4,7 +4,7 @@ import Hero from "@/components/Hero";
 import GlobalStats from "@/components/GlobalStats";
 import Editor from "@/components/Editor";
 import HowItWorks from "@/components/HowItWorks";
-import Premium from "@/components/Premium";
+import Pricing from "@/components/Pricing";
 
 export default function Home() {
   return (
@@ -15,7 +15,7 @@ export default function Home() {
         <GlobalStats />
         <Editor />
         <HowItWorks />
-        <Premium />
+        <Pricing />
       </main>
       <Footer />
     </div>

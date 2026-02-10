@@ -45,6 +45,7 @@ type SidebarProps = {
   onSettingsChange: (settings: EditorSettings) => void;
   onExport: () => void;
   isExporting: boolean;
+  cooldown?: number;
 };
 
 const ALL_METRICS: MetricType[] = ["followers", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
@@ -187,7 +188,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
   );
 });
 
-export default function Sidebar({ settings, onSettingsChange, onExport, isExporting }: SidebarProps) {
+export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0 }: SidebarProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -363,7 +364,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
       <div className="flex-1" />
       <Button
         onClick={onExport}
-        disabled={isExporting}
+        disabled={isExporting || cooldown > 0}
         size="xl"
         className="w-full group duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
       >
@@ -371,7 +372,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           <HugeiconsIcon icon={Download04Icon} size={22} strokeWidth={2} className="transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-0 group-hover:scale-75" />
           <span className="absolute inset-0 flex items-center justify-center text-xl opacity-0 scale-75 transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-100 group-hover:scale-125 group-hover:rotate-[-8deg]">🐯</span>
         </span>
-        {isExporting ? "Loading..." : "Get your image"}
+        {isExporting ? "Loading..." : cooldown > 0 ? `Wait ${cooldown}s` : "Get your image"}
       </Button>
     </aside>
   );

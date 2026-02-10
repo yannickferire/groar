@@ -130,8 +130,16 @@ export default function Editor({ isPremium = false }: EditorProps) {
   const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!importId);
+  const [cooldown, setCooldown] = useState(0);
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
 
   // Load settings from localStorage on mount, or from import if specified
   useEffect(() => {
@@ -171,7 +179,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
   }, [settings]);
 
   const handleExport = useCallback(async () => {
-    if (!previewRef.current) return;
+    if (!previewRef.current || cooldown > 0) return;
 
     setIsExporting(true);
     let injectedWatermark: HTMLElement | null = null;
@@ -223,16 +231,25 @@ export default function Editor({ isPremium = false }: EditorProps) {
             textColor: settings.textColor,
           }));
 
-          await fetch("/api/exports", {
+          const res = await fetch("/api/exports", {
             method: "POST",
             body: formData,
           });
+
+          if (!res.ok) {
+            const data = await res.json();
+            if (data.code === "LIMIT_REACHED") {
+              showToast("Daily export limit reached. Upgrade for unlimited exports!", "error");
+              return;
+            }
+          }
         } catch (saveError) {
-          // Don't show error to user - export still succeeded
           console.error("Failed to save export:", saveError);
         }
       }
 
+      // Start cooldown after successful export
+      setCooldown(5);
       showToast("Image downloaded successfully!");
     } catch (error) {
       console.error("Export failed:", error);
@@ -244,7 +261,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
     } finally {
       setIsExporting(false);
     }
-  }, [settings, isPremium, showToast]);
+  }, [settings, isPremium, showToast, cooldown]);
 
   useKeyboardShortcuts(
     useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
@@ -257,6 +274,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
         onSettingsChange={setSettings}
         onExport={handleExport}
         isExporting={isExporting}
+        cooldown={cooldown}
       />
       <div className="flex-1 flex flex-col gap-5">
         <AnimatePresence mode="wait">

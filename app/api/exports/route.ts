@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
+import { PLAN_LIMITS } from "@/lib/plans";
+import { getUserPlanFromDB } from "@/lib/plans-server";
 
 // POST: Save a new export
 export async function POST(request: NextRequest) {
@@ -12,6 +14,26 @@ export async function POST(request: NextRequest) {
 
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check daily export limit based on user's plan
+  const plan = await getUserPlanFromDB(session.user.id);
+  const limit = PLAN_LIMITS[plan].maxExportsPerDay;
+
+  if (limit !== null) {
+    const todayCount = await pool.query(
+      `SELECT COUNT(*) FROM export
+       WHERE "userId" = $1
+       AND "createdAt" >= CURRENT_DATE`,
+      [session.user.id]
+    );
+
+    if (parseInt(todayCount.rows[0].count) >= limit) {
+      return NextResponse.json(
+        { error: "Daily export limit reached", code: "LIMIT_REACHED" },
+        { status: 429 }
+      );
+    }
   }
 
   try {

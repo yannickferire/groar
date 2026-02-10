@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link01Icon, Add01Icon, Rocket01Icon, Delete02Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
-import { PLAN_LIMITS, getUserPlan } from "@/lib/plans";
+import { PLAN_LIMITS, PlanType } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
@@ -42,31 +42,36 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
 export default function ConnectionsPage() {
   const { data: session } = authClient.useSession();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [plan, setPlan] = useState<PlanType>("free");
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
-  const plan = getUserPlan();
   const maxPerProvider = PLAN_LIMITS[plan].maxConnectionsPerProvider;
 
-  const fetchAccounts = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const res = await fetch("/api/connections");
-      const data = await res.json();
-      setAccounts(data.accounts || []);
+      const [connectionsRes, planRes] = await Promise.all([
+        fetch("/api/connections"),
+        fetch("/api/user/plan"),
+      ]);
+      const connectionsData = await connectionsRes.json();
+      const planData = await planRes.json();
+      setAccounts(connectionsData.accounts || []);
+      setPlan(planData.plan || "free");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAccounts();
-  }, [fetchAccounts]);
+    fetchData();
+  }, [fetchData]);
 
   const handleDisconnect = async (accountId: string) => {
     setDisconnecting(accountId);
     try {
       await fetch(`/api/connections/${accountId}`, { method: "DELETE" });
-      await fetchAccounts();
+      await fetchData();
     } finally {
       setDisconnecting(null);
     }

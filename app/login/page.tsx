@@ -1,24 +1,42 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GoogleIcon, Loading03Icon } from "@hugeicons/core-free-icons";
+import { PlanType } from "@/lib/plans";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState<"google" | "twitter" | null>(null);
+  const searchParams = useSearchParams();
+  const planParam = searchParams.get("plan") as PlanType | null;
+
+  // Determine callback URL based on plan
+  const getCallbackURL = () => {
+    if (!planParam) {
+      // No plan selected, go to onboarding to choose
+      return "/onboarding";
+    }
+    if (planParam === "free") {
+      // Free plan, go directly to dashboard
+      return "/dashboard";
+    }
+    // Paid plan, go to onboarding which handles Polar checkout
+    return `/onboarding?plan=${planParam}`;
+  };
 
   const handleGoogle = () => {
     setLoading("google");
-    authClient.signIn.social({ provider: "google", callbackURL: "/dashboard" });
+    authClient.signIn.social({ provider: "google", callbackURL: getCallbackURL() });
   };
 
   const handleTwitter = () => {
     setLoading("twitter");
-    authClient.signIn.social({ provider: "twitter", callbackURL: "/dashboard" });
+    authClient.signIn.social({ provider: "twitter", callbackURL: getCallbackURL() });
   };
 
   return (
@@ -37,7 +55,9 @@ export default function LoginPage() {
 
         <div className="w-full rounded-3xl border-fade p-8 flex flex-col gap-6">
           <div className="text-center">
-            <h1 className="text-xl font-heading font-bold">Welcome back</h1>
+            <h1 className="text-xl font-heading font-bold">
+              {planParam ? `Get started with ${planParam === "free" ? "Free" : planParam === "pro" ? "Pro" : "Agency"}` : "Welcome back"}
+            </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Sign in to access your dashboard
             </p>
@@ -83,7 +103,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground text-center">
+        <p className="text-xs text-muted-foreground text-center text-balance">
           By signing in, you agree to our{" "}
           <Link href="/terms" className="underline hover:text-foreground">
             Terms
