@@ -1,17 +1,45 @@
 "use client";
 
+import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { PLANS, PlanType } from "@/lib/plans";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { FadeInView, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 
 const PLAN_ORDER: PlanType[] = ["free", "pro", "agency"];
 
 export default function PricingPage() {
+  const { data: session } = authClient.useSession();
+  const [upgrading, setUpgrading] = useState<PlanType | null>(null);
+
+  const handleUpgrade = async (planKey: PlanType) => {
+    // If not logged in, redirect to login
+    if (!session) {
+      window.location.href = `/login?callbackUrl=/dashboard/plan&plan=${planKey}`;
+      return;
+    }
+
+    setUpgrading(planKey);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planKey }),
+      });
+      const data = await response.json();
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+      setUpgrading(null);
+    }
+  };
   return (
     <div className="flex flex-col min-h-screen px-4">
       <Header />
@@ -91,9 +119,14 @@ export default function PricingPage() {
                       variant={isPopular ? "defaultReverse" : "outline"}
                       size="lg"
                       className="w-full"
-                      disabled
+                      onClick={() => handleUpgrade(planKey)}
+                      disabled={upgrading !== null}
                     >
-                      Coming soon
+                      {upgrading === planKey ? (
+                        <HugeiconsIcon icon={Loading03Icon} size={18} strokeWidth={2} className="animate-spin" />
+                      ) : (
+                        `Get ${plan.name}`
+                      )}
                     </Button>
                   )}
                 </div>
@@ -104,7 +137,7 @@ export default function PricingPage() {
 
         <FadeInView direction="up" distance={16} delay={0.4}>
           <p className="text-sm text-muted-foreground text-center mt-12">
-            All plans include access to all backgrounds and no watermark on exports.
+            All plans include access to all backgrounds. Paid plans remove the watermark.
           </p>
         </FadeInView>
       </main>
