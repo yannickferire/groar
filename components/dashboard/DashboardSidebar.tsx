@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import UserMenu from "./UserMenu";
@@ -28,6 +28,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
+  { label: "Analytics", href: "/dashboard/analytics", icon: Analytics01Icon },
   { label: "Connections", href: "/dashboard/connections", icon: Link01Icon },
   { label: "History", href: "/dashboard/history", icon: Clock01Icon },
 ];

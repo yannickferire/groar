@@ -11,6 +11,9 @@ import { BACKGROUNDS } from "@/lib/backgrounds";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Rocket01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 
 // Convert data URL to File for upload
 function dataURLtoFile(dataUrl: string, filename: string): File {
@@ -131,8 +134,112 @@ export default function Editor({ isPremium = false }: EditorProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!importId);
   const [cooldown, setCooldown] = useState(0);
+  const [isFetchingAnalytics, setIsFetchingAnalytics] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+
+  const MAX_METRICS = 5;
+
+  // Fetch analytics from X API and populate metrics
+  const fetchFromX = useCallback(async () => {
+    setIsFetchingAnalytics(true);
+    try {
+      // First fetch fresh data from X
+      const fetchRes = await fetch("/api/analytics/fetch", { method: "POST" });
+      if (!fetchRes.ok) {
+        const data = await fetchRes.json();
+        showToast(data.error || "Failed to fetch analytics", "error");
+        return;
+      }
+
+      const fetchData = await fetchRes.json();
+      const accountResult = fetchData.accounts?.[0];
+
+      // Handle "already fetched today" - still load the data but show info message
+      const wasAlreadyFetched = accountResult?.alreadyFetched;
+      if (wasAlreadyFetched) {
+        // Continue to load the existing data...
+      } else if (!accountResult?.success) {
+        const errorMsg = accountResult?.error || "No analytics data available";
+        // Check for specific errors
+        if (errorMsg.includes("Token expired") || errorMsg.includes("reconnect")) {
+          showToast("Please reconnect your X account in Settings", "error");
+        } else if (errorMsg.includes("No access token")) {
+          showToast("X account not properly connected", "error");
+        } else {
+          showToast(errorMsg, "error");
+        }
+        return;
+      }
+
+      // Get the stored analytics to populate metrics
+      const analyticsRes = await fetch("/api/analytics?days=1");
+      if (!analyticsRes.ok) {
+        showToast("Failed to load analytics data", "error");
+        return;
+      }
+
+      const analyticsData = await analyticsRes.json();
+      const account = analyticsData.accounts?.[0];
+      const latest = account?.latest;
+
+      if (!latest) {
+        showToast("No analytics data found", "error");
+        return;
+      }
+
+      // Map API data to editor metrics
+      const newMetrics: Metric[] = [];
+
+      // Followers (always available - free)
+      if (latest.followersCount > 0) {
+        newMetrics.push({ type: "followers", value: latest.followersCount });
+      }
+
+      // Impressions (paid - may be 0)
+      if (latest.impressionsCount > 0) {
+        newMetrics.push({ type: "impressions", value: latest.impressionsCount });
+      }
+
+      // Likes (free)
+      if (latest.likesCount > 0) {
+        newMetrics.push({ type: "likes", value: latest.likesCount });
+      }
+
+      // Reposts (free)
+      if (latest.retweetsCount > 0) {
+        newMetrics.push({ type: "reposts", value: latest.retweetsCount });
+      }
+
+      // Replies (free)
+      if (latest.repliesCount > 0) {
+        newMetrics.push({ type: "replies", value: latest.repliesCount });
+      }
+
+      // Limit to MAX_METRICS and ensure at least one metric
+      const finalMetrics = newMetrics.slice(0, MAX_METRICS);
+      if (finalMetrics.length === 0) {
+        finalMetrics.push({ type: "followers", value: 0 });
+      }
+
+      // Update settings
+      setSettings(prev => ({
+        ...prev,
+        handle: account.username ? `@${account.username}` : prev.handle,
+        metrics: finalMetrics,
+      }));
+
+      showToast(wasAlreadyFetched
+        ? "Using today's data (1 refresh/day)"
+        : "Analytics loaded successfully!"
+      );
+    } catch (error) {
+      console.error("Error fetching from X:", error);
+      showToast("Failed to fetch analytics", "error");
+    } finally {
+      setIsFetchingAnalytics(false);
+    }
+  }, [showToast]);
 
   // Cooldown timer
   useEffect(() => {
@@ -276,7 +383,27 @@ export default function Editor({ isPremium = false }: EditorProps) {
         isExporting={isExporting}
         cooldown={cooldown}
       />
-      <div className="flex-1 flex flex-col gap-5">
+      <div className="flex-1 flex flex-col gap-3">
+        {isPremium && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white border-primary/20 text-primary hover:bg-primary/5"
+              onClick={fetchFromX}
+              disabled={isFetchingAnalytics}
+            >
+              <HugeiconsIcon
+                icon={isFetchingAnalytics ? Loading03Icon : Rocket01Icon}
+                size={16}
+                strokeWidth={1.5}
+                className={`mr-1.5 ${isFetchingAnalytics ? "animate-spin" : ""}`}
+                aria-hidden="true"
+              />
+              {isFetchingAnalytics ? "Fetching..." : "Fetch from X"}
+            </Button>
+          </div>
+        )}
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
