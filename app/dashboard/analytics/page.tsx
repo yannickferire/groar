@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -84,34 +83,32 @@ function MetricCard({
   icon: React.ReactNode;
 }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              {icon}
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{label}</p>
-              <p className="text-2xl font-bold">{formatNumber(value)}</p>
-            </div>
+    <div className="rounded-2xl border-fade p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            {icon}
           </div>
-          {delta !== undefined && delta !== 0 && (
-            <div
-              className={`flex items-center gap-1 text-sm ${
-                delta > 0 ? "text-green-600" : "text-red-500"
-              }`}
-            >
-              <HugeiconsIcon
-                icon={delta > 0 ? ArrowUp01Icon : ArrowDown01Icon}
-                size={16}
-              />
-              <span>{delta > 0 ? "+" : ""}{formatNumber(delta)}</span>
-            </div>
-          )}
+          <div>
+            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="text-2xl font-bold">{formatNumber(value)}</p>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+        {delta !== undefined && delta !== 0 && (
+          <div
+            className={`flex items-center gap-1 text-sm ${
+              delta > 0 ? "text-green-600" : "text-red-500"
+            }`}
+          >
+            <HugeiconsIcon
+              icon={delta > 0 ? ArrowUp01Icon : ArrowDown01Icon}
+              size={16}
+            />
+            <span>{delta > 0 ? "+" : ""}{formatNumber(delta)}</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -192,7 +189,7 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="w-full max-w-5xl mx-auto space-y-10">
         {/* Header skeleton */}
         <div className="flex items-center justify-between">
           <div>
@@ -205,46 +202,42 @@ export default function AnalyticsPage() {
         {/* Main metrics skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 rounded-lg" />
-                  <div>
-                    <Skeleton className="h-4 w-16 mb-2" />
-                    <Skeleton className="h-7 w-20" />
-                  </div>
+            <div key={i} className="rounded-2xl border-fade p-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-lg" />
+                <div>
+                  <Skeleton className="h-4 w-16 mb-2" />
+                  <Skeleton className="h-7 w-20" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
 
         {/* Engagement metrics skeleton */}
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-5 w-48" />
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="text-center p-3 rounded-lg bg-muted/50">
-                  <Skeleton className="h-6 w-6 mx-auto mb-2 rounded" />
-                  <Skeleton className="h-6 w-12 mx-auto mb-1" />
-                  <Skeleton className="h-3 w-16 mx-auto" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border-fade p-6">
+          <Skeleton className="h-5 w-48 mb-6" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="text-center p-3 rounded-lg bg-muted/50">
+                <Skeleton className="h-6 w-6 mx-auto mb-2 rounded" />
+                <Skeleton className="h-6 w-12 mx-auto mb-1" />
+                <Skeleton className="h-3 w-16 mx-auto" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-muted-foreground">{error}</p>
-        <Button onClick={fetchAnalytics}>Try again</Button>
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <p className="text-muted-foreground">{error}</p>
+          <Button onClick={() => fetchAnalytics()}>Try again</Button>
+        </div>
       </div>
     );
   }
@@ -254,32 +247,34 @@ export default function AnalyticsPage() {
 
   if (!account || !latest) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <p className="text-muted-foreground">No analytics data yet</p>
-        <Button onClick={refreshData} disabled={isRefreshing}>
-          {isRefreshing ? (
-            <>
-              <HugeiconsIcon icon={Loading03Icon} size={18} className="animate-spin mr-2" />
-              Fetching...
-            </>
-          ) : (
-            <>
-              <HugeiconsIcon icon={RefreshIcon} size={18} className="mr-2" />
-              Fetch from X
-            </>
-          )}
-        </Button>
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <p className="text-muted-foreground">No analytics data yet</p>
+          <Button onClick={refreshData} disabled={isRefreshing}>
+            {isRefreshing ? (
+              <>
+                <HugeiconsIcon icon={Loading03Icon} size={18} className="animate-spin mr-2" />
+                Fetching...
+              </>
+            ) : (
+              <>
+                <HugeiconsIcon icon={RefreshIcon} size={18} className="mr-2" />
+                Fetch from X
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-5xl mx-auto space-y-10">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Analytics</h1>
+          <h1 className="text-2xl font-heading font-bold">Analytics</h1>
           {account.username && (
-            <p className="text-muted-foreground">@{account.username}</p>
+            <p className="text-sm text-muted-foreground mt-1">@{account.username}</p>
           )}
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -329,83 +324,75 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Engagement metrics (from recent tweets) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Tweet Engagement (Last 30 days)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {latest.impressionsCount > 0 && (
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <HugeiconsIcon icon={EyeIcon} size={24} className="mx-auto mb-2 text-muted-foreground" />
-                <p className="text-xl font-bold">{formatNumber(latest.impressionsCount)}</p>
-                <p className="text-xs text-muted-foreground">Impressions</p>
-              </div>
-            )}
-            <div className="text-center p-3 rounded-lg bg-muted/50">
-              <HugeiconsIcon icon={FavouriteIcon} size={24} className="mx-auto mb-2 text-muted-foreground" />
-              <p className="text-xl font-bold">{formatNumber(latest.likesCount)}</p>
-              <p className="text-xs text-muted-foreground">Likes</p>
+      <div className="rounded-2xl border-fade p-6 space-y-6">
+        <h2 className="text-lg font-heading font-semibold">Tweet Engagement (Last 30 days)</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {latest.impressionsCount > 0 && (
+            <div className="text-center p-3 rounded-xl bg-sidebar">
+              <HugeiconsIcon icon={EyeIcon} size={24} className="mx-auto mb-2 text-muted-foreground" />
+              <p className="text-xl font-bold">{formatNumber(latest.impressionsCount)}</p>
+              <p className="text-xs text-muted-foreground">Impressions</p>
             </div>
-            <div className="text-center p-3 rounded-lg bg-muted/50">
-              <HugeiconsIcon icon={RepeatIcon} size={24} className="mx-auto mb-2 text-muted-foreground" />
-              <p className="text-xl font-bold">{formatNumber(latest.retweetsCount)}</p>
-              <p className="text-xs text-muted-foreground">Reposts</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-muted/50">
-              <HugeiconsIcon icon={Comment01Icon} size={24} className="mx-auto mb-2 text-muted-foreground" />
-              <p className="text-xl font-bold">{formatNumber(latest.repliesCount)}</p>
-              <p className="text-xs text-muted-foreground">Replies</p>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-muted/50">
-              <HugeiconsIcon icon={Bookmark01Icon} size={24} className="mx-auto mb-2 text-muted-foreground" />
-              <p className="text-xl font-bold">{formatNumber(latest.bookmarksCount)}</p>
-              <p className="text-xs text-muted-foreground">Bookmarks</p>
-            </div>
+          )}
+          <div className="text-center p-3 rounded-xl bg-sidebar">
+            <HugeiconsIcon icon={FavouriteIcon} size={24} className="mx-auto mb-2 text-muted-foreground" />
+            <p className="text-xl font-bold">{formatNumber(latest.likesCount)}</p>
+            <p className="text-xs text-muted-foreground">Likes</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-center p-3 rounded-xl bg-sidebar">
+            <HugeiconsIcon icon={RepeatIcon} size={24} className="mx-auto mb-2 text-muted-foreground" />
+            <p className="text-xl font-bold">{formatNumber(latest.retweetsCount)}</p>
+            <p className="text-xs text-muted-foreground">Reposts</p>
+          </div>
+          <div className="text-center p-3 rounded-xl bg-sidebar">
+            <HugeiconsIcon icon={Comment01Icon} size={24} className="mx-auto mb-2 text-muted-foreground" />
+            <p className="text-xl font-bold">{formatNumber(latest.repliesCount)}</p>
+            <p className="text-xs text-muted-foreground">Replies</p>
+          </div>
+          <div className="text-center p-3 rounded-xl bg-sidebar">
+            <HugeiconsIcon icon={Bookmark01Icon} size={24} className="mx-auto mb-2 text-muted-foreground" />
+            <p className="text-xl font-bold">{formatNumber(latest.bookmarksCount)}</p>
+            <p className="text-xs text-muted-foreground">Bookmarks</p>
+          </div>
+        </div>
+      </div>
 
       {/* History */}
       {account.snapshots.length > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {account.snapshots.slice(0, 7).map((snapshot) => (
-                <div
-                  key={snapshot.date}
-                  className="flex items-center justify-between py-2 border-b last:border-0"
-                >
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(snapshot.date).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span>{formatNumber(snapshot.followersCount)} followers</span>
-                    {snapshot.followersGained !== 0 && (
-                      <span
-                        className={
-                          snapshot.followersGained > 0
-                            ? "text-green-600"
-                            : "text-red-500"
-                        }
-                      >
-                        {snapshot.followersGained > 0 ? "+" : ""}
-                        {snapshot.followersGained}
-                      </span>
-                    )}
-                  </div>
+        <div className="rounded-2xl border-fade p-6 space-y-6">
+          <h2 className="text-lg font-heading font-semibold">History</h2>
+          <div className="space-y-2">
+            {account.snapshots.slice(0, 7).map((snapshot) => (
+              <div
+                key={snapshot.date}
+                className="flex items-center justify-between py-2 border-b last:border-0"
+              >
+                <span className="text-sm text-muted-foreground">
+                  {new Date(snapshot.date).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+                <div className="flex items-center gap-4 text-sm">
+                  <span>{formatNumber(snapshot.followersCount)} followers</span>
+                  {snapshot.followersGained !== 0 && (
+                    <span
+                      className={
+                        snapshot.followersGained > 0
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }
+                    >
+                      {snapshot.followersGained > 0 ? "+" : ""}
+                      {snapshot.followersGained}
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <p className="text-xs text-muted-foreground text-center">
