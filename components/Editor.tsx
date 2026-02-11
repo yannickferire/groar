@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { toJpeg } from "html-to-image";
 import Sidebar from "./editor/Sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -13,7 +14,7 @@ import { FadeIn } from "@/components/ui/motion";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Rocket01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
+import { Rocket01Icon, Loading03Icon, CrownIcon } from "@hugeicons/core-free-icons";
 
 // Convert data URL to File for upload
 function dataURLtoFile(dataUrl: string, filename: string): File {
@@ -162,10 +163,10 @@ export default function Editor({ isPremium = false }: EditorProps) {
       } else if (!accountResult?.success) {
         const errorMsg = accountResult?.error || "No analytics data available";
         // Check for specific errors
-        if (errorMsg.includes("Token expired") || errorMsg.includes("reconnect")) {
-          showToast("Please reconnect your X account in Settings", "error");
+        if (errorMsg.includes("Token expired") || errorMsg.includes("reconnect") || errorMsg.includes("Unauthorized") || errorMsg.includes("401")) {
+          showToast("Token expired — reconnect in Connections", "error");
         } else if (errorMsg.includes("No access token")) {
-          showToast("X account not properly connected", "error");
+          showToast("X account not connected", "error");
         } else {
           showToast(errorMsg, "error");
         }
@@ -384,12 +385,16 @@ export default function Editor({ isPremium = false }: EditorProps) {
         cooldown={cooldown}
       />
       <div className="flex-1 flex flex-col gap-3">
-        {isPremium && (
-          <div className="flex justify-end">
+        {/* Fetch from X button */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {isPremium ? "1 refresh per day" : ""}
+          </p>
+          {isPremium ? (
             <Button
               variant="outline"
               size="sm"
-              className="bg-white border-primary/20 text-primary hover:bg-primary/5"
+              className="bg-white border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-colors"
               onClick={fetchFromX}
               disabled={isFetchingAnalytics}
             >
@@ -397,13 +402,30 @@ export default function Editor({ isPremium = false }: EditorProps) {
                 icon={isFetchingAnalytics ? Loading03Icon : Rocket01Icon}
                 size={16}
                 strokeWidth={1.5}
-                className={`mr-1.5 ${isFetchingAnalytics ? "animate-spin" : ""}`}
+                className={isFetchingAnalytics ? "animate-spin" : ""}
                 aria-hidden="true"
               />
               {isFetchingAnalytics ? "Fetching..." : "Fetch from X"}
             </Button>
-          </div>
-        )}
+          ) : (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="bg-white border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-colors"
+            >
+              <Link href="/pricing">
+                <HugeiconsIcon
+                  icon={CrownIcon}
+                  size={16}
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+                Upgrade to auto-fetch X data
+              </Link>
+            </Button>
+          )}
+        </div>
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div

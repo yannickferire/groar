@@ -84,6 +84,14 @@ export default function ConnectionsPage() {
     });
   };
 
+  const handleReconnect = (provider: "twitter") => {
+    // Re-triggering OAuth will refresh the tokens
+    authClient.signIn.social({
+      provider,
+      callbackURL: "/dashboard/connections",
+    });
+  };
+
   const googleAccount = accounts.find((a) => a.providerId === "google");
 
   return (
@@ -167,14 +175,25 @@ export default function ConnectionsPage() {
                         ? `@${session.user.xUsername}`
                         : session?.user?.name || account.accountId}
                     </span>
-                    <button
-                      onClick={() => handleDisconnect(account.id)}
-                      disabled={disconnecting === account.id}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
-                      aria-label="Disconnect"
-                    >
-                      <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={2} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReconnect(platform.provider)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <HugeiconsIcon icon={Link01Icon} size={14} strokeWidth={2} />
+                        Reconnect
+                      </Button>
+                      <button
+                        onClick={() => handleDisconnect(account.id)}
+                        disabled={disconnecting === account.id}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                        aria-label="Disconnect"
+                      >
+                        <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={2} />
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -214,7 +233,7 @@ export default function ConnectionsPage() {
         <div>
           <p className="font-medium font-heading text-foreground">More platforms coming soon</p>
           <p className="text-xs mt-0.5">
-            Instagram, LinkedIn, TikTok and more will be available in future updates.
+            GitHub, Instagram, LinkedIn, TikTok and more will be available in future updates.
           </p>
         </div>
       </div>

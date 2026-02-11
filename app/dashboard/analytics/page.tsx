@@ -16,6 +16,11 @@ import {
   Loading03Icon,
   RefreshIcon,
 } from "@hugeicons/core-free-icons";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Simple in-memory cache for analytics data
+let analyticsCache: { data: AnalyticsData | null; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 type AnalyticsSnapshot = {
   date: string;
@@ -117,13 +122,24 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (forceRefresh = false) => {
+    // Check cache first (unless forcing refresh)
+    if (!forceRefresh && analyticsCache && Date.now() - analyticsCache.timestamp < CACHE_DURATION) {
+      setData(analyticsCache.data);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/analytics?days=30");
       if (!res.ok) {
         throw new Error("Failed to fetch analytics");
       }
       const analyticsData = await res.json();
+
+      // Update cache
+      analyticsCache = { data: analyticsData, timestamp: Date.now() };
+
       setData(analyticsData);
       setError(null);
     } catch (err) {
@@ -155,8 +171,8 @@ export default function AnalyticsPage() {
         setRefreshMessage("Data refreshed successfully!");
       }
 
-      // Reload the analytics
-      await fetchAnalytics();
+      // Reload the analytics (force refresh to bypass cache)
+      await fetchAnalytics(true);
     } catch (err) {
       setError("Failed to refresh data");
       console.error(err);
@@ -176,12 +192,50 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <HugeiconsIcon
-          icon={Loading03Icon}
-          size={32}
-          className="animate-spin text-muted-foreground"
-        />
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-32 mb-2" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <Skeleton className="h-10 w-28" />
+        </div>
+
+        {/* Main metrics skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-lg" />
+                  <div>
+                    <Skeleton className="h-4 w-16 mb-2" />
+                    <Skeleton className="h-7 w-20" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Engagement metrics skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="text-center p-3 rounded-lg bg-muted/50">
+                  <Skeleton className="h-6 w-6 mx-auto mb-2 rounded" />
+                  <Skeleton className="h-6 w-12 mx-auto mb-1" />
+                  <Skeleton className="h-3 w-16 mx-auto" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
