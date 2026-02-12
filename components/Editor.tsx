@@ -161,10 +161,12 @@ export default function Editor({ isPremium = false }: EditorProps) {
       if (wasAlreadyFetched) {
         // Continue to load the existing data...
       } else if (!accountResult?.success) {
+        const errorCode = accountResult?.errorCode;
         const errorMsg = accountResult?.error || "No analytics data available";
-        // Check for specific errors
-        if (errorMsg.includes("Token expired") || errorMsg.includes("reconnect") || errorMsg.includes("Unauthorized") || errorMsg.includes("401")) {
-          showToast("Token expired — reconnect in Connections", "error");
+
+        // Check for specific error codes
+        if (errorCode === "TOKEN_EXPIRED" || errorCode === "REFRESH_FAILED" || errorCode === "MISSING_SCOPE") {
+          showToast("Session expired — reconnect your X account in Connections", "error");
         } else if (errorMsg.includes("No access token")) {
           showToast("X account not connected", "error");
         } else {
@@ -293,19 +295,21 @@ export default function Editor({ isPremium = false }: EditorProps) {
     let injectedWatermark: HTMLElement | null = null;
 
     try {
-      // Check if watermark exists and is visible
-      const existingWatermark = previewRef.current.querySelector(".groar-watermark") as HTMLElement;
-      const isWatermarkVisible = existingWatermark &&
-        existingWatermark.offsetParent !== null &&
-        getComputedStyle(existingWatermark).display !== "none" &&
-        getComputedStyle(existingWatermark).visibility !== "hidden";
+      // For non-premium users: ensure watermark is present in export
+      if (!isPremium) {
+        const existingWatermark = previewRef.current.querySelector(".groar-watermark") as HTMLElement;
+        const isWatermarkVisible = existingWatermark &&
+          existingWatermark.offsetParent !== null &&
+          getComputedStyle(existingWatermark).display !== "none" &&
+          getComputedStyle(existingWatermark).visibility !== "hidden";
 
-      // If watermark is missing or hidden, inject one
-      if (!isWatermarkVisible) {
-        injectedWatermark = document.createElement("footer");
-        injectedWatermark.style.cssText = "position: absolute; bottom: 3%; left: 0; right: 0; z-index: 10; display: flex; justify-content: center;";
-        injectedWatermark.innerHTML = `<p style="color: ${settings.textColor}; text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 0.875rem; white-space: nowrap;"><span style="opacity: 0.6;">made with</span> 🐯 <span style="opacity: 0.6;">groar</span></p>`;
-        previewRef.current.appendChild(injectedWatermark);
+        // If watermark is missing or hidden, inject one
+        if (!isWatermarkVisible) {
+          injectedWatermark = document.createElement("footer");
+          injectedWatermark.style.cssText = "position: absolute; bottom: 3%; left: 0; right: 0; z-index: 10; display: flex; justify-content: center;";
+          injectedWatermark.innerHTML = `<p style="color: ${settings.textColor}; text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 0.875rem; white-space: nowrap;"><span style="opacity: 0.6;">made with</span> 🐯 <span style="opacity: 0.6;">groar</span></p>`;
+          previewRef.current.appendChild(injectedWatermark);
+        }
       }
 
       const dataUrl = await toJpeg(previewRef.current, {

@@ -14,8 +14,10 @@ import {
   ArrowDown01Icon,
   Loading03Icon,
   RefreshIcon,
+  Link01Icon,
 } from "@hugeicons/core-free-icons";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 // Simple in-memory cache for analytics data
 let analyticsCache: { data: AnalyticsData | null; timestamp: number } | null = null;
@@ -117,6 +119,7 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsReconnect, setNeedsReconnect] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
 
   const fetchAnalytics = async (forceRefresh = false) => {
@@ -150,6 +153,7 @@ export default function AnalyticsPage() {
   const refreshData = async () => {
     setIsRefreshing(true);
     setRefreshMessage(null);
+    setNeedsReconnect(false);
     try {
       // First fetch fresh data from X API
       const fetchRes = await fetch("/api/analytics/fetch", { method: "POST" });
@@ -160,8 +164,21 @@ export default function AnalyticsPage() {
         return;
       }
 
-      // Check if already fetched today
+      // Check for errors in account result
       const accountResult = fetchData.accounts?.[0];
+
+      if (accountResult?.errorCode) {
+        // Token expired or needs reconnection
+        const errorCode = accountResult.errorCode;
+        if (errorCode === "TOKEN_EXPIRED" || errorCode === "REFRESH_FAILED" || errorCode === "MISSING_SCOPE") {
+          setError("Session expired");
+          setNeedsReconnect(true);
+          return;
+        }
+        setError(accountResult.error || "Failed to refresh");
+        return;
+      }
+
       if (accountResult?.alreadyFetched) {
         setRefreshMessage("Already refreshed today. Next refresh available tomorrow.");
       } else if (accountResult?.success) {
@@ -236,7 +253,16 @@ export default function AnalyticsPage() {
       <div className="w-full max-w-5xl mx-auto">
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <p className="text-muted-foreground">{error}</p>
-          <Button onClick={() => fetchAnalytics()}>Try again</Button>
+          {needsReconnect ? (
+            <Button asChild>
+              <Link href="/dashboard/connections">
+                <HugeiconsIcon icon={Link01Icon} size={16} strokeWidth={2} />
+                Reconnect X account
+              </Link>
+            </Button>
+          ) : (
+            <Button onClick={() => fetchAnalytics()}>Try again</Button>
+          )}
         </div>
       </div>
     );

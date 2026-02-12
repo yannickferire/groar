@@ -6,6 +6,7 @@ import {
   aggregateTweetMetrics,
   isTokenExpired,
   isMissingScope,
+  refreshAccessToken,
 } from "@/lib/x-api";
 
 export type FetchType = "auto" | "manual";
@@ -18,6 +19,7 @@ export type FetchResult = {
   fetchedAt?: string;
   message?: string;
   error?: string;
+  errorCode?: "TOKEN_EXPIRED" | "MISSING_SCOPE" | "REFRESH_FAILED";
   tweetsAnalyzed?: number;
   tweetsError?: string;
   metrics?: {
@@ -31,14 +33,36 @@ export type FetchResult = {
   };
 };
 
+// Update tokens in database after refresh
+async function updateAccountTokens(
+  accountDbId: string,
+  accessToken: string,
+  refreshToken?: string
+): Promise<void> {
+  if (refreshToken) {
+    await pool.query(
+      `UPDATE account SET "accessToken" = $1, "refreshToken" = $2 WHERE id = $3`,
+      [accessToken, refreshToken, accountDbId]
+    );
+  } else {
+    await pool.query(
+      `UPDATE account SET "accessToken" = $1 WHERE id = $2`,
+      [accessToken, accountDbId]
+    );
+  }
+  console.log(`Updated tokens for account ${accountDbId}`);
+}
+
 // Fetch analytics for a single X account
 export async function fetchAccountAnalytics(
   accountDbId: string,
   xUserId: string,
   accessToken: string,
-  fetchType: FetchType
+  fetchType: FetchType,
+  refreshToken?: string
 ): Promise<FetchResult> {
   const today = new Date().toISOString().split("T")[0];
+  let currentAccessToken = accessToken;
 
   // Check if already fetched today with this fetchType
   const existingSnapshot = await pool.query(
@@ -59,18 +83,54 @@ export async function fetchAccountAnalytics(
   }
 
   // Fetch user metrics from X API
-  const userResult = await getAuthenticatedUser(accessToken);
+  let userResult = await getAuthenticatedUser(currentAccessToken);
+
+  // If token expired, try to refresh it
+  if ("error" in userResult && isTokenExpired(userResult)) {
+    if (refreshToken) {
+      console.log("Access token expired, attempting refresh...");
+      const refreshResult = await refreshAccessToken(refreshToken);
+
+      if ("error" in refreshResult) {
+        console.error("Token refresh failed:", refreshResult.error);
+        return {
+          accountId: accountDbId,
+          error: "Session expired. Please reconnect your X account in Connections.",
+          errorCode: "REFRESH_FAILED",
+        };
+      }
+
+      // Update tokens in database
+      await updateAccountTokens(
+        accountDbId,
+        refreshResult.access_token,
+        refreshResult.refresh_token
+      );
+
+      // Retry with new token
+      currentAccessToken = refreshResult.access_token;
+      userResult = await getAuthenticatedUser(currentAccessToken);
+    } else {
+      return {
+        accountId: accountDbId,
+        error: "Session expired. Please reconnect your X account in Connections.",
+        errorCode: "TOKEN_EXPIRED",
+      };
+    }
+  }
 
   if ("error" in userResult) {
     if (isTokenExpired(userResult)) {
       return {
         accountId: accountDbId,
-        error: "Token expired. Please reconnect your X account.",
+        error: "Session expired. Please reconnect your X account in Connections.",
+        errorCode: "TOKEN_EXPIRED",
       };
     } else if (isMissingScope(userResult)) {
       return {
         accountId: accountDbId,
-        error: "Missing permissions. Please reconnect your X account.",
+        error: "Missing permissions. Please reconnect your X account in Connections.",
+        errorCode: "MISSING_SCOPE",
       };
     } else {
       return {
@@ -81,7 +141,7 @@ export async function fetchAccountAnalytics(
   }
 
   // Fetch recent tweets with metrics
-  const tweetsResult = await getUserTweets(accessToken, xUserId);
+  const tweetsResult = await getUserTweets(currentAccessToken, xUserId);
 
   let tweetMetrics = {
     impressionsCount: 0,
@@ -104,8 +164,12 @@ export async function fetchAccountAnalytics(
     tweetsCount = tweetsResult.length;
     console.log(`Fetched ${tweetsCount} tweets for aggregation`);
     if (tweetsCount > 0) {
+      // Log first tweet to debug metrics structure
+      console.log("First tweet sample:", JSON.stringify(tweetsResult[0], null, 2));
       tweetMetrics = aggregateTweetMetrics(tweetsResult);
       console.log("Aggregated metrics:", tweetMetrics);
+    } else {
+      console.log("No tweets found in the last 30 days (excluding retweets/replies)");
     }
   }
 

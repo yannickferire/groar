@@ -215,7 +215,7 @@ export default function ConnectionsPage() {
                 </Button>
               ) : (
                 <Link
-                  href="/dashboard/upgrade"
+                  href="/pricing"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
                   Upgrade your plan to connect more accounts

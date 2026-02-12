@@ -27,12 +27,13 @@ export async function POST() {
     const today = new Date().toISOString().split("T")[0];
 
     for (const account of accounts) {
-      const { id: accountDbId, accountId: xUserId, accessToken } = account;
+      const { id: accountDbId, accountId: xUserId, accessToken, refreshToken } = account;
 
       if (!accessToken) {
         results.push({
           accountId: accountDbId,
           error: "No access token",
+          errorCode: "TOKEN_EXPIRED",
         });
         continue;
       }
@@ -41,7 +42,8 @@ export async function POST() {
         accountDbId,
         xUserId,
         accessToken,
-        "manual" // Manual fetch type
+        "manual", // Manual fetch type
+        refreshToken // Pass refresh token for auto-refresh
       );
 
       results.push(result);

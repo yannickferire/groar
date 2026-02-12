@@ -135,6 +135,7 @@ export async function getUserTweets(
     }
 
     const data = await response.json();
+    console.log("X API tweets response:", JSON.stringify(data, null, 2));
     return (data.data || []) as XTweet[];
   } catch (error) {
     console.error("Failed to fetch X tweets:", error);
@@ -188,4 +189,56 @@ export function isTokenExpired(error: XApiError): boolean {
 // Check if an error response indicates missing scope
 export function isMissingScope(error: XApiError): boolean {
   return error.status === 403;
+}
+
+// Token refresh result type
+export type TokenRefreshResult = {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+} | XApiError;
+
+// Refresh an expired access token using the refresh token
+export async function refreshAccessToken(
+  refreshToken: string
+): Promise<TokenRefreshResult> {
+  const clientId = process.env.TWITTER_CLIENT_ID;
+
+  if (!clientId) {
+    return { error: "Missing Twitter client ID" };
+  }
+
+  try {
+    const response = await fetch("https://api.twitter.com/2/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        client_id: clientId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Token refresh failed:", errorText);
+      return {
+        error: "Token refresh failed. Please reconnect your X account.",
+        status: response.status,
+      };
+    }
+
+    const data = await response.json();
+    console.log("Token refreshed successfully");
+    return {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: data.expires_in,
+    };
+  } catch (error) {
+    console.error("Failed to refresh token:", error);
+    return { error: "Failed to refresh token" };
+  }
 }
