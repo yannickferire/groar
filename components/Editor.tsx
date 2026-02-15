@@ -233,12 +233,32 @@ export default function Editor({ isPremium = false }: EditorProps) {
       const aspectRatio = settings.aspectRatio || "post";
       const { width: exportWidth, height: exportHeight } = ASPECT_RATIOS[aspectRatio];
 
-      const dataUrl = await toJpeg(previewRef.current, {
+      const baseOptions = {
         canvasWidth: exportWidth,
         canvasHeight: exportHeight,
         quality: 0.92,
         cacheBust: true,
-      });
+        skipAutoScale: true,
+        pixelRatio: 1,
+        includeQueryParams: true,
+        filter: (node: Element) => {
+          const tagName = node.tagName;
+          if (tagName === "SCRIPT" || tagName === "NOSCRIPT") {
+            return false;
+          }
+          return true;
+        },
+      };
+
+      let dataUrl: string;
+      try {
+        // First attempt: try with font embedding
+        dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: false });
+      } catch (fontError) {
+        // Firefox often fails with font embedding - retry without fonts
+        console.warn("Font embedding failed, retrying without fonts:", fontError);
+        dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: true });
+      }
 
       // Remove injected watermark if we added one
       if (injectedWatermark) {
