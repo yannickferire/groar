@@ -53,10 +53,6 @@ export const formatNumber = (value: number): string => {
  * Format a metric value for display based on its type
  */
 export const formatMetricValue = (type: MetricType, value: number): string => {
-  if (type === "followers") {
-    const sign = value >= 0 ? "+" : "";
-    return `${sign}${formatNumber(value)}`;
-  }
   if (type === "engagementRate") {
     return `${value}%`;
   }

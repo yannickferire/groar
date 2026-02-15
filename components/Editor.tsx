@@ -2,19 +2,16 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { toJpeg } from "html-to-image";
 import Sidebar from "./editor/Sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Preview from "./editor/Preview";
 import StyleControls from "./editor/StyleControls";
 import { BACKGROUNDS } from "@/lib/backgrounds";
+import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Rocket01Icon, Loading03Icon, CrownIcon } from "@hugeicons/core-free-icons";
 
 // Convert data URL to File for upload
 function dataURLtoFile(dataUrl: string, filename: string): File {
@@ -30,8 +27,6 @@ function dataURLtoFile(dataUrl: string, filename: string): File {
 }
 
 const STORAGE_KEY = "groar-editor-settings";
-const EXPORT_WIDTH = 1200;
-const EXPORT_HEIGHT = 675;
 
 // Solid color preset (displayed last in StyleControls)
 const SOLID_COLOR_PRESET: BackgroundPreset = {
@@ -70,6 +65,7 @@ export type BackgroundPreset = {
   image?: string;
   color?: string;
   gradient?: string;
+  premium?: boolean;
 };
 
 export type BackgroundSettings = {
@@ -82,12 +78,29 @@ export type PeriodSettings = {
   number: number;
 } | null;
 
+// Premium feature types
+export type AspectRatioType = "post" | "square" | "banner";
+export type FontFamily = "bricolage" | "inter" | "playfair" | "space-grotesk";
+export type TemplateType = "metrics" | "milestone" | "progress";
+
+export type BrandingSettings = {
+  logoUrl?: string;
+  position: "left" | "center" | "right";
+};
+
 export type EditorSettings = {
+  // Existing fields
   handle: string;
   period: PeriodSettings;
   metrics: Metric[];
   background: BackgroundSettings;
   textColor: string;
+  // Premium fields (optional for backward compatibility)
+  aspectRatio?: AspectRatioType;
+  font?: FontFamily;
+  template?: TemplateType;
+  branding?: BrandingSettings;
+  goal?: number;
 };
 
 const defaultSettings: EditorSettings = {
@@ -96,6 +109,10 @@ const defaultSettings: EditorSettings = {
   metrics: [{ type: "followers", value: 56 }],
   background: { presetId: BACKGROUNDS[0]?.id || "solid-color", solidColor: "#f59e0b" },
   textColor: "#faf7e9",
+  // Premium defaults
+  aspectRatio: "post",
+  font: "bricolage",
+  template: "metrics",
 };
 
 function loadSettings(): EditorSettings {
@@ -104,9 +121,15 @@ function loadSettings(): EditorSettings {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Validate the structure
+      // Validate the structure and merge with defaults for backward compatibility
       if (parsed.handle && parsed.metrics && parsed.background && parsed.textColor) {
-        return parsed;
+        return {
+          ...defaultSettings,
+          ...parsed,
+          // Ensure nested objects are properly merged
+          background: { ...defaultSettings.background, ...parsed.background },
+          branding: parsed.branding,
+        };
       }
     }
   } catch {
@@ -135,114 +158,8 @@ export default function Editor({ isPremium = false }: EditorProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!importId);
   const [cooldown, setCooldown] = useState(0);
-  const [isFetchingAnalytics, setIsFetchingAnalytics] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
-
-  const MAX_METRICS = 5;
-
-  // Fetch analytics from X API and populate metrics
-  const fetchFromX = useCallback(async () => {
-    setIsFetchingAnalytics(true);
-    try {
-      // First fetch fresh data from X
-      const fetchRes = await fetch("/api/analytics/fetch", { method: "POST" });
-      if (!fetchRes.ok) {
-        const data = await fetchRes.json();
-        showToast(data.error || "Failed to fetch analytics", "error");
-        return;
-      }
-
-      const fetchData = await fetchRes.json();
-      const accountResult = fetchData.accounts?.[0];
-
-      // Handle "already fetched today" - still load the data but show info message
-      const wasAlreadyFetched = accountResult?.alreadyFetched;
-      if (wasAlreadyFetched) {
-        // Continue to load the existing data...
-      } else if (!accountResult?.success) {
-        const errorCode = accountResult?.errorCode;
-        const errorMsg = accountResult?.error || "No analytics data available";
-
-        // Check for specific error codes
-        if (errorCode === "TOKEN_EXPIRED" || errorCode === "REFRESH_FAILED" || errorCode === "MISSING_SCOPE") {
-          showToast("Session expired — reconnect your X account in Connections", "error");
-        } else if (errorMsg.includes("No access token")) {
-          showToast("X account not connected", "error");
-        } else {
-          showToast(errorMsg, "error");
-        }
-        return;
-      }
-
-      // Get the stored analytics to populate metrics
-      const analyticsRes = await fetch("/api/analytics?days=1");
-      if (!analyticsRes.ok) {
-        showToast("Failed to load analytics data", "error");
-        return;
-      }
-
-      const analyticsData = await analyticsRes.json();
-      const account = analyticsData.accounts?.[0];
-      const latest = account?.latest;
-
-      if (!latest) {
-        showToast("No analytics data found", "error");
-        return;
-      }
-
-      // Map API data to editor metrics
-      const newMetrics: Metric[] = [];
-
-      // Followers (always available - free)
-      if (latest.followersCount > 0) {
-        newMetrics.push({ type: "followers", value: latest.followersCount });
-      }
-
-      // Impressions (paid - may be 0)
-      if (latest.impressionsCount > 0) {
-        newMetrics.push({ type: "impressions", value: latest.impressionsCount });
-      }
-
-      // Likes (free)
-      if (latest.likesCount > 0) {
-        newMetrics.push({ type: "likes", value: latest.likesCount });
-      }
-
-      // Reposts (free)
-      if (latest.retweetsCount > 0) {
-        newMetrics.push({ type: "reposts", value: latest.retweetsCount });
-      }
-
-      // Replies (free)
-      if (latest.repliesCount > 0) {
-        newMetrics.push({ type: "replies", value: latest.repliesCount });
-      }
-
-      // Limit to MAX_METRICS and ensure at least one metric
-      const finalMetrics = newMetrics.slice(0, MAX_METRICS);
-      if (finalMetrics.length === 0) {
-        finalMetrics.push({ type: "followers", value: 0 });
-      }
-
-      // Update settings
-      setSettings(prev => ({
-        ...prev,
-        handle: account.username ? `@${account.username}` : prev.handle,
-        metrics: finalMetrics,
-      }));
-
-      showToast(wasAlreadyFetched
-        ? "Using today's data (1 refresh/day)"
-        : "Analytics loaded successfully!"
-      );
-    } catch (error) {
-      console.error("Error fetching from X:", error);
-      showToast("Failed to fetch analytics", "error");
-    } finally {
-      setIsFetchingAnalytics(false);
-    }
-  }, [showToast]);
 
   // Cooldown timer
   useEffect(() => {
@@ -312,9 +229,13 @@ export default function Editor({ isPremium = false }: EditorProps) {
         }
       }
 
+      // Get export dimensions based on aspect ratio
+      const aspectRatio = settings.aspectRatio || "post";
+      const { width: exportWidth, height: exportHeight } = ASPECT_RATIOS[aspectRatio];
+
       const dataUrl = await toJpeg(previewRef.current, {
-        canvasWidth: EXPORT_WIDTH,
-        canvasHeight: EXPORT_HEIGHT,
+        canvasWidth: exportWidth,
+        canvasHeight: exportHeight,
         quality: 0.92,
         cacheBust: true,
       });
@@ -387,49 +308,9 @@ export default function Editor({ isPremium = false }: EditorProps) {
         onExport={handleExport}
         isExporting={isExporting}
         cooldown={cooldown}
+        isPremium={isPremium}
       />
       <div className="flex-1 flex flex-col gap-3">
-        {/* Fetch from X button */}
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {isPremium ? "1 refresh per day" : ""}
-          </p>
-          {isPremium ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-white border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-colors"
-              onClick={fetchFromX}
-              disabled={isFetchingAnalytics}
-            >
-              <HugeiconsIcon
-                icon={isFetchingAnalytics ? Loading03Icon : Rocket01Icon}
-                size={16}
-                strokeWidth={1.5}
-                className={isFetchingAnalytics ? "animate-spin" : ""}
-                aria-hidden="true"
-              />
-              {isFetchingAnalytics ? "Fetching..." : "Fetch from X"}
-            </Button>
-          ) : (
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="bg-white border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-colors"
-            >
-              <Link href="/pricing">
-                <HugeiconsIcon
-                  icon={CrownIcon}
-                  size={16}
-                  strokeWidth={1.5}
-                  aria-hidden="true"
-                />
-                Upgrade to auto-fetch X data
-              </Link>
-            </Button>
-          )}
-        </div>
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
@@ -454,6 +335,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
           settings={settings}
           onSettingsChange={setSettings}
           backgrounds={ALL_BACKGROUNDS}
+          isPremium={isPremium}
         />
       </div>
     </section>
