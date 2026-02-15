@@ -5,23 +5,23 @@ import { BackgroundPreset } from "@/components/Editor";
 
 export const BACKGROUNDS: BackgroundPreset[] = [
   {
+    "id": "noisy-lights",
+    "name": "Noisy Lights",
+    "image": "/backgrounds/01-noisy-lights.png"
+  },
+  {
     "id": "northern-lights",
     "name": "Northern Lights",
-    "image": "/backgrounds/01-northern-lights.jpg"
+    "image": "/backgrounds/02-northern-lights.jpg"
   },
   {
     "id": "tokyo-streets",
     "name": "Tokyo Streets",
-    "image": "/backgrounds/02-tokyo-streets.jpg"
+    "image": "/backgrounds/03-tokyo-streets.jpg"
   },
   {
     "id": "bled-lakes",
     "name": "Bled Lakes",
-    "image": "/backgrounds/03-bled-lakes.jpg"
-  },
-  {
-    "id": "noisy-lights",
-    "name": "Noisy Lights",
-    "image": "/backgrounds/04-noisy-lights.png"
+    "image": "/backgrounds/04-bled-lakes.jpg"
   }
 ];
