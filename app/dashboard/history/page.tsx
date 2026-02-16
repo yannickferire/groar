@@ -80,6 +80,7 @@ export default function HistoryPage() {
                 imageUrl={exp.imageUrl}
                 handle={(exp.metrics as { handle?: string }).handle}
                 createdAt={exp.createdAt}
+                isPremium
               />
             ))}
           </div>

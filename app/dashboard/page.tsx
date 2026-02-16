@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AddSquareIcon, ArrowRight01Icon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon, ArrowRight01Icon, CheckmarkCircle02Icon, UserLove01Icon, News01Icon, CrownIcon, Download04Icon, Link01Icon, Fire02Icon, Calendar03Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import ExportsEmptyState from "@/components/dashboard/ExportsEmptyState";
@@ -24,6 +24,16 @@ type ConnectedAccount = {
   providerId: string;
 };
 
+type AnalyticsAccount = {
+  username: string | null;
+  latest: {
+    followersCount: number;
+    followingCount: number;
+    tweetCount: number;
+    date: string;
+  } | null;
+};
+
 function DashboardContent() {
   const { data: session } = authClient.useSession();
   const searchParams = useSearchParams();
@@ -34,6 +44,7 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [pendingPlan, setPendingPlan] = useState<PlanType | null>(null);
   const [planActivated, setPlanActivated] = useState(false);
+  const [analyticsAccounts, setAnalyticsAccounts] = useState<AnalyticsAccount[]>([]);
 
   // Get first name from session
   const firstName = session?.user?.name?.split(" ")[0];
@@ -44,17 +55,20 @@ function DashboardContent() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [exportsRes, connectionsRes, planRes] = await Promise.all([
+      const [exportsRes, connectionsRes, planRes, analyticsRes] = await Promise.all([
         fetch("/api/exports"),
         fetch("/api/connections"),
         fetch("/api/user/plan"),
+        fetch("/api/analytics?days=30"),
       ]);
       const exportsData = await exportsRes.json();
       const connectionsData = await connectionsRes.json();
       const planData = await planRes.json();
+      const analyticsData = await analyticsRes.json();
       setExports(exportsData.exports || []);
       setConnectedAccounts(connectionsData.accounts || []);
       setPlan(planData.plan || "free");
+      setAnalyticsAccounts(analyticsData.accounts || []);
       return planData.plan || "free";
     } finally {
       setLoading(false);
@@ -102,6 +116,30 @@ function DashboardContent() {
   const hasExports = exportCount > 0;
   const googleConnectionCount = connectedAccounts.filter(a => a.providerId === "google").length;
   const xConnectionCount = connectedAccounts.filter(a => a.providerId === "twitter").length;
+  const isFree = plan === "free";
+
+  // Today's exports count
+  const today = new Date().toDateString();
+  const exportsToday = exports.filter(e => new Date(e.createdAt).toDateString() === today).length;
+
+  // Streak: count consecutive days with at least 1 export (including today)
+  const streak = (() => {
+    if (exports.length === 0) return 0;
+    const daySet = new Set(exports.map(e => new Date(e.createdAt).toDateString()));
+    let count = 0;
+    const d = new Date();
+    // If no export today, start from yesterday
+    if (!daySet.has(d.toDateString())) {
+      d.setDate(d.getDate() - 1);
+    }
+    while (daySet.has(d.toDateString())) {
+      count++;
+      d.setDate(d.getDate() - 1);
+    }
+    return count;
+  })();
+
+  const hasXAccounts = analyticsAccounts.length > 0;
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-10">
@@ -113,9 +151,9 @@ function DashboardContent() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Link href="/dashboard/plan" className="rounded-2xl border-fade hover-effect p-5">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Current plan</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={CrownIcon} size={14} strokeWidth={1.5} />Current plan</p>
           {loading ? (
             <div className="h-9 w-12 rounded bg-sidebar mt-1" />
           ) : pendingPlan ? (
@@ -133,7 +171,7 @@ function DashboardContent() {
           )}
         </Link>
         <Link href="/dashboard/history" className="rounded-2xl border-fade hover-effect p-5">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Total exports</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Download04Icon} size={14} strokeWidth={1.5} />Total exports</p>
           {loading ? (
             <div className="h-9 w-12 rounded bg-sidebar mt-1" />
           ) : (
@@ -141,7 +179,7 @@ function DashboardContent() {
           )}
         </Link>
         <Link href="/dashboard/connections" className="rounded-2xl border-fade hover-effect p-5">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Connections</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Link01Icon} size={14} strokeWidth={1.5} />Connections</p>
           {loading ? (
             <div className="h-9 w-12 rounded bg-sidebar mt-1" />
           ) : (
@@ -164,6 +202,24 @@ function DashboardContent() {
             </div>
           )}
         </Link>
+        <div className="rounded-2xl border-fade p-5">
+          {loading ? (
+            <>
+              <div className="h-3 w-20 rounded bg-sidebar" />
+              <div className="h-9 w-12 rounded bg-sidebar mt-2" />
+            </>
+          ) : isFree ? (
+            <>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={1.5} />Exports available today</p>
+              <p className="text-3xl font-heading font-bold mt-1">{Math.min(exportsToday, PLANS.free.maxExportsPerDay)}<span className="text-lg text-muted-foreground font-normal">/{PLANS.free.maxExportsPerDay}</span></p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Fire02Icon} size={14} strokeWidth={1.5} />Streak</p>
+              <p className="text-3xl font-heading font-bold mt-1">{streak}<span className="text-lg text-muted-foreground font-normal"> {streak === 1 ? "day" : "days"}</span></p>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Recent exports */}
@@ -191,19 +247,20 @@ function DashboardContent() {
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
-            {[...Array(8)].map((_, i) => (
+            {[...Array(4)].map((_, i) => (
               <ExportCardSkeleton key={i} />
             ))}
           </div>
         ) : hasExports ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
-            {exports.slice(0, 8).map((exp) => (
+            {exports.slice(0, 4).map((exp) => (
               <ExportCard
                 key={exp.id}
                 id={exp.id}
                 imageUrl={exp.imageUrl}
                 handle={(exp.metrics as { handle?: string }).handle}
                 createdAt={exp.createdAt}
+                isPremium={!isFree}
               />
             ))}
           </div>
@@ -211,6 +268,44 @@ function DashboardContent() {
           <ExportsEmptyState />
         )}
       </div>
+
+      {/* Analytics summary */}
+      {!loading && !isFree && hasXAccounts && (
+        <div className="space-y-8">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-heading font-semibold">Analytics</h2>
+            <Link
+              href="/dashboard/analytics"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              View details
+              <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {analyticsAccounts.map((account) => (
+              <div key={account.username} className="rounded-2xl border-fade p-5 space-y-3">
+                <p className="text-xs text-muted-foreground font-medium">@{account.username}</p>
+                {account.latest ? (
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <HugeiconsIcon icon={UserLove01Icon} size={16} strokeWidth={1.5} className="text-muted-foreground" />
+                      <p className="text-2xl font-heading font-bold">{account.latest.followersCount.toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <HugeiconsIcon icon={News01Icon} size={16} strokeWidth={1.5} className="text-muted-foreground" />
+                      <p className="text-2xl font-heading font-bold">{account.latest.tweetCount.toLocaleString()}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No data yet</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -223,8 +318,8 @@ export default function DashboardPage() {
           <div className="h-8 w-32 rounded bg-sidebar" />
           <div className="h-4 w-64 rounded bg-sidebar mt-2" />
         </div>
-        <div className="grid grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
+        <div className="grid grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
             <div key={i} className="rounded-2xl border-fade p-5">
               <div className="h-3 w-20 rounded bg-sidebar" />
               <div className="h-9 w-12 rounded bg-sidebar mt-2" />

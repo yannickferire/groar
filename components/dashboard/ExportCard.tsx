@@ -10,6 +10,7 @@ type ExportCardProps = {
   imageUrl: string;
   handle?: string;
   createdAt: string;
+  isPremium?: boolean;
 };
 
 function formatDate(dateString: string) {
@@ -35,7 +36,7 @@ function formatDate(dateString: string) {
   }) + `, ${time}`;
 }
 
-export default function ExportCard({ id, imageUrl, handle, createdAt }: ExportCardProps) {
+export default function ExportCard({ id, imageUrl, handle, createdAt, isPremium = false }: ExportCardProps) {
   return (
     <div className="group">
       <div className="rounded-2xl overflow-hidden">
@@ -46,15 +47,17 @@ export default function ExportCard({ id, imageUrl, handle, createdAt }: ExportCa
             fill
             className="object-cover"
           />
-          <Link
-            href={`/dashboard/editor?import=${id}`}
-            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-          >
-            <span className="text-white text-sm font-medium flex items-center gap-1.5">
-              <HugeiconsIcon icon={ArrowUpRight01Icon} size={16} strokeWidth={2} />
-              Import in editor
-            </span>
-          </Link>
+          {isPremium && (
+            <Link
+              href={`/dashboard/editor?import=${id}`}
+              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+            >
+              <span className="text-white text-sm font-medium flex items-center gap-1.5">
+                <HugeiconsIcon icon={ArrowUpRight01Icon} size={16} strokeWidth={2} />
+                Import in editor
+              </span>
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex items-center justify-between mt-1 px-1">
