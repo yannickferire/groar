@@ -292,10 +292,12 @@ function DashboardContent() {
                     <div className="flex items-center gap-2">
                       <HugeiconsIcon icon={UserLove01Icon} size={16} strokeWidth={1.5} className="text-muted-foreground" />
                       <p className="text-2xl font-heading font-bold">{account.latest.followersCount.toLocaleString()}</p>
+                      <span className="text-xs text-muted-foreground">followers</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <HugeiconsIcon icon={News01Icon} size={16} strokeWidth={1.5} className="text-muted-foreground" />
                       <p className="text-2xl font-heading font-bold">{account.latest.tweetCount.toLocaleString()}</p>
+                      <span className="text-xs text-muted-foreground">posts</span>
                     </div>
                   </div>
                 ) : (
