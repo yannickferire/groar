@@ -193,9 +193,21 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
   );
 });
 
+type ConnectedAccount = {
+  accountId: string;
+  username: string | null;
+  latest: {
+    followersCount: number;
+    followingCount: number;
+    tweetCount: number;
+  } | null;
+};
+
 export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false }: SidebarProps) {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isDeletingLogo, setIsDeletingLogo] = useState(false);
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
+  const [handleMode, setHandleMode] = useState<"custom" | string>("custom"); // "custom" or account username
   const fileInputRef = useCallback((node: HTMLInputElement | null) => {
     if (node) node.value = "";
   }, []);
@@ -222,6 +234,36 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         })
         .catch(console.error);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremium]);
+
+  // Fetch connected X accounts and analytics
+  useEffect(() => {
+    if (!isPremium) return;
+    fetch("/api/analytics?days=1")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.accounts && data.accounts.length > 0) {
+          const accounts: ConnectedAccount[] = data.accounts.map((a: { accountId: string; username: string | null; latest: { followersCount: number; followingCount: number; tweetCount: number } | null }) => ({
+            accountId: a.accountId,
+            username: a.username,
+            latest: a.latest ? {
+              followersCount: a.latest.followersCount || 0,
+              followingCount: a.latest.followingCount || 0,
+              tweetCount: a.latest.tweetCount || 0,
+            } : null,
+          }));
+          setConnectedAccounts(accounts);
+
+          // Auto-select if current handle matches a connected account
+          const currentHandle = settings.handle.replace("@", "").toLowerCase();
+          const match = accounts.find((a: ConnectedAccount) => a.username?.toLowerCase() === currentHandle);
+          if (match) {
+            setHandleMode(match.username!);
+          }
+        }
+      })
+      .catch(console.error);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
 
@@ -268,6 +310,35 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     }
   }, [settings, onSettingsChange]);
 
+  const handleAccountSelect = useCallback((value: string) => {
+    setHandleMode(value);
+    if (value === "custom") return;
+
+    const account = connectedAccounts.find(a => a.username === value);
+    if (!account) return;
+
+    // Set handle
+    const newHandle = `@${account.username}`;
+
+    // Auto-populate metrics from analytics data
+    if (account.latest) {
+      const metricMap: Partial<Record<MetricType, number>> = {
+        followers: account.latest.followersCount,
+        followings: account.latest.followingCount,
+        posts: account.latest.tweetCount,
+      };
+
+      const updatedMetrics = settings.metrics.map(m => {
+        const autoValue = metricMap[m.type];
+        return autoValue !== undefined ? { ...m, value: autoValue } : m;
+      });
+
+      onSettingsChange({ ...settings, handle: newHandle, metrics: updatedMetrics });
+    } else {
+      onSettingsChange({ ...settings, handle: newHandle });
+    }
+  }, [connectedAccounts, settings, onSettingsChange]);
+
   const updateSetting = useCallback(<K extends keyof EditorSettings>(
     key: K,
     value: EditorSettings[K]
@@ -276,9 +347,16 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   }, [settings, onSettingsChange]);
 
   const addMetric = useCallback((type: MetricType) => {
-    const newMetric: Metric = { type, value: 0 };
+    // Auto-populate from connected account analytics if available
+    const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
+    const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
+      followers: selectedAccount.latest.followersCount,
+      followings: selectedAccount.latest.followingCount,
+      posts: selectedAccount.latest.tweetCount,
+    } : {};
+    const newMetric: Metric = { type, value: metricMap[type] ?? 0 };
     updateSetting("metrics", [...settings.metrics, newMetric]);
-  }, [updateSetting, settings.metrics]);
+  }, [updateSetting, settings.metrics, connectedAccounts, handleMode]);
 
   const removeMetric = useCallback((type: MetricType) => {
     updateSetting("metrics", settings.metrics.filter(m => m.type !== type));
@@ -376,15 +454,44 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="handle">X Handle</Label>
-          <Input
-            id="handle"
-            type="text"
-            placeholder="@username"
-            value={settings.handle}
-            onChange={(e) => updateSetting("handle", e.target.value)}
-            onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
-            className="bg-white"
-          />
+          {connectedAccounts.length > 0 ? (
+            <div className="flex gap-2">
+              <Select value={handleMode} onValueChange={handleAccountSelect}>
+                <SelectTrigger className={`bg-white ${handleMode === "custom" ? "w-28 shrink-0" : "flex-1"}`}>
+                  <SelectValue placeholder="Select account" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">Custom</SelectItem>
+                  {connectedAccounts.map((account) => (
+                    <SelectItem key={account.accountId} value={account.username || account.accountId}>
+                      @{account.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {handleMode === "custom" && (
+                <Input
+                  id="handle"
+                  type="text"
+                  placeholder="@username"
+                  value={settings.handle}
+                  onChange={(e) => updateSetting("handle", e.target.value)}
+                  onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
+                  className="flex-1 bg-white"
+                />
+              )}
+            </div>
+          ) : (
+            <Input
+              id="handle"
+              type="text"
+              placeholder="@username"
+              value={settings.handle}
+              onChange={(e) => updateSetting("handle", e.target.value)}
+              onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
+              className="bg-white"
+            />
+          )}
         </div>
 
         {/* Period - only for metrics template */}
@@ -552,7 +659,18 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
               />
               <Select
                 value={settings.metrics[0]?.type || "followers"}
-                onValueChange={(value) => updateSetting("metrics", [{ type: value as MetricType, value: settings.metrics[0]?.value || 0 }])}
+                onValueChange={(value) => {
+                  const newType = value as MetricType;
+                  // Auto-populate from connected account analytics if available
+                  const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
+                  const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
+                    followers: selectedAccount.latest.followersCount,
+                    followings: selectedAccount.latest.followingCount,
+                    posts: selectedAccount.latest.tweetCount,
+                  } : {};
+                  const autoValue = metricMap[newType];
+                  updateSetting("metrics", [{ type: newType, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
+                }}
               >
                 <SelectTrigger className="flex-1 bg-white">
                   <SelectValue />

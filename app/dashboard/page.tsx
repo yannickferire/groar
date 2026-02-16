@@ -173,7 +173,7 @@ function DashboardContent() {
             <h2 className="text-lg font-heading font-semibold">Recent exports</h2>
             <Link
               href="/dashboard/history"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 -top-px relative"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
               View all
               <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
