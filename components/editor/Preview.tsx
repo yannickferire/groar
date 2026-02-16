@@ -6,7 +6,7 @@ import { EditorSettings, MetricType, METRIC_LABELS, BackgroundPreset } from "../
 import { formatMetricValue } from "@/lib/metrics";
 import { getDateLabel } from "@/lib/date";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserLove01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon } from "@hugeicons/core-free-icons";
+import { UserLove01Icon, UserAdd01Icon, News01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import BackgroundCanvas from "./BackgroundCanvas";
 import { FONTS } from "@/lib/fonts";
@@ -16,6 +16,8 @@ import ProgressTemplate from "./templates/ProgressTemplate";
 
 const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
   followers: UserLove01Icon,
+  followings: UserAdd01Icon,
+  posts: News01Icon,
   impressions: EyeIcon,
   replies: Comment01Icon,
   engagementRate: Activity01Icon,
@@ -42,6 +44,10 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
     secondaryWithPeriod: "3.2cqi", // ~38px at 1200px
     secondaryNoPeriod: "4.2cqi",   // ~50px at 1200px
   };
+
+  // Force abbreviation if any metric exceeds 999M
+  const forceAbbreviate = settings.metrics.some(m => m.value > 999_999_999);
+  const abbreviate = forceAbbreviate || settings.abbreviateNumbers !== false;
 
   // Get the selected font family CSS variable
   const selectedFont = settings.font || "bricolage";
@@ -78,16 +84,18 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
               className="opacity-60"
               style={{ color: settings.textColor, textShadow, fontSize: "1.6cqi" }}
             >
-              {getDateLabel(settings.period.type)}
+              {settings.template === "milestone" || settings.template === "progress"
+                ? new Date().getFullYear()
+                : getDateLabel(settings.period.type)}
             </p>
           )}
         </header>
 
         {/* Template Content */}
         {settings.template === "milestone" ? (
-          <MilestoneTemplate settings={settings} />
+          <MilestoneTemplate settings={{ ...settings, abbreviateNumbers: abbreviate }} />
         ) : settings.template === "progress" ? (
-          <ProgressTemplate settings={settings} />
+          <ProgressTemplate settings={{ ...settings, abbreviateNumbers: abbreviate }} />
         ) : (
           /* Default: Metrics Template */
           <div
@@ -96,7 +104,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
           >
             {settings.period && (
               <p className="font-bold tracking-tight" style={{ fontSize: "8cqi" }}>
-                <span className="font-heading capitalize">{settings.period.type}</span> {settings.period.number}
+                <span className="capitalize">{settings.period.type}</span> {settings.period.number}
               </p>
             )}
             <div className="flex flex-col items-center" style={{ gap: "0.5cqi" }}>
@@ -124,7 +132,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                     strokeWidth={2}
                     color="currentColor"
                   />
-                  {formatMetricValue(metric.type, metric.value)} {METRIC_LABELS[metric.type].toLowerCase()}
+                  {formatMetricValue(metric.type, metric.value, abbreviate)} {METRIC_LABELS[metric.type].toLowerCase()}
                 </p>
               ))}
             </div>

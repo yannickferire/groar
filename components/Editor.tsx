@@ -12,6 +12,7 @@ import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
 import { motion, AnimatePresence } from "framer-motion";
+import UpgradeModal, { FREE_DAILY_LIMIT } from "@/components/UpgradeModal";
 
 // Convert data URL to File for upload
 function dataURLtoFile(dataUrl: string, filename: string): File {
@@ -40,7 +41,7 @@ const ALL_BACKGROUNDS = [SOLID_COLOR_PRESET, ...BACKGROUNDS];
 
 export type PeriodType = "day" | "week" | "month" | "year";
 
-export type MetricType = "followers" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks";
+export type MetricType = "followers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks";
 
 export type Metric = {
   type: MetricType;
@@ -49,6 +50,8 @@ export type Metric = {
 
 export const METRIC_LABELS: Record<MetricType, string> = {
   followers: "Followers",
+  followings: "Followings",
+  posts: "Posts",
   impressions: "Impressions",
   replies: "Replies",
   engagementRate: "Engagement Rate",
@@ -80,7 +83,7 @@ export type PeriodSettings = {
 
 // Premium feature types
 export type AspectRatioType = "post" | "square" | "banner";
-export type FontFamily = "bricolage" | "inter" | "playfair" | "space-grotesk";
+export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono";
 export type TemplateType = "metrics" | "milestone" | "progress";
 
 export type BrandingSettings = {
@@ -101,6 +104,7 @@ export type EditorSettings = {
   template?: TemplateType;
   branding?: BrandingSettings;
   goal?: number;
+  abbreviateNumbers?: boolean;
 };
 
 const defaultSettings: EditorSettings = {
@@ -113,6 +117,7 @@ const defaultSettings: EditorSettings = {
   aspectRatio: "post",
   font: "bricolage",
   template: "metrics",
+  abbreviateNumbers: true,
 };
 
 function loadSettings(): EditorSettings {
@@ -158,8 +163,36 @@ export default function Editor({ isPremium = false }: EditorProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!importId);
   const [cooldown, setCooldown] = useState(0);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [todayExportCount, setTodayExportCount] = useState(0);
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+
+  // Track daily exports for free users
+  const getExportCountKey = () => {
+    const today = new Date().toISOString().split("T")[0];
+    return `groar-exports-${today}`;
+  };
+
+  const getTodayExportCount = useCallback(() => {
+    if (typeof window === "undefined") return 0;
+    const count = localStorage.getItem(getExportCountKey());
+    return count ? parseInt(count, 10) : 0;
+  }, []);
+
+  const incrementExportCount = useCallback(() => {
+    const key = getExportCountKey();
+    const current = getTodayExportCount();
+    const newCount = current + 1;
+    localStorage.setItem(key, newCount.toString());
+    setTodayExportCount(newCount);
+    return newCount;
+  }, [getTodayExportCount]);
+
+  // Load today's export count on mount
+  useEffect(() => {
+    setTodayExportCount(getTodayExportCount());
+  }, [getTodayExportCount]);
 
   // Cooldown timer
   useEffect(() => {
@@ -176,13 +209,12 @@ export default function Editor({ isPremium = false }: EditorProps) {
         .then((res) => res.json())
         .then((data) => {
           if (data.export?.metrics) {
-            const imported = data.export.metrics as EditorSettings;
+            const imported = data.export.metrics as Partial<EditorSettings>;
             setSettings({
-              handle: imported.handle || defaultSettings.handle,
-              period: imported.period ?? defaultSettings.period,
-              metrics: imported.metrics || defaultSettings.metrics,
-              background: imported.background || defaultSettings.background,
-              textColor: imported.textColor || defaultSettings.textColor,
+              ...defaultSettings,
+              ...imported,
+              // Ensure nested objects are properly merged
+              background: { ...defaultSettings.background, ...imported.background },
             });
           }
         })
@@ -207,6 +239,12 @@ export default function Editor({ isPremium = false }: EditorProps) {
 
   const handleExport = useCallback(async () => {
     if (!previewRef.current || cooldown > 0) return;
+
+    // Check daily limit for free users
+    if (!isPremium && getTodayExportCount() >= FREE_DAILY_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
+    }
 
     setIsExporting(true);
     let injectedWatermark: HTMLElement | null = null;
@@ -276,13 +314,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
           const file = dataURLtoFile(dataUrl, `export-${Date.now()}.jpg`);
           const formData = new FormData();
           formData.append("image", file);
-          formData.append("metrics", JSON.stringify({
-            handle: settings.handle,
-            period: settings.period,
-            metrics: settings.metrics,
-            background: settings.background,
-            textColor: settings.textColor,
-          }));
+          formData.append("metrics", JSON.stringify(settings));
 
           const res = await fetch("/api/exports", {
             method: "POST",
@@ -303,7 +335,14 @@ export default function Editor({ isPremium = false }: EditorProps) {
 
       // Start cooldown after successful export
       setCooldown(5);
-      showToast("Image downloaded successfully!");
+
+      if (isPremium) {
+        showToast("Image downloaded successfully!");
+      } else {
+        // Increment export count and show upgrade modal
+        incrementExportCount();
+        setShowUpgradeModal(true);
+      }
     } catch (error) {
       console.error("Export failed:", error);
       // Clean up injected watermark on error
@@ -314,7 +353,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
     } finally {
       setIsExporting(false);
     }
-  }, [settings, isPremium, showToast, cooldown]);
+  }, [settings, isPremium, showToast, cooldown, getTodayExportCount, incrementExportCount]);
 
   useKeyboardShortcuts(
     useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
@@ -379,6 +418,11 @@ export default function Editor({ isPremium = false }: EditorProps) {
           style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.2 } as React.CSSProperties}
         />
         {editorContent}
+        <UpgradeModal
+          open={showUpgradeModal}
+          onOpenChange={setShowUpgradeModal}
+          exportCount={todayExportCount}
+        />
       </div>
     </FadeIn>
   );

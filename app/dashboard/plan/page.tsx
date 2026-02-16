@@ -74,6 +74,7 @@ export default function PlanPage() {
         window.location.href = data.portalUrl;
       } else {
         console.error("No portal URL returned:", data);
+        alert(data.error || "Failed to open billing portal. Please try again.");
         setOpeningPortal(false);
       }
     } catch (error) {
@@ -227,7 +228,7 @@ export default function PlanPage() {
                       </>
                     )}
                   </Button>
-                ) : isDowngrade ? (
+                ) : isDowngrade && isPaidPlan ? (
                   <Button
                     variant="ghost"
                     size="sm"

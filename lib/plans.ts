@@ -38,6 +38,17 @@ export const PLANS = {
       "Early access to new features",
     ],
   },
+  friend: {
+    name: "Friend",
+    price: 0,
+    maxConnectionsPerProvider: 999, // unlimited
+    maxExportsPerDay: null, // unlimited
+    features: [
+      "Everything in Agency",
+      "Gift plan",
+      "Unlimited everything",
+    ],
+  },
 } as const;
 
 export type PlanType = keyof typeof PLANS;

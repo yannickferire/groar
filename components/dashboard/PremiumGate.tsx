@@ -12,7 +12,7 @@ type PremiumGateProps = {
 // Server component that gates access to premium features
 export default async function PremiumGate({
   children,
-  requiredPlans = ["pro", "agency"],
+  requiredPlans = ["pro", "agency", "friend"],
 }: PremiumGateProps) {
   const session = await auth.api.getSession({
     headers: await headers(),

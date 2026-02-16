@@ -1,7 +1,24 @@
 "use client";
 
-import { EditorSettings, METRIC_LABELS } from "@/components/Editor";
+import { EditorSettings, METRIC_LABELS, MetricType } from "@/components/Editor";
 import { formatMetricValue } from "@/lib/metrics";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserLove01Icon, UserAdd01Icon, News01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon } from "@hugeicons/core-free-icons";
+import { IconSvgElement } from "@hugeicons/react";
+
+const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
+  followers: UserLove01Icon,
+  followings: UserAdd01Icon,
+  posts: News01Icon,
+  impressions: EyeIcon,
+  replies: Comment01Icon,
+  engagementRate: Activity01Icon,
+  engagement: Tap01Icon,
+  profileVisits: UserCircleIcon,
+  likes: FavouriteIcon,
+  reposts: RepeatIcon,
+  bookmarks: Bookmark01Icon,
+};
 
 type ProgressTemplateProps = {
   settings: EditorSettings;
@@ -71,15 +88,21 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
         className="uppercase tracking-widest opacity-60"
         style={{ fontSize: "2cqi" }}
       >
-        Goal: {formatMetricValue(primaryMetric?.type || "followers", goal)} {METRIC_LABELS[primaryMetric?.type || "followers"].toLowerCase()}
+        Goal: {formatMetricValue(primaryMetric?.type || "followers", goal, settings.abbreviateNumbers !== false)} {METRIC_LABELS[primaryMetric?.type || "followers"].toLowerCase()}
       </p>
 
       {/* Current value - big */}
       <p
-        className="font-bold tracking-tight"
-        style={{ fontSize: "12cqi" }}
+        className="font-bold tracking-tight flex items-center"
+        style={{ fontSize: "12cqi", gap: "2cqi" }}
       >
-        {formatMetricValue(primaryMetric?.type || "followers", currentValue)}
+        <HugeiconsIcon
+          icon={METRIC_ICONS[primaryMetric?.type || "followers"]}
+          style={{ width: "10cqi", height: "10cqi" }}
+          strokeWidth={1.5}
+          color="currentColor"
+        />
+        {formatMetricValue(primaryMetric?.type || "followers", currentValue, settings.abbreviateNumbers !== false)}
       </p>
 
       {/* Progress bar */}

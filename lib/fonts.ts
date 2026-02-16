@@ -1,6 +1,6 @@
 // Font configuration for the editor
 
-export type FontFamily = "bricolage" | "inter" | "playfair" | "space-grotesk";
+export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono";
 
 export type FontConfig = {
   name: string;
@@ -19,15 +19,15 @@ export const FONTS: Record<FontFamily, FontConfig> = {
     variable: "--font-inter",
     premium: true,
   },
-  playfair: {
-    name: "Playfair Display",
-    variable: "--font-playfair",
-    premium: true,
-  },
-  "space-grotesk": {
+"space-grotesk": {
     name: "Space Grotesk",
     variable: "--font-space-grotesk",
     premium: true,
+  },
+  "dm-mono": {
+    name: "DM Mono",
+    variable: "--font-dm-mono",
+    premium: false,
   },
 };
 

@@ -53,7 +53,7 @@ type SidebarProps = {
   isPremium?: boolean;
 };
 
-const ALL_METRICS: MetricType[] = ["followers", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
+const ALL_METRICS: MetricType[] = ["followers", "followings", "posts", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
 const MAX_METRICS = 5;
 
 type SortableMetricItemProps = {
@@ -305,79 +305,67 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
 
   return (
     <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-3xl bg-card min-h-full">
-      {/* Template Selector */}
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
-          Template
-        </h3>
+      {/* Template Selector - Premium only */}
+      {isPremium && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+            <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
+            Template
+          </h3>
 
-        <div className="grid grid-cols-3 gap-2">
-          {TEMPLATE_LIST.map((template) => {
-            const isSelected = (settings.template || "metrics") === template.id;
-            const isLocked = template.premium && !isPremium;
+          <div className="grid grid-cols-3 gap-2">
+            {TEMPLATE_LIST.map((template) => {
+              const isSelected = (settings.template || "metrics") === template.id;
 
-            return (
-              <button
-                key={template.id}
-                type="button"
-                onClick={() => {
-                  if (isLocked) return;
-                  updateSetting("template", template.id as TemplateType);
-                }}
-                disabled={isLocked}
-                className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
-                  isSelected
-                    ? "border-primary bg-white"
-                    : isLocked
-                      ? "border-transparent bg-muted/20 cursor-not-allowed opacity-50"
+              return (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => updateSetting("template", template.id as TemplateType)}
+                  className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
+                    isSelected
+                      ? "border-primary bg-white"
                       : "border-transparent bg-white hover:border-muted"
-                }`}
-              >
-                {/* Mini preview */}
-                <div className={`w-full h-8 rounded-lg flex items-center justify-center ${
-                  isSelected ? "bg-primary/10" : "bg-muted/50"
-                }`}>
-                  {template.id === "metrics" && (
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className={`w-5 h-1 rounded-full ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                      <div className={`w-3 h-0.5 rounded-full ${isSelected ? "bg-primary/50" : "bg-muted-foreground/20"}`} />
-                    </div>
-                  )}
-                  {template.id === "milestone" && (
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className={`w-3 h-0.5 rounded-full opacity-50 ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                      <div className={`w-5 h-1 rounded-full ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                      <div className={`w-3 h-0.5 rounded-full opacity-50 ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                    </div>
-                  )}
-                  {template.id === "progress" && (
-                    <div className="flex flex-col items-center gap-1 w-full px-2">
-                      <div className={`w-full h-1.5 rounded-full ${isSelected ? "bg-primary/20" : "bg-muted-foreground/15"}`}>
-                        <div className={`w-3/4 h-full rounded-full ${isSelected ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                  }`}
+                >
+                  {/* Mini preview */}
+                  <div className={`w-full h-8 rounded-lg flex items-center justify-center ${
+                    isSelected ? "bg-primary/10" : "bg-muted/50"
+                  }`}>
+                    {template.id === "metrics" && (
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className={`w-5 h-1 rounded-full ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                        <div className={`w-3 h-0.5 rounded-full ${isSelected ? "bg-primary/50" : "bg-muted-foreground/20"}`} />
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Label */}
-                <span className={`text-[10px] font-semibold transition-colors ${
-                  isSelected ? "text-primary" : isLocked ? "text-muted-foreground/50" : "text-muted-foreground"
-                }`}>
-                  {template.name}
-                </span>
-
-                {/* Crown badge for premium */}
-                {isLocked && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center">
-                    <HugeiconsIcon icon={CrownIcon} size={10} className="text-primary" strokeWidth={2} />
+                    )}
+                    {template.id === "milestone" && (
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className={`w-3 h-0.5 rounded-full opacity-50 ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                        <div className={`w-5 h-1 rounded-full ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                        <div className={`w-3 h-0.5 rounded-full opacity-50 ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                      </div>
+                    )}
+                    {template.id === "progress" && (
+                      <div className="flex flex-col items-center gap-1 w-full px-2">
+                        <div className={`w-full h-1.5 rounded-full ${isSelected ? "bg-primary/20" : "bg-muted-foreground/15"}`}>
+                          <div className={`w-3/4 h-full rounded-full ${isSelected ? "bg-primary" : "bg-muted-foreground/40"}`} />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </button>
-            );
-          })}
+
+                  {/* Label */}
+                  <span className={`text-[10px] font-semibold transition-colors ${
+                    isSelected ? "text-primary" : "text-muted-foreground"
+                  }`}>
+                    {template.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Info */}
       <div className="flex flex-col gap-4">
@@ -454,11 +442,44 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
             <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
             {(settings.template || "metrics") === "metrics" ? "Metrics" : "Metric"}
           </h3>
-          {(settings.template || "metrics") === "metrics" && settings.metrics.length >= MAX_METRICS && (
-            <span className="text-xs text-primary italic">
-              5 max — remove to add
-            </span>
-          )}
+          <div className="flex items-center gap-1.5">
+            {(settings.template || "metrics") === "metrics" && settings.metrics.length >= MAX_METRICS && (
+              <>
+                <span className="text-xs text-primary italic">
+                  5 max
+                </span>
+                <span className="text-muted-foreground/30">|</span>
+              </>
+            )}
+            {(() => {
+              const forceAbbreviate = settings.metrics.some(m => m.value > 999_999_999);
+              const isAbbreviated = forceAbbreviate || settings.abbreviateNumbers !== false;
+              return (
+                <label className={`flex items-center gap-1.5 ${forceAbbreviate ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
+                  <span className="text-xs text-muted-foreground">
+                    Abbreviate numbers
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isAbbreviated}
+                    aria-label="Abbreviate numbers"
+                    disabled={forceAbbreviate}
+                    onClick={() => !forceAbbreviate && updateSetting("abbreviateNumbers", settings.abbreviateNumbers === false)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                      isAbbreviated ? "bg-primary" : "bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                        isAbbreviated ? "translate-x-4.5" : "translate-x-0.75"
+                      }`}
+                    />
+                  </button>
+                </label>
+              );
+            })()}
+          </div>
         </div>
 
         {/* Multi-metric for "metrics" template */}
@@ -547,6 +568,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
             </div>
           </div>
         )}
+
       </div>
 
       {/* Goal - only for progress template */}
@@ -573,17 +595,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         </div>
       )}
 
-      {/* Branding (Premium) */}
-      <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <HugeiconsIcon icon={ImageAdd01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
-          Branding
-          {!isPremium && (
-            <HugeiconsIcon icon={LockIcon} size={14} strokeWidth={2} className="text-muted-foreground" aria-hidden="true" />
-          )}
-        </h3>
+      {/* Branding (Premium only) */}
+      {isPremium && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+            <HugeiconsIcon icon={ImageAdd01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
+            Branding
+          </h3>
 
-        {isPremium ? (
           <div className="flex flex-col gap-2">
             {settings.branding?.logoUrl ? (
               <div className="flex flex-col gap-2">
@@ -597,7 +616,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex gap-1 flex-1">
+                  <div className="flex gap-2 flex-1">
                     {(["left", "center", "right"] as const).map((pos) => (
                       <button
                         key={pos}
@@ -651,15 +670,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
               </label>
             )}
           </div>
-        ) : (
-          <Link
-            href="/pricing"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-          >
-            <span>Upgrade to add your logo</span>
-          </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Export */}
       <div className="flex-1" />

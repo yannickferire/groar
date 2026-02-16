@@ -37,9 +37,9 @@ export const parseMetricInput = (input: string, metricType: MetricType): number 
 };
 
 /**
- * Format a number for display in preview (e.g., 10000 -> "10.0K")
+ * Format a number abbreviated (e.g., 10000 -> "10.0K")
  */
-export const formatNumber = (value: number): string => {
+export const formatNumberShort = (value: number): string => {
   if (value >= 1000000) {
     return `${(value / 1000000).toFixed(1)}M`;
   }
@@ -50,11 +50,25 @@ export const formatNumber = (value: number): string => {
 };
 
 /**
+ * Format a number with thousands separators (e.g., 10000 -> "10,000")
+ */
+export const formatNumberFull = (value: number): string => {
+  return value.toLocaleString("en-US");
+};
+
+/**
+ * Format a number for display in preview (abbreviated or full)
+ */
+export const formatNumber = (value: number, abbreviate = true): string => {
+  return abbreviate ? formatNumberShort(value) : formatNumberFull(value);
+};
+
+/**
  * Format a metric value for display based on its type
  */
-export const formatMetricValue = (type: MetricType, value: number): string => {
+export const formatMetricValue = (type: MetricType, value: number, abbreviate = true): string => {
   if (type === "engagementRate") {
     return `${value}%`;
   }
-  return formatNumber(value);
+  return formatNumber(value, abbreviate);
 };
