@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
 import { getUserPlanFromDB, getUserSubscription, setUserPlan } from "@/lib/plans-server";
+import { pool } from "@/lib/db";
 
 export async function GET() {
   const session = await auth.api.getSession({
@@ -13,11 +14,16 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [plan, subscription] = await Promise.all([
+  const [plan, subscription, todayExportsResult] = await Promise.all([
     getUserPlanFromDB(session.user.id),
     getUserSubscription(session.user.id),
+    pool.query(
+      `SELECT COUNT(*) FROM export WHERE "userId" = $1 AND "createdAt" >= CURRENT_DATE`,
+      [session.user.id]
+    ),
   ]);
   const planDetails = PLANS[plan];
+  const exportsToday = parseInt(todayExportsResult.rows[0].count);
 
   return NextResponse.json({
     plan,
@@ -28,6 +34,7 @@ export async function GET() {
       maxConnectionsPerProvider: planDetails.maxConnectionsPerProvider,
       maxExportsPerDay: planDetails.maxExportsPerDay,
     },
+    exportsToday,
     status: subscription?.status,
     currentPeriodEnd: subscription?.currentPeriodEnd,
   });

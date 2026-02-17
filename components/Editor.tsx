@@ -161,13 +161,24 @@ export default function Editor({ isPremium = false }: EditorProps) {
   const importId = searchParams.get("import");
 
   // On landing page, detect if user has a premium plan to hide the upgrade modal
+  // Also sync today's export count from DB when logged in
   const [hideUpgradeModal, setHideUpgradeModal] = useState(false);
+  const dbExportCountLoaded = useRef(false);
   useEffect(() => {
     if (isPremium) return; // Dashboard already knows
     fetch("/api/user/plan")
       .then((res) => res.json())
       .then((data) => {
         if (data.plan && data.plan !== "free") setHideUpgradeModal(true);
+        // Sync export count from DB (more accurate than localStorage)
+        if (data.exportsToday !== undefined) {
+          const dbCount = Number(data.exportsToday);
+          const localCount = parseInt(localStorage.getItem(`groar-exports-${new Date().toISOString().split("T")[0]}`) || "0", 10);
+          const maxCount = Math.max(dbCount, localCount);
+          localStorage.setItem(`groar-exports-${new Date().toISOString().split("T")[0]}`, maxCount.toString());
+          setTodayExportCount(maxCount);
+          dbExportCountLoaded.current = true;
+        }
       })
       .catch(() => {});
   }, [isPremium]);

@@ -211,7 +211,7 @@ function DashboardContent() {
           ) : isFree ? (
             <>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={1.5} />Exports available today</p>
-              <p className="text-3xl font-heading font-bold mt-1">{Math.min(exportsToday, PLANS.free.maxExportsPerDay)}<span className="text-lg text-muted-foreground font-normal">/{PLANS.free.maxExportsPerDay}</span></p>
+              <p className="text-3xl font-heading font-bold mt-1">{Math.max(PLANS.free.maxExportsPerDay - exportsToday, 0)}<span className="text-lg text-muted-foreground font-normal">/{PLANS.free.maxExportsPerDay}</span></p>
             </>
           ) : (
             <>
