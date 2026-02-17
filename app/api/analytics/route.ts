@@ -38,13 +38,16 @@ export async function GET(request: NextRequest) {
     const accountIds = accountsResult.rows.map((a) => a.id);
     const today = new Date().toISOString().split("T")[0];
 
-    // Check if manual refresh was already done today
+    // Check how many manual refreshes were done today per account
+    const MAX_DAILY_REFRESHES = 3;
     const manualFetchResult = await pool.query(
-      `SELECT "accountId" FROM x_analytics_snapshot
+      `SELECT "accountId", COALESCE("manualRefreshCount", 1) as count FROM x_analytics_snapshot
        WHERE "accountId" = ANY($1) AND date = $2 AND "fetchType" = 'manual'`,
       [accountIds, today]
     );
-    const manualFetchedAccountIds = new Set(manualFetchResult.rows.map(r => r.accountId));
+    const manualFetchCounts = new Map<string, number>(
+      manualFetchResult.rows.map((r: { accountId: string; count: string }) => [r.accountId, parseInt(r.count)])
+    );
 
     // Get analytics snapshots for the last N days
     const analyticsResult = await pool.query(
@@ -64,7 +67,8 @@ export async function GET(request: NextRequest) {
         "profileClicksCount",
         "urlClicksCount",
         "followersGained",
-        "impressionsGained"
+        "impressionsGained",
+        "createdAt"
        FROM x_analytics_snapshot
        WHERE "accountId" = ANY($1)
          AND date >= CURRENT_DATE - INTERVAL '1 day' * $2
@@ -96,7 +100,7 @@ export async function GET(request: NextRequest) {
         accountId: account.id,
         xUserId: account.xUserId,
         username: account.username,
-        canManualRefresh: !manualFetchedAccountIds.has(account.id),
+        canManualRefresh: (manualFetchCounts.get(account.id) || 0) < MAX_DAILY_REFRESHES,
         snapshots: [],
         latest: null,
         summary: {

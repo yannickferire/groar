@@ -2,8 +2,6 @@
 import { pool } from "@/lib/db";
 import {
   getAuthenticatedUser,
-  getUserTweets,
-  aggregateTweetMetrics,
   isTokenExpired,
   isMissingScope,
   refreshAccessToken,
@@ -20,16 +18,9 @@ export type FetchResult = {
   message?: string;
   error?: string;
   errorCode?: "TOKEN_EXPIRED" | "MISSING_SCOPE" | "REFRESH_FAILED";
-  tweetsAnalyzed?: number;
-  tweetsError?: string;
   metrics?: {
     followers: number;
     followersGained: number;
-    likes: number;
-    reposts: number;
-    replies: number;
-    impressions: number;
-    impressionsGained: number;
   };
 };
 
@@ -66,19 +57,28 @@ export async function fetchAccountAnalytics(
 
   // Check if already fetched today with this fetchType
   const existingSnapshot = await pool.query(
-    `SELECT id, "createdAt" FROM x_analytics_snapshot
+    `SELECT id, "createdAt", COALESCE("manualRefreshCount", 1) as "refreshCount" FROM x_analytics_snapshot
      WHERE "accountId" = $1 AND date = $2 AND "fetchType" = $3`,
     [accountDbId, today, fetchType]
   );
 
-  if (existingSnapshot.rows.length > 0) {
+  const MAX_DAILY_MANUAL_REFRESHES = 3;
+  if (fetchType === "manual" && existingSnapshot.rows.length > 0) {
+    const refreshCount = parseInt(existingSnapshot.rows[0].refreshCount);
+    if (refreshCount >= MAX_DAILY_MANUAL_REFRESHES) {
+      return {
+        accountId: accountDbId,
+        alreadyFetched: true,
+        fetchedAt: existingSnapshot.rows[0].createdAt,
+        message: "Daily refresh limit reached (3/3).",
+      };
+    }
+  } else if (fetchType !== "manual" && existingSnapshot.rows.length > 0) {
     return {
       accountId: accountDbId,
       alreadyFetched: true,
       fetchedAt: existingSnapshot.rows[0].createdAt,
-      message: fetchType === "manual"
-        ? "Already refreshed manually today."
-        : "Already auto-fetched today.",
+      message: "Already auto-fetched today.",
     };
   }
 
@@ -140,42 +140,9 @@ export async function fetchAccountAnalytics(
     }
   }
 
-  // Fetch recent tweets with metrics
-  const tweetsResult = await getUserTweets(currentAccessToken, xUserId);
-
-  let tweetMetrics = {
-    impressionsCount: 0,
-    likesCount: 0,
-    retweetsCount: 0,
-    repliesCount: 0,
-    quotesCount: 0,
-    bookmarksCount: 0,
-    profileClicksCount: 0,
-    urlClicksCount: 0,
-  };
-
-  let tweetsError: string | undefined;
-  let tweetsCount = 0;
-
-  if ("error" in tweetsResult) {
-    console.error("Failed to fetch tweets:", tweetsResult.error);
-    tweetsError = tweetsResult.error;
-  } else {
-    tweetsCount = tweetsResult.length;
-    console.log(`Fetched ${tweetsCount} tweets for aggregation`);
-    if (tweetsCount > 0) {
-      // Log first tweet to debug metrics structure
-      console.log("First tweet sample:", JSON.stringify(tweetsResult[0], null, 2));
-      tweetMetrics = aggregateTweetMetrics(tweetsResult);
-      console.log("Aggregated metrics:", tweetMetrics);
-    } else {
-      console.log("No tweets found in the last 30 days (excluding retweets/replies)");
-    }
-  }
-
-  // Get previous snapshot to calculate deltas
+  // Get previous snapshot to calculate followers delta
   const previousResult = await pool.query(
-    `SELECT "followersCount", "impressionsCount"
+    `SELECT "followersCount"
      FROM x_analytics_snapshot
      WHERE "accountId" = $1 AND date <= $2
      ORDER BY date DESC, "createdAt" DESC LIMIT 1`,
@@ -186,34 +153,21 @@ export async function fetchAccountAnalytics(
   const followersGained = previousSnapshot
     ? userResult.public_metrics.followers_count - previousSnapshot.followersCount
     : 0;
-  const impressionsGained = previousSnapshot
-    ? tweetMetrics.impressionsCount - previousSnapshot.impressionsCount
-    : 0;
 
-  // Insert new snapshot
+  // Insert new snapshot (only free API data: user profile metrics)
   await pool.query(
     `INSERT INTO x_analytics_snapshot (
       "accountId", date, "fetchType",
       "followersCount", "followingCount", "tweetCount", "listedCount",
-      "impressionsCount", "likesCount", "retweetsCount", "repliesCount",
-      "quotesCount", "bookmarksCount", "profileClicksCount", "urlClicksCount",
-      "followersGained", "impressionsGained"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      "followersGained"
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     ON CONFLICT ("accountId", date, "fetchType") DO UPDATE SET
       "followersCount" = EXCLUDED."followersCount",
       "followingCount" = EXCLUDED."followingCount",
       "tweetCount" = EXCLUDED."tweetCount",
       "listedCount" = EXCLUDED."listedCount",
-      "impressionsCount" = EXCLUDED."impressionsCount",
-      "likesCount" = EXCLUDED."likesCount",
-      "retweetsCount" = EXCLUDED."retweetsCount",
-      "repliesCount" = EXCLUDED."repliesCount",
-      "quotesCount" = EXCLUDED."quotesCount",
-      "bookmarksCount" = EXCLUDED."bookmarksCount",
-      "profileClicksCount" = EXCLUDED."profileClicksCount",
-      "urlClicksCount" = EXCLUDED."urlClicksCount",
       "followersGained" = EXCLUDED."followersGained",
-      "impressionsGained" = EXCLUDED."impressionsGained"`,
+      "manualRefreshCount" = COALESCE(x_analytics_snapshot."manualRefreshCount", 1) + 1`,
     [
       accountDbId,
       today,
@@ -222,16 +176,7 @@ export async function fetchAccountAnalytics(
       userResult.public_metrics.following_count,
       userResult.public_metrics.tweet_count,
       userResult.public_metrics.listed_count,
-      tweetMetrics.impressionsCount,
-      tweetMetrics.likesCount,
-      tweetMetrics.retweetsCount,
-      tweetMetrics.repliesCount,
-      tweetMetrics.quotesCount,
-      tweetMetrics.bookmarksCount,
-      tweetMetrics.profileClicksCount,
-      tweetMetrics.urlClicksCount,
       followersGained,
-      impressionsGained,
     ]
   );
 
@@ -239,16 +184,9 @@ export async function fetchAccountAnalytics(
     accountId: accountDbId,
     username: userResult.username,
     success: true,
-    tweetsAnalyzed: tweetsCount,
-    tweetsError,
     metrics: {
       followers: userResult.public_metrics.followers_count,
       followersGained,
-      likes: tweetMetrics.likesCount,
-      reposts: tweetMetrics.retweetsCount,
-      replies: tweetMetrics.repliesCount,
-      impressions: tweetMetrics.impressionsCount,
-      impressionsGained,
     },
   };
 }

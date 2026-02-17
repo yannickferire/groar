@@ -158,16 +158,16 @@ function DashboardContent() {
             <div className="h-9 w-12 rounded bg-sidebar mt-1" />
           ) : pendingPlan ? (
             <div className="flex items-center gap-2 mt-1">
-              <p className="text-3xl font-heading font-bold">{PLANS[pendingPlan].name}</p>
+              <p className="text-3xl font-mono font-bold">{PLANS[pendingPlan].name}</p>
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             </div>
           ) : planActivated ? (
             <div className="flex items-center gap-2 mt-1">
-              <p className="text-3xl font-heading font-bold">{PLANS[plan].name}</p>
+              <p className="text-3xl font-mono font-bold">{PLANS[plan].name}</p>
               <HugeiconsIcon icon={CheckmarkCircle02Icon} size={20} strokeWidth={2} className="text-primary" />
             </div>
           ) : (
-            <p className="text-3xl font-heading font-bold mt-1">{PLANS[plan].name}</p>
+            <p className="text-3xl font-mono font-bold mt-1">{PLANS[plan].name}</p>
           )}
         </Link>
         <Link href="/dashboard/history" className="rounded-2xl border-fade hover-effect p-5">
@@ -175,7 +175,7 @@ function DashboardContent() {
           {loading ? (
             <div className="h-9 w-12 rounded bg-sidebar mt-1" />
           ) : (
-            <p className="text-3xl font-heading font-bold mt-1">{exportCount}</p>
+            <p className="text-3xl font-mono font-bold mt-1">{exportCount}</p>
           )}
         </Link>
         <Link href="/dashboard/connections" className="rounded-2xl border-fade hover-effect p-5">
@@ -186,18 +186,18 @@ function DashboardContent() {
             <div className="flex items-center gap-3 mt-1">
               {googleConnectionCount > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <p className="text-3xl font-heading font-bold">{googleConnectionCount}</p>
+                  <p className="text-3xl font-mono font-bold">{googleConnectionCount}</p>
                   <GoogleLogo />
                 </div>
               )}
               {xConnectionCount > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <p className="text-3xl font-heading font-bold">{xConnectionCount}</p>
+                  <p className="text-3xl font-mono font-bold">{xConnectionCount}</p>
                   <XLogo />
                 </div>
               )}
               {googleConnectionCount === 0 && xConnectionCount === 0 && (
-                <p className="text-3xl font-heading font-bold">0</p>
+                <p className="text-3xl font-mono font-bold">0</p>
               )}
             </div>
           )}
@@ -211,12 +211,12 @@ function DashboardContent() {
           ) : isFree ? (
             <>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={1.5} />Exports available today</p>
-              <p className="text-3xl font-heading font-bold mt-1">{Math.max(PLANS.free.maxExportsPerDay - exportsToday, 0)}<span className="text-lg text-muted-foreground font-normal">/{PLANS.free.maxExportsPerDay}</span></p>
+              <p className="text-3xl font-mono font-bold mt-1">{Math.max(PLANS.free.maxExportsPerDay - exportsToday, 0)}<span className="text-lg text-muted-foreground font-normal">/{PLANS.free.maxExportsPerDay}</span></p>
             </>
           ) : (
             <>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Fire02Icon} size={14} strokeWidth={1.5} />Streak</p>
-              <p className="text-3xl font-heading font-bold mt-1">{streak}<span className="text-lg text-muted-foreground font-normal"> {streak === 1 ? "day" : "days"}</span></p>
+              <p className="text-3xl font-mono font-bold mt-1">{streak}<span className="text-lg text-muted-foreground font-normal"> {streak === 1 ? "day" : "days"}</span></p>
             </>
           )}
         </div>

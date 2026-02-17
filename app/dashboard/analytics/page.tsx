@@ -43,6 +43,7 @@ type AnalyticsSnapshot = {
   urlClicksCount: number;
   followersGained: number;
   impressionsGained: number;
+  createdAt: string;
 };
 
 type AnalyticsAccount = {
@@ -72,9 +73,7 @@ type AnalyticsData = {
 };
 
 function formatNumber(num: number): string {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
+  return num.toLocaleString("en-US");
 }
 
 function MetricCard({
@@ -401,7 +400,20 @@ export default function AnalyticsPage() {
       {/* History */}
       {account.snapshots.length > 1 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-heading font-semibold">History</h2>
+          <div>
+            <h2 className="text-lg font-heading font-semibold">History</h2>
+            <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
+              Last updated: {new Date(latest.createdAt).toLocaleString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                timeZoneName: "short",
+              })}
+            </p>
+          </div>
           <div className="rounded-2xl border-fade overflow-hidden">
             {/* Header */}
             <div className="grid grid-cols-4 gap-4 px-5 py-3 bg-sidebar text-xs text-muted-foreground font-medium uppercase tracking-wide">
@@ -457,15 +469,6 @@ export default function AnalyticsPage() {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground text-center">
-        Last updated: {new Date(latest.date).toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
-        {latest.date === new Date().toISOString().split("T")[0] && " (today)"}
-      </p>
     </div>
   );
 }
