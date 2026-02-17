@@ -9,7 +9,7 @@ export default function Hero() {
     <section className="max-w-3xl text-balance text-center flex flex-col gap-6 mx-auto">
       <FadeIn delay={0.25} duration={0.6}>
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-          Make your social metrics <span className="highlighted">Roaaar</span>
+          Make your <XLogo className="w-10! h-10! md:w-12! md:h-12! rounded-xl! align-middle -mt-1 -rotate-2 [&>svg]:w-5! [&>svg]:h-5! md:[&>svg]:w-6! md:[&>svg]:h-6!" /> social metrics <span className="highlighted">Roaaar</span>
         </h1>
       </FadeIn>
       <FadeIn delay={0.35} duration={0.6}>
@@ -20,11 +20,6 @@ export default function Hero() {
       </FadeIn>
       <FadeIn delay={0.45} duration={0.6}>
         <LovedBy />
-      </FadeIn>
-      <FadeIn delay={0.5} duration={0.6}>
-        <p className="-mt-2 text-sm text-muted-foreground flex items-center justify-center gap-1">
-          For now only available for <XLogo className="mx-1" /><span className="sr-only">X (ex Twitter)</span>
-        </p>
       </FadeIn>
     </section>
   );

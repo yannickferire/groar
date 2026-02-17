@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
-import { createCheckoutSession, getPolarProductId } from "@/lib/polar";
+import { createCheckoutSession, getPolarProductId, BillingPeriod } from "@/lib/polar";
 
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({
@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const planKey = body.plan as PlanType;
+    const billingPeriod = (body.billingPeriod as BillingPeriod) || "monthly";
 
     // Validate plan
     if (!planKey || !(planKey in PLANS)) {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This plan is free" }, { status: 400 });
     }
 
-    const productId = getPolarProductId(planKey as "pro" | "agency");
+    const productId = getPolarProductId(planKey as "pro" | "agency", billingPeriod);
     if (!productId) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         userId: session.user.id,
         plan: planKey,
+        billingPeriod,
       },
     });
 

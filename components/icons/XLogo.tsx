@@ -1,6 +1,6 @@
 export default function XLogo({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center justify-center w-7 h-7 bg-foreground text-background rounded-lg ${className}`}>
+    <span className={`inline-flex items-center justify-center w-7 h-7 bg-gradient-to-br from-foreground to-foreground/80 text-background rounded-lg border-2 border-foreground ${className}`}>
       <svg
         viewBox="0 0 24 24"
         className="w-4 h-4"

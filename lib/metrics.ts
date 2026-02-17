@@ -1,13 +1,22 @@
 import { MetricType } from "@/components/Editor";
 
 /**
- * Parse values like "10k", "1.5M", "100" into numbers
+ * Detect a leading "+" prefix in the input
+ */
+export const detectPrefix = (input: string): string | undefined => {
+  const trimmed = input.trim();
+  if (trimmed.startsWith("+")) return "+";
+  return undefined;
+};
+
+/**
+ * Parse values like "10k", "1.5M", "100", "+39" into numbers
  */
 export const parseMetricInput = (input: string, metricType: MetricType): number | null => {
   // Strip thousands separators (commas and dots used as grouping)
   // Dots followed by exactly 3 digits are treated as thousands separators (e.g., 1.500 -> 1500)
   const trimmed = input.trim().replace(/,/g, "").replace(/\.(?=\d{3}(?:\D|$))/g, "").toLowerCase();
-  if (trimmed === "" || trimmed === "-") return 0;
+  if (trimmed === "" || trimmed === "-" || trimmed === "+") return 0;
 
   // For engagement rate, allow decimals but cap at 100
   if (metricType === "engagementRate") {
@@ -16,7 +25,7 @@ export const parseMetricInput = (input: string, metricType: MetricType): number 
     return Math.min(100, Math.max(0, num));
   }
 
-  const match = trimmed.match(/^(-?\d+\.?\d*)\s*(k|m|b)?$/);
+  const match = trimmed.match(/^([+-]?\d+\.?\d*)\s*(k|m|b)?$/);
   if (!match) return null;
 
   const num = parseFloat(match[1]);
@@ -66,9 +75,10 @@ export const formatNumber = (value: number, abbreviate = true): string => {
 /**
  * Format a metric value for display based on its type
  */
-export const formatMetricValue = (type: MetricType, value: number, abbreviate = true): string => {
+export const formatMetricValue = (type: MetricType, value: number, abbreviate = true, prefix?: string): string => {
   if (type === "engagementRate") {
     return `${value}%`;
   }
-  return formatNumber(value, abbreviate);
+  const formatted = formatNumber(value, abbreviate);
+  return prefix ? `${prefix}${formatted}` : formatted;
 };

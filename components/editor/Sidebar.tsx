@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, memo, useEffect } from "react";
 import { EditorSettings, PeriodType, MetricType, Metric, METRIC_LABELS } from "../Editor";
-import { parseMetricInput } from "@/lib/metrics";
+import { parseMetricInput, detectPrefix } from "@/lib/metrics";
 import { normalizeHandle } from "@/lib/validation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -58,7 +58,7 @@ const MAX_METRICS = 5;
 
 type SortableMetricItemProps = {
   metric: Metric;
-  onValueChange: (type: MetricType, value: number) => void;
+  onValueChange: (type: MetricType, value: number, prefix?: string) => void;
   onRemove: (type: MetricType) => void;
   canRemove: boolean;
   canDrag: boolean;
@@ -105,12 +105,12 @@ function PeriodNumberInput({ value, onChange }: { value: number; onChange: (valu
 }
 
 const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDrag }: SortableMetricItemProps) {
-  const [inputValue, setInputValue] = useState(metric.value.toString());
+  const [inputValue, setInputValue] = useState(metric.prefix ? `${metric.prefix}${metric.value}` : metric.value.toString());
 
   // Sync local state when metric value changes (e.g., from localStorage)
   useEffect(() => {
-    setInputValue(metric.value.toString());
-  }, [metric.value]);
+    setInputValue(metric.prefix ? `${metric.prefix}${metric.value}` : metric.value.toString());
+  }, [metric.value, metric.prefix]);
 
   const {
     attributes,
@@ -134,19 +134,21 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
     // Parse and update the metric value
     const parsed = parseMetricInput(value, metric.type);
     if (parsed !== null) {
-      onValueChange(metric.type, parsed);
+      const prefix = detectPrefix(value);
+      onValueChange(metric.type, parsed, prefix);
       // If user typed a shortcut like "2k", replace with expanded value
       if (/[kmb]$/i.test(value)) {
-        setInputValue(parsed.toString());
+        setInputValue(prefix ? `${prefix}${parsed}` : parsed.toString());
       }
     }
   };
 
   const handleBlur = () => {
-    // Clean up display: remove leading zeros and commas
+    // Clean up display: remove leading zeros and commas, keep prefix
     const parsed = parseMetricInput(inputValue, metric.type);
     if (parsed !== null) {
-      setInputValue(parsed.toString());
+      const prefix = detectPrefix(inputValue);
+      setInputValue(prefix ? `${prefix}${parsed}` : parsed.toString());
     }
   };
 
@@ -362,9 +364,9 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     updateSetting("metrics", settings.metrics.filter(m => m.type !== type));
   }, [updateSetting, settings.metrics]);
 
-  const updateMetricValue = useCallback((type: MetricType, value: number) => {
+  const updateMetricValue = useCallback((type: MetricType, value: number, prefix?: string) => {
     updateSetting("metrics", settings.metrics.map(m =>
-      m.type === type ? { ...m, value } : m
+      m.type === type ? { ...m, value, prefix } : m
     ));
   }, [updateSetting, settings.metrics]);
 
@@ -647,11 +649,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                 type="text"
                 inputMode="text"
                 placeholder="0"
-                value={settings.metrics[0]?.value.toString() || "0"}
+                value={settings.metrics[0]?.prefix ? `${settings.metrics[0].prefix}${settings.metrics[0].value}` : (settings.metrics[0]?.value.toString() || "0")}
                 onChange={(e) => {
                   const parsed = parseMetricInput(e.target.value, settings.metrics[0]?.type || "followers");
                   if (parsed !== null) {
-                    updateSetting("metrics", [{ type: settings.metrics[0]?.type || "followers", value: parsed }]);
+                    const prefix = detectPrefix(e.target.value);
+                    updateSetting("metrics", [{ type: settings.metrics[0]?.type || "followers", value: parsed, prefix }]);
                   }
                 }}
                 className="flex-1 bg-white"

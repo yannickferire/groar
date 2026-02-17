@@ -6,26 +6,14 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Tick01Icon,
-  Analytics01Icon,
-  Clock01Icon,
-  Setting06Icon,
-  FlashIcon,
-  MoreHorizontalIcon,
   StarIcon,
   Cancel01Icon,
+  Clock01Icon,
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
+import { PRO_FEATURES, PRO_PRICING_TIERS, CURRENT_PRO_TIER, CURRENT_PRO_PRICE } from "@/lib/plans";
 
 const FREE_DAILY_LIMIT = 3;
-
-// Same features as Pricing Pro card
-const PRO_FEATURES = [
-  { icon: Analytics01Icon, title: "Dashboard", description: "Track all your metrics" },
-  { icon: FlashIcon, title: "Automation", description: "Auto-fetch your metrics" },
-  { icon: Setting06Icon, title: "Custom branding", description: "Remove watermark" },
-  { icon: Clock01Icon, title: "History", description: "Access past visuals" },
-  { icon: MoreHorizontalIcon, title: "And more...", description: "Templates, all platforms, etc." },
-];
 
 type UpgradeModalProps = {
   open: boolean;
@@ -167,9 +155,21 @@ export default function UpgradeModal({
                       {/* Pro title */}
                       <div className="mb-4">
                         <h4 className="text-lg font-heading font-bold">
-                          Groar Pro <span className="inline-block">🐯</span>
+                          <span className="inline-block">🐯</span> GROAR Pro
                         </h4>
                         <p className="text-sm text-background/60">Unlimited exports + premium features</p>
+                        {(() => {
+                          const tier = PRO_PRICING_TIERS[CURRENT_PRO_TIER];
+                          const nextTier = PRO_PRICING_TIERS[CURRENT_PRO_TIER + 1];
+                          if (tier && tier.spots !== null && nextTier) {
+                            return (
+                              <p className="text-xs text-background/40 mt-1">
+                                Launch price – <span className="text-primary font-medium">{tier.spots} spots left</span> – Next: ${nextTier.price}/mo
+                              </p>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
 
                       {/* Premium features list */}
@@ -191,7 +191,7 @@ export default function UpgradeModal({
                       <div className="flex flex-col gap-2">
                         <Button asChild variant="defaultReverse" size="lg" className="w-full">
                           <Link href="/pricing">
-                            Upgrade to Pro — $9/month
+                            Upgrade to Pro — ${CURRENT_PRO_PRICE}/month
                           </Link>
                         </Button>
                         <button

@@ -132,7 +132,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                     strokeWidth={2}
                     color="currentColor"
                   />
-                  {formatMetricValue(metric.type, metric.value, abbreviate)} {METRIC_LABELS[metric.type].toLowerCase()}
+                  {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {METRIC_LABELS[metric.type].toLowerCase()}
                 </p>
               ))}
             </div>

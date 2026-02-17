@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState<"google" | "twitter" | null>(null);
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan") as PlanType | null;
+  const billingParam = searchParams.get("billing");
 
   // Determine callback URL based on plan
   const getCallbackURL = () => {
@@ -25,8 +26,10 @@ export default function LoginPage() {
       // Free plan, go directly to dashboard
       return "/dashboard";
     }
-    // Paid plan, go to onboarding which handles Polar checkout
-    return `/onboarding?plan=${planParam}`;
+    // Paid plan, go directly to checkout
+    const params = new URLSearchParams({ plan: planParam });
+    if (billingParam) params.set("billing", billingParam);
+    return `/checkout-redirect?${params.toString()}`;
   };
 
   const handleGoogle = () => {

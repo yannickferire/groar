@@ -61,14 +61,20 @@ function validateEnv(): { accessToken: string; webhookSecret: string } {
 }
 
 // Get Polar product ID from env or fallback
-export function getPolarProductId(plan: "pro" | "agency"): string | null {
-  if (plan === "pro") {
-    return process.env.POLAR_PRODUCT_ID_PRO || "43027235-0bb3-4ace-86a1-f154a3c6a866";
-  }
-  if (plan === "agency") {
-    return process.env.POLAR_PRODUCT_ID_AGENCY || "29945ded-b994-4dea-8d76-ce3cd1c98a6f";
-  }
-  return null;
+import type { BillingPeriod } from "@/lib/plans";
+export type { BillingPeriod };
+
+const POLAR_PRODUCT_IDS: Record<string, string> = {
+  "pro:monthly": "43027235-0bb3-4ace-86a1-f154a3c6a866",
+  "pro:annual": "51c67e06-c8e0-462f-b9c4-64b736a55162",
+  "agency:monthly": "29945ded-b994-4dea-8d76-ce3cd1c98a6f",
+  "agency:annual": "e878aaaa-1858-4dc9-9e0f-431f27b98e9b"
+};
+
+export function getPolarProductId(plan: "pro" | "agency", billingPeriod: BillingPeriod = "monthly"): string | null {
+  const envKey = `POLAR_PRODUCT_ID_${plan.toUpperCase()}_${billingPeriod === "annual" ? "ANNUAL" : "MONTHLY"}`;
+  const fallbackKey = `${plan}:${billingPeriod}`;
+  return process.env[envKey] || POLAR_PRODUCT_IDS[fallbackKey] || null;
 }
 
 // Create checkout session
