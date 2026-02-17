@@ -237,13 +237,23 @@ input.gooey:focus {
   background: color-mix(in srgb, var(--muted) 50%, var(--card));
 }
 
+.border-fade {
+  --border-fade-top: 70%;
+  --border-fade-bottom: 20%;
+}
+
+.border-fade.border-fade-reverse {
+  --border-fade-top: 20%;
+  --border-fade-bottom: 70%;
+}
+
 .border-fade::before {
   content: "";
   position: absolute;
   inset: 0;
   padding: 1px;
   border-radius: inherit;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) 70%, transparent) 0%, color-mix(in srgb, var(--primary) 20%, transparent) 100%);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--primary) var(--border-fade-top), transparent) 0%, color-mix(in srgb, var(--primary) var(--border-fade-bottom), transparent) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;

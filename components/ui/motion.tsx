@@ -156,33 +156,50 @@ export function StaggerItem({
 type AnimatedCounterProps = {
   value: number;
   duration?: number;
+  delay?: number;
   formatter?: (value: number) => string;
   className?: string;
+  /** Starting value for the animation. If not set, defaults to ~80-90% of value (closer for larger numbers). */
+  from?: number;
 };
+
+function getDefaultFrom(value: number): number {
+  if (value <= 5) return 0;
+  if (value <= 50) return Math.floor(value * 0.7);
+  if (value <= 500) return Math.floor(value * 0.8);
+  return Math.floor(value * 0.9);
+}
 
 export function AnimatedCounter({
   value,
-  duration = 1.5,
+  duration = 1,
+  delay = 0,
   formatter = (n) => n.toLocaleString("fr-FR"),
   className,
+  from,
 }: AnimatedCounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
 
-  const motionValue = useMotionValue(0);
+  const startValue = from ?? getDefaultFrom(value);
+  const motionValue = useMotionValue(startValue);
   const display = useTransform(motionValue, (current) =>
     formatter(Math.round(current))
   );
 
   useEffect(() => {
     if (inView) {
-      const controls = animate(motionValue, value, {
-        duration,
-        ease: "easeOut",
-      });
-      return () => controls.stop();
+      motionValue.set(startValue);
+      const timeout = setTimeout(() => {
+        const controls = animate(motionValue, value, {
+          duration,
+          ease: "easeOut",
+        });
+        return () => controls.stop();
+      }, delay * 1000);
+      return () => clearTimeout(timeout);
     }
-  }, [inView, motionValue, value, duration]);
+  }, [inView, motionValue, value, duration, startValue, delay]);
 
   return (
     <motion.span ref={ref} className={className}>

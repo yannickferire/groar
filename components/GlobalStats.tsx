@@ -2,22 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Image01Icon, UserLove01Icon, EyeIcon } from "@hugeicons/core-free-icons";
+import { Download04Icon, UserLove01Icon, DashboardSquare01Icon, Image01Icon } from "@hugeicons/core-free-icons";
 import { FadeInView, StaggerContainer, StaggerItem, AnimatedCounter } from "@/components/ui/motion";
+import { BACKGROUNDS } from "@/lib/backgrounds";
 
 type GlobalStatsData = {
   totalExports: number;
   totalFollowers: number;
-  totalImpressions: number;
 };
 
-const numberFormatter = (n: number) => n.toLocaleString("fr-FR");
+const numberFormatter = (n: number) => n.toLocaleString("en-US");
 
 export default function GlobalStats() {
   const [stats, setStats] = useState<GlobalStatsData>({
     totalExports: 0,
     totalFollowers: 0,
-    totalImpressions: 0,
   });
   const [loaded, setLoaded] = useState(false);
 
@@ -33,7 +32,6 @@ export default function GlobalStats() {
           setStats({
             totalExports: Number(statsData.totalExports ?? 0),
             totalFollowers: Number(statsData.totalFollowers ?? 0),
-            totalImpressions: Number(statsData.totalImpressions ?? 0),
           });
           setLoaded(true);
         }
@@ -51,21 +49,24 @@ export default function GlobalStats() {
     };
   }, []);
 
+  // +1 for solid color preset
+  const backgroundCount = BACKGROUNDS.length + 1;
+
   return (
     <FadeInView delay={0.3} duration={0.6}>
-      <section className="w-full max-w-5xl mx-auto">
-        <div className="rounded-3xl border-fade p-6 md:p-8">
+      <section className="w-full max-w-5xl mx-auto -mb-6 md:-mb-12">
+        <div className="rounded-3xl border-fade border-fade-reverse p-6 md:p-8">
           <StaggerContainer
             staggerDelay={0.15}
             delayChildren={0.2}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center"
+            className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
           >
             <StaggerItem>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
-                <HugeiconsIcon icon={Image01Icon} size={18} strokeWidth={2} />
-                Images created
+                <HugeiconsIcon icon={Download04Icon} size={18} strokeWidth={2} />
+                Visuals exported
               </p>
-              <p className="text-3xl font-heading font-bold mt-3">
+              <p className="text-3xl font-mono font-bold mt-3">
                 {loaded ? (
                   <AnimatedCounter value={stats.totalExports} formatter={numberFormatter} />
                 ) : (
@@ -77,9 +78,9 @@ export default function GlobalStats() {
             <StaggerItem>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
                 <HugeiconsIcon icon={UserLove01Icon} size={18} strokeWidth={2} />
-                Followers announced
+                Followers gained
               </p>
-              <p className="text-3xl font-heading font-bold mt-3">
+              <p className="text-3xl font-mono font-bold mt-3">
                 {loaded ? (
                   <AnimatedCounter value={stats.totalFollowers} formatter={numberFormatter} />
                 ) : (
@@ -90,12 +91,26 @@ export default function GlobalStats() {
 
             <StaggerItem>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
-                <HugeiconsIcon icon={EyeIcon} size={18} strokeWidth={2} />
-                Impressions announced
+                <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} />
+                Templates
               </p>
-              <p className="text-3xl font-heading font-bold mt-3">
+              <p className="text-3xl font-mono font-bold mt-3">
                 {loaded ? (
-                  <AnimatedCounter value={stats.totalImpressions} formatter={numberFormatter} />
+                  <AnimatedCounter value={3} />
+                ) : (
+                  "0"
+                )}
+              </p>
+            </StaggerItem>
+
+            <StaggerItem>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
+                <HugeiconsIcon icon={Image01Icon} size={18} strokeWidth={2} />
+                Backgrounds
+              </p>
+              <p className="text-3xl font-mono font-bold mt-3">
+                {loaded ? (
+                  <><AnimatedCounter value={backgroundCount} /><span>+</span></>
                 ) : (
                   "0"
                 )}

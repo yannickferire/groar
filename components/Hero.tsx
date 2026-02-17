@@ -18,9 +18,9 @@ export default function Hero() {
           Share your wins and watch the engagement grow.
         </p>
       </FadeIn>
-      <FadeIn delay={0.45} duration={0.6}>
+      {/* <FadeIn delay={0.45} duration={0.6}>
         <LovedBy />
-      </FadeIn>
+      </FadeIn> */}
     </section>
   );
 }

@@ -46,14 +46,19 @@ export const parseMetricInput = (input: string, metricType: MetricType): number 
 };
 
 /**
- * Format a number abbreviated (e.g., 10000 -> "10.0K")
+ * Format a number abbreviated (e.g., 1450 -> "1.45K", 10000 -> "10K")
+ * Keeps enough decimal places to avoid losing precision, removes trailing zeros.
  */
 export const formatNumberShort = (value: number): string => {
   if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
+    const divided = value / 1000000;
+    const decimals = divided < 10 ? 2 : divided < 100 ? 1 : 0;
+    return `${parseFloat(divided.toFixed(decimals))}M`;
   }
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`;
+    const divided = value / 1000;
+    const decimals = divided < 10 ? 2 : divided < 100 ? 1 : 0;
+    return `${parseFloat(divided.toFixed(decimals))}K`;
   }
   return value.toString();
 };

@@ -1,10 +1,27 @@
 "use client";
 
-import { PLANS, PlanType, BillingPeriod } from "@/lib/plans";
+import { useEffect, useState } from "react";
+import { PLANS, PlanType, BillingPeriod, PLAN_ORDER } from "@/lib/plans";
 import { FadeInView } from "@/components/ui/motion";
 import PricingCards from "@/components/PricingCards";
+import { authClient } from "@/lib/auth-client";
 
 export default function Pricing() {
+  const { data: session } = authClient.useSession();
+  const [userPlan, setUserPlan] = useState<PlanType | null>(null);
+
+  useEffect(() => {
+    if (!session) {
+      setUserPlan(null);
+      return;
+    }
+
+    fetch("/api/user/plan")
+      .then((res) => res.json())
+      .then((data) => setUserPlan(data.plan || "free"))
+      .catch(() => setUserPlan("free"));
+  }, [session]);
+
   const handleSelectPlan = (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") {
       const editor = document.getElementById("editor");
@@ -14,14 +31,55 @@ export default function Pricing() {
       }
       return;
     }
+
+    // Already logged in with a paid plan
+    if (session && userPlan && userPlan !== "free") {
+      if (userPlan === planKey || (planKey === "pro" && userPlan === "friend")) {
+        window.location.href = "/dashboard";
+        return;
+      }
+      // Upgrade or downgrade: go to plan management page
+      window.location.href = "/dashboard/plan";
+      return;
+    }
+
     const params = new URLSearchParams({ plan: planKey });
     if (billingPeriod) params.set("billing", billingPeriod);
     window.location.href = `/login?${params.toString()}`;
   };
 
+  const getCtaLabel = (planKey: PlanType): string => {
+    if (planKey === "free") return "Try for free";
+
+    // Not logged in OR free plan: same CTAs
+    if (!userPlan || userPlan === "free") {
+      if (planKey === "pro") return "Claim your spot";
+      return "Get started";
+    }
+
+    // Current plan → "Dashboard"
+    if (userPlan === planKey || (planKey === "pro" && userPlan === "friend")) {
+      return "Dashboard";
+    }
+
+    const currentIndex = PLAN_ORDER.indexOf(userPlan === "friend" ? "pro" : userPlan);
+    const targetIndex = PLAN_ORDER.indexOf(planKey);
+
+    if (targetIndex > currentIndex) return "Upgrade plan";
+    return "Downgrade plan";
+  };
+
+  // Only show "Current" badge for paid plans
+  const effectivePlan = userPlan === "friend" ? "pro" : userPlan;
+  const displayCurrentPlan = effectivePlan && effectivePlan !== "free" ? effectivePlan : undefined;
+
+  // Only Agency is disabled when it's the current plan
+  const disabledPlans: PlanType[] = [];
+  if (effectivePlan === "agency") disabledPlans.push("agency");
+
   return (
     <FadeInView direction="up" distance={32}>
-      <section className="w-full max-w-5xl mx-auto py-4">
+      <section id="pricing" className="w-full max-w-5xl mx-auto py-4 scroll-mt-12.5">
         <div className="text-center mb-18">
           <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight mb-3">
             Simple pricing
@@ -33,14 +91,12 @@ export default function Pricing() {
 
         <PricingCards
           onSelectPlan={handleSelectPlan}
+          currentPlan={displayCurrentPlan}
+          disabledPlans={disabledPlans}
           animated={true}
           showProFeatures={true}
           proHighlighted={true}
-          ctaLabel={(planKey) => {
-            if (planKey === "free") return "Try for free";
-            if (planKey === "pro") return "Claim your spot";
-            return "Get started";
-          }}
+          ctaLabel={getCtaLabel}
         />
       </section>
     </FadeInView>

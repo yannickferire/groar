@@ -48,7 +48,7 @@ export default function UpgradeModal({
             {/* Content - centered */}
             <RadixDialog.Content asChild>
               <motion.div
-                className="fixed left-[50%] top-[50%] z-50 w-full max-w-md origin-bottom"
+                className="fixed left-[50%] top-[50%] z-50 w-full max-w-lg origin-bottom"
                 style={{ translateX: "-50%", translateY: "-50%" }}
                 initial={{
                   opacity: 0,
@@ -92,20 +92,20 @@ export default function UpgradeModal({
                   </button>
 
                   {/* Header - light */}
-                  <div className="p-5 pb-4">
-                    <div className="flex items-center gap-3">
+                  <div className="p-6 pb-5">
+                    <div className="flex items-center gap-4">
                       {isAtLimit ? (
                         <>
-                          <div className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                             <HugeiconsIcon
                               icon={Clock01Icon}
-                              size={22}
+                              size={24}
                               strokeWidth={2}
                               className="text-amber-600"
                             />
                           </div>
                           <div>
-                            <h3 className="text-lg font-heading font-bold text-foreground">Daily limit reached</h3>
+                            <h3 className="text-xl font-heading font-bold text-foreground">Daily limit reached</h3>
                             <p className="text-sm text-muted-foreground">
                               You&apos;ve used all {FREE_DAILY_LIMIT} free exports for today
                             </p>
@@ -113,16 +113,16 @@ export default function UpgradeModal({
                         </>
                       ) : (
                         <>
-                          <div className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
                             <HugeiconsIcon
                               icon={Tick01Icon}
-                              size={22}
+                              size={24}
                               strokeWidth={2.5}
                               className="text-green-600"
                             />
                           </div>
                           <div>
-                            <h3 className="text-lg font-heading font-bold text-foreground">Image downloaded!</h3>
+                            <h3 className="text-xl font-heading font-bold text-foreground">Image downloaded!</h3>
                             <p className="text-sm text-muted-foreground">
                               Export {exportCount} of {FREE_DAILY_LIMIT} today
                               {remaining === 1 && <span className="text-amber-600 font-medium"> — last one!</span>}
@@ -134,8 +134,8 @@ export default function UpgradeModal({
                   </div>
 
                   {/* Pro section - dark background with spacing */}
-                  <div className="px-4 pb-4">
-                    <div className="relative bg-foreground text-background p-5 rounded-xl overflow-hidden">
+                  <div className="px-5 pb-5">
+                    <div className="relative bg-foreground text-background p-6 rounded-xl overflow-hidden">
                     {/* Badge */}
                     <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-medium px-2.5 py-1 rounded-full z-20 flex items-center gap-1">
                       <HugeiconsIcon icon={StarIcon} size={12} strokeWidth={2} />
@@ -144,7 +144,7 @@ export default function UpgradeModal({
 
                     {/* Gradient effect */}
                     <motion.div
-                      className="absolute -bottom-16 -right-32 w-64 h-48 bg-gradient-to-tl from-primary/40 via-primary/20 to-transparent blur-3xl rotate-[-25deg]"
+                      className="absolute -bottom-20 -right-40 w-80 h-60 bg-linear-to-tl from-primary/40 via-primary/20 to-transparent blur-3xl rotate-[-25deg]"
                       style={{ borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%" }}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -153,8 +153,8 @@ export default function UpgradeModal({
 
                     <div className="relative z-10">
                       {/* Pro title */}
-                      <div className="mb-4">
-                        <h4 className="text-lg font-heading font-bold">
+                      <div className="mb-5">
+                        <h4 className="text-xl font-heading font-bold">
                           <span className="inline-block">🐯</span> GROAR Pro
                         </h4>
                         <p className="text-sm text-background/60">Unlimited exports + premium features</p>
@@ -163,7 +163,7 @@ export default function UpgradeModal({
                           const nextTier = PRO_PRICING_TIERS[CURRENT_PRO_TIER + 1];
                           if (tier && tier.spots !== null && nextTier) {
                             return (
-                              <p className="text-xs text-background/40 mt-1">
+                              <p className="text-xs text-background/50 mt-1.5">
                                 Launch price – <span className="text-primary font-medium">{tier.spots} spots left</span> – Next: ${nextTier.price}/mo
                               </p>
                             );
@@ -173,15 +173,15 @@ export default function UpgradeModal({
                       </div>
 
                       {/* Premium features list */}
-                      <div className="grid grid-cols-2 gap-2.5 mb-5">
+                      <div className="space-y-2.5 mb-6">
                         {PRO_FEATURES.map((feature, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
-                              <HugeiconsIcon icon={feature.icon} size={14} strokeWidth={1.5} className="text-primary" />
+                          <div key={index} className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
+                              <HugeiconsIcon icon={feature.icon} size={16} strokeWidth={1.5} className="text-primary" />
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-xs font-medium leading-tight truncate">{feature.title}</p>
-                              <p className="text-[10px] text-background/50 leading-tight truncate">{feature.description}</p>
+                            <div>
+                              <p className="text-sm font-medium leading-tight">{feature.title}</p>
+                              <p className="text-xs text-background/50">{feature.description}</p>
                             </div>
                           </div>
                         ))}

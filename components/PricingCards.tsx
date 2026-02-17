@@ -1,7 +1,7 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, PRO_PRICING_TIERS, CURRENT_PRO_TIER, CURRENT_PRO_PRICE, BillingPeriod, getAnnualPrice } from "@/lib/plans";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
@@ -17,6 +17,7 @@ type PricingCardsProps = {
   proHighlighted?: boolean;
   animated?: boolean;
   showBillingToggle?: boolean;
+  disabledPlans?: PlanType[];
 };
 
 function ProCard({
@@ -146,12 +147,17 @@ function ProCard({
             variant="defaultReverse"
             className="w-full"
             onClick={onSelect}
-            disabled={isCurrent || disabled}
+            disabled={disabled}
           >
             {isLoading ? (
               <HugeiconsIcon icon={Loading03Icon} size={18} strokeWidth={2} className="animate-spin" />
             ) : (
-              ctaLabel
+              <>
+                {ctaLabel !== "Dashboard" && (
+                  <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+                )}
+                {ctaLabel}
+              </>
             )}
           </Button>
         </div>
@@ -261,7 +267,7 @@ function PlanCard({
         variant={isCurrent ? "defaultReverse" : "outline"}
         className="w-full"
         onClick={onSelect}
-        disabled={isCurrent || disabled}
+        disabled={disabled}
       >
         {isLoading ? (
           <HugeiconsIcon icon={Loading03Icon} size={18} strokeWidth={2} className="animate-spin" />
@@ -324,6 +330,7 @@ export default function PricingCards({
   proHighlighted = true,
   animated = false,
   showBillingToggle = true,
+  disabledPlans = [],
 }: PricingCardsProps) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
 
@@ -340,6 +347,7 @@ export default function PricingCards({
     const isCurrent = currentPlan === planKey;
     const isLoading = loadingPlan === planKey;
     const isPro = planKey === "pro";
+    const isDisabled = isAnyLoading || disabledPlans.includes(planKey);
 
     const card = isPro ? (
       <ProCard
@@ -352,7 +360,7 @@ export default function PricingCards({
         showProFeatures={showProFeatures}
         proHighlighted={proHighlighted}
         onSelect={() => onSelectPlan(planKey, billingPeriod)}
-        disabled={isAnyLoading}
+        disabled={isDisabled}
         billingPeriod={billingPeriod}
       />
     ) : (
@@ -364,7 +372,7 @@ export default function PricingCards({
         isLoading={isLoading}
         ctaLabel={getLabel(planKey)}
         onSelect={() => onSelectPlan(planKey, billingPeriod)}
-        disabled={isAnyLoading}
+        disabled={isDisabled}
         billingPeriod={billingPeriod}
       />
     );
@@ -382,7 +390,7 @@ export default function PricingCards({
               showProFeatures={showProFeatures}
               proHighlighted={false}
               onSelect={() => onSelectPlan(planKey, billingPeriod)}
-              disabled={isAnyLoading}
+              disabled={isDisabled}
               billingPeriod={billingPeriod}
             />
           ) : (
@@ -393,7 +401,7 @@ export default function PricingCards({
               isLoading={isLoading}
               ctaLabel={getLabel(planKey)}
               onSelect={() => onSelectPlan(planKey, billingPeriod)}
-              disabled={isAnyLoading}
+              disabled={isDisabled}
               billingPeriod={billingPeriod}
             />
           )}

@@ -210,7 +210,8 @@ export default function Editor({ isPremium = false }: EditorProps) {
         .then((res) => res.json())
         .then((data) => {
           if (data.export?.metrics) {
-            const imported = data.export.metrics as Partial<EditorSettings>;
+            const raw = data.export.metrics;
+            const imported = (typeof raw === "string" ? JSON.parse(raw) : raw) as Partial<EditorSettings>;
             setSettings({
               ...defaultSettings,
               ...imported,
@@ -226,9 +227,18 @@ export default function Editor({ isPremium = false }: EditorProps) {
           setIsLoading(false);
         });
     } else {
-      setSettings(loadSettings());
+      const loaded = loadSettings();
+      if (!isPremium) {
+        // Landing page: always use default premium settings
+        loaded.template = defaultSettings.template;
+        loaded.font = defaultSettings.font;
+        loaded.aspectRatio = defaultSettings.aspectRatio;
+        loaded.abbreviateNumbers = defaultSettings.abbreviateNumbers;
+        loaded.branding = undefined;
+      }
+      setSettings(loaded);
     }
-  }, [importId]);
+  }, [importId, isPremium]);
 
   // Save settings to localStorage when they change (debounced)
   useEffect(() => {
@@ -361,7 +371,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
   );
 
   const editorContent = (
-    <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-[50px]">
+    <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-12.5">
       <Sidebar
         settings={settings}
         onSettingsChange={setSettings}

@@ -171,6 +171,7 @@ export default function PlanPage() {
           <PricingCards
             onSelectPlan={handleUpgrade}
             currentPlan={planData.plan}
+            disabledPlans={[planData.plan]}
             loadingPlan={upgrading}
             showProFeatures={false}
             proHighlighted={false}
