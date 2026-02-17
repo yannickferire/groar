@@ -22,7 +22,6 @@ type PricingCardsProps = {
 
 function ProCard({
   plan,
-  planKey,
   isCurrent,
   isLoading,
   ctaLabel,
@@ -44,12 +43,12 @@ function ProCard({
   billingPeriod: BillingPeriod;
 }) {
   return (
-    <div className={proHighlighted ? "md:-my-6 md:-mx-8 relative z-10" : ""}>
+    <div className={proHighlighted ? "md:-my-6 md:-mx-4 relative z-10" : ""}>
       <div className="relative rounded-3xl p-8 flex flex-col bg-foreground text-background overflow-hidden">
         {/* Badge */}
         {!isCurrent && (
-          <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-medium px-2.5 py-1 rounded-full z-20 flex items-center gap-1">
-            <HugeiconsIcon icon={StarIcon} size={12} strokeWidth={2} />
+          <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-[14px] z-20 flex items-center gap-1">
+            <HugeiconsIcon icon={StarIcon} size={12} strokeWidth={3} />
             Popular
           </div>
         )}
@@ -80,17 +79,19 @@ function ProCard({
                 </span>
               )}
             </div>
-            <div className="flex items-baseline gap-1">
+            <div className="flex items-baseline gap-0.5">
               {billingPeriod === "annual" ? (
                 <>
-                  <span className="text-3xl font-heading font-bold">${getAnnualPrice(CURRENT_PRO_PRICE)}</span>
-                  <span className="text-background/60 text-sm">/year</span>
+                  <span className="text-[32px] font-heading font-extrabold leading-none">$</span>
+                  <span className="text-[42px] font-mono font-black leading-none">{getAnnualPrice(CURRENT_PRO_PRICE)}</span>
+                  <span className="text-background/60 text-sm ml-0.5">/year</span>
                   <span className="text-sm text-background/40 line-through ml-1">${CURRENT_PRO_PRICE * 12}</span>
                 </>
               ) : (
                 <>
-                  <span className="text-3xl font-heading font-bold">${CURRENT_PRO_PRICE}</span>
-                  <span className="text-background/60 text-sm">/month</span>
+                  <span className="text-[32px] font-heading font-extrabold leading-none">$</span>
+                  <span className="text-[42px] font-mono font-black leading-none">{CURRENT_PRO_PRICE}</span>
+                  <span className="text-background/60 text-sm ml-0.5">/month</span>
                 </>
               )}
             </div>
@@ -113,16 +114,13 @@ function ProCard({
 
           {/* Premium features icons */}
           {showProFeatures && (
-            <div className="space-y-2.5 mb-6">
+            <div className="space-y-2 mb-6">
               {PRO_FEATURES.map((feature, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
                     <HugeiconsIcon icon={feature.icon} size={16} strokeWidth={1.5} className="text-primary" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium leading-tight">{feature.title}</p>
-                    <p className="text-xs text-background/50">{feature.description}</p>
-                  </div>
+                  <p className="text-sm font-medium leading-tight text-muted">{feature.title}</p>
                 </div>
               ))}
             </div>
@@ -176,7 +174,7 @@ function PlanCard({
   disabled,
   billingPeriod,
 }: {
-  plan: typeof PLANS.free;
+  plan: (typeof PLANS)[keyof typeof PLANS];
   planKey: PlanType;
   isCurrent: boolean;
   isLoading: boolean;
@@ -187,9 +185,9 @@ function PlanCard({
 }) {
   return (
     <div
-      className={`relative rounded-3xl p-7 h-full flex flex-col ${
-        isCurrent ? "bg-foreground text-background" : "bg-card border-fade"
-      }`}
+      className={`relative p-7 h-full flex flex-col rounded-3xl ${
+        planKey === "free" ? "md:rounded-r-none" : planKey === "agency" ? "md:rounded-l-none" : ""
+      } ${isCurrent ? "bg-foreground text-background" : "bg-card border-fade"}`}
     >
       {isCurrent && (
         <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-medium px-2.5 py-1 rounded-full">
@@ -206,20 +204,22 @@ function PlanCard({
             </span>
           )}
         </div>
-        <div className="flex items-baseline gap-1">
+        <div className="flex items-baseline gap-0.5">
           {plan.price > 0 && billingPeriod === "annual" ? (
             <>
-              <span className="text-3xl font-heading font-bold">${getAnnualPrice(plan.price)}</span>
-              <span className={isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}>
+              <span className="text-[32px] font-heading font-extrabold leading-none">$</span>
+              <span className="text-[42px] font-mono font-black leading-none">{getAnnualPrice(plan.price)}</span>
+              <span className={`ml-0.5 ${isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}`}>
                 /year
               </span>
               <span className={`text-sm line-through ml-1 ${isCurrent ? "text-background/30" : "text-muted-foreground/40"}`}>${plan.price * 12}</span>
             </>
           ) : (
             <>
-              <span className="text-3xl font-heading font-bold">${plan.price}</span>
+              <span className="text-[32px] font-heading font-extrabold leading-none">$</span>
+              <span className="text-[42px] font-mono font-black leading-none">{plan.price}</span>
               {plan.price > 0 && (
-                <span className={isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}>
+                <span className={`ml-0.5 ${isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}`}>
                   /month
                 </span>
               )}
@@ -352,7 +352,7 @@ export default function PricingCards({
     const card = isPro ? (
       <ProCard
         key={planKey}
-        plan={plan}
+        plan={plan as typeof PLANS.pro}
         planKey={planKey}
         isCurrent={isCurrent}
         isLoading={isLoading}
@@ -379,10 +379,10 @@ export default function PricingCards({
 
     if (animated) {
       return (
-        <StaggerItem key={planKey} direction="up" distance={24} className={isPro && proHighlighted ? "md:-my-6 md:-mx-8 relative z-10" : ""}>
+        <StaggerItem key={planKey} direction="up" distance={24} className={isPro && proHighlighted ? "md:-my-6 md:-mx-4 relative z-10" : ""}>
           {isPro ? (
             <ProCard
-              plan={plan}
+              plan={plan as typeof PLANS.pro}
               planKey={planKey}
               isCurrent={isCurrent}
               isLoading={isLoading}
@@ -424,7 +424,7 @@ export default function PricingCards({
             <BillingToggle period={billingPeriod} onChange={setBillingPeriod} />
           </StaggerItem>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-center">
           {cards}
         </div>
       </StaggerContainer>
@@ -434,7 +434,7 @@ export default function PricingCards({
   return (
     <div>
       {toggle}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-center">
         {cards}
       </div>
     </div>

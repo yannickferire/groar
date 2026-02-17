@@ -5,7 +5,6 @@
 import {
   Setting06Icon,
   Clock01Icon,
-  Link01Icon,
   Image01Icon,
   Layout01Icon,
   ChromeIcon,
@@ -52,6 +51,7 @@ export const PLANS = {
       "Everything in Pro",
       "Connect 10 accounts per platform",
       "Brand presets per client",
+      "Early access to new features",
       "Priority support",
     ],
   },
@@ -83,13 +83,12 @@ export const PLAN_LIMITS = Object.fromEntries(
 
 export const PLAN_ORDER: PlanType[] = ["free", "pro", "agency"];
 
-export const PRO_FEATURES: { icon: IconSvgElement; title: string; description: string }[] = [
-  { icon: Layout01Icon, title: "Templates", description: "All templates unlocked" },
-  { icon: Image01Icon, title: "More backgrounds", description: "Full background library" },
-  { icon: Link01Icon, title: "Connect accounts", description: "Auto-fetch your metrics" },
-  { icon: Setting06Icon, title: "Brand customization", description: "Remove watermark, custom style" },
-  { icon: Clock01Icon, title: "History", description: "Re-import past visuals" },
-  { icon: ChromeIcon, title: "Chrome extension", description: "Coming soon to fetch all your metrics" },
+export const PRO_FEATURES: { icon: IconSvgElement; title: string }[] = [
+  { icon: Layout01Icon, title: "All templates unlocked" },
+  { icon: Image01Icon, title: "Full background library" },
+  { icon: Setting06Icon, title: "Custom branding" },
+  { icon: Clock01Icon, title: "Export history & re-import" },
+  { icon: ChromeIcon, title: "Chrome extension (coming soon)" },
 ];
 
 export const PRO_CHECKS: string[] = [

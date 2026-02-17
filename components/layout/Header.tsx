@@ -26,13 +26,13 @@ export default function Header() {
           <Logo />
           <nav className="flex items-center gap-6">
             <button
-              onClick={() => smoothScrollTo("editor", 40)}
+              onClick={() => smoothScrollTo("editor", 72)}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Try for free
             </button>
             <button
-              onClick={() => smoothScrollTo("pricing", 40)}
+              onClick={() => smoothScrollTo("pricing", 72)}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Pricing

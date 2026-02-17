@@ -6,11 +6,25 @@ export const dynamic = "force-dynamic";
 // GET: Global stats for landing page (public)
 export async function GET() {
   try {
-    // Count total exports
+    // Count total exports (DB exports + anonymous exports)
     const exportsResult = await pool.query(
       `SELECT COUNT(*) as count FROM "export"`
     );
-    const totalExports = parseInt(exportsResult.rows[0].count, 10);
+    const dbExports = parseInt(exportsResult.rows[0].count, 10);
+
+    let anonymousExports = 0;
+    try {
+      const counterResult = await pool.query(
+        `SELECT value FROM counter WHERE key = 'anonymous_exports'`
+      );
+      if (counterResult.rows.length > 0) {
+        anonymousExports = counterResult.rows[0].value;
+      }
+    } catch {
+      // counter table may not exist yet
+    }
+
+    const totalExports = dbExports + anonymousExports;
 
     // Sum followers from all exports (metrics->'followers')
     const followersResult = await pool.query(
@@ -32,7 +46,19 @@ export async function GET() {
       ), 0) as total
       FROM "export"`
     );
-    const totalFollowers = parseInt(followersResult.rows[0].total, 10);
+    let anonymousFollowers = 0;
+    try {
+      const counterResult = await pool.query(
+        `SELECT value FROM counter WHERE key = 'anonymous_followers'`
+      );
+      if (counterResult.rows.length > 0) {
+        anonymousFollowers = counterResult.rows[0].value;
+      }
+    } catch {
+      // counter table may not exist yet
+    }
+
+    const totalFollowers = parseInt(followersResult.rows[0].total, 10) + anonymousFollowers;
 
     // Sum impressions from all exports
     const impressionsResult = await pool.query(

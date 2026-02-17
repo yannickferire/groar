@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Download04Icon, UserLove01Icon, DashboardSquare01Icon, Image01Icon } from "@hugeicons/core-free-icons";
 import { FadeInView, StaggerContainer, StaggerItem, AnimatedCounter } from "@/components/ui/motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 
 type GlobalStatsData = {
@@ -49,6 +50,20 @@ export default function GlobalStats() {
     };
   }, []);
 
+  // Listen for real-time export events from Editor
+  const handleExport = useCallback((e: Event) => {
+    const { followers } = (e as CustomEvent).detail;
+    setStats((prev) => ({
+      totalExports: prev.totalExports + 1,
+      totalFollowers: prev.totalFollowers + (followers || 0),
+    }));
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("groar:export", handleExport);
+    return () => window.removeEventListener("groar:export", handleExport);
+  }, [handleExport]);
+
   // +1 for solid color preset
   const backgroundCount = BACKGROUNDS.length + 1;
 
@@ -66,27 +81,35 @@ export default function GlobalStats() {
                 <HugeiconsIcon icon={Download04Icon} size={18} strokeWidth={2} />
                 Visuals exported
               </p>
-              <p className="text-3xl font-mono font-bold mt-3">
-                {loaded ? (
-                  <AnimatedCounter value={stats.totalExports} formatter={numberFormatter} />
-                ) : (
-                  "0"
-                )}
-              </p>
+              <div className="text-3xl font-mono font-bold mt-3 flex justify-center">
+                <AnimatePresence mode="wait">
+                  {loaded ? (
+                    <motion.span key="value" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                      <AnimatedCounter value={stats.totalExports} formatter={numberFormatter} />
+                    </motion.span>
+                  ) : (
+                    <motion.span key="skeleton" exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="inline-block h-9 w-16 rounded-lg bg-muted-foreground/10 animate-pulse" />
+                  )}
+                </AnimatePresence>
+              </div>
             </StaggerItem>
 
             <StaggerItem>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
                 <HugeiconsIcon icon={UserLove01Icon} size={18} strokeWidth={2} />
-                Followers gained
+                Followers announced
               </p>
-              <p className="text-3xl font-mono font-bold mt-3">
-                {loaded ? (
-                  <AnimatedCounter value={stats.totalFollowers} formatter={numberFormatter} />
-                ) : (
-                  "0"
-                )}
-              </p>
+              <div className="text-3xl font-mono font-bold mt-3 flex justify-center">
+                <AnimatePresence mode="wait">
+                  {loaded ? (
+                    <motion.span key="value" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                      <AnimatedCounter value={stats.totalFollowers} formatter={numberFormatter} />
+                    </motion.span>
+                  ) : (
+                    <motion.span key="skeleton" exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="inline-block h-9 w-16 rounded-lg bg-muted-foreground/10 animate-pulse" />
+                  )}
+                </AnimatePresence>
+              </div>
             </StaggerItem>
 
             <StaggerItem>
@@ -94,13 +117,17 @@ export default function GlobalStats() {
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} />
                 Templates
               </p>
-              <p className="text-3xl font-mono font-bold mt-3">
-                {loaded ? (
-                  <AnimatedCounter value={3} />
-                ) : (
-                  "0"
-                )}
-              </p>
+              <div className="text-3xl font-mono font-bold mt-3 flex justify-center">
+                <AnimatePresence mode="wait">
+                  {loaded ? (
+                    <motion.span key="value" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                      <AnimatedCounter value={3} />
+                    </motion.span>
+                  ) : (
+                    <motion.span key="skeleton" exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="inline-block h-9 w-8 rounded-lg bg-muted-foreground/10 animate-pulse" />
+                  )}
+                </AnimatePresence>
+              </div>
             </StaggerItem>
 
             <StaggerItem>
@@ -108,13 +135,17 @@ export default function GlobalStats() {
                 <HugeiconsIcon icon={Image01Icon} size={18} strokeWidth={2} />
                 Backgrounds
               </p>
-              <p className="text-3xl font-mono font-bold mt-3">
-                {loaded ? (
-                  <><AnimatedCounter value={backgroundCount} /><span>+</span></>
-                ) : (
-                  "0"
-                )}
-              </p>
+              <div className="text-3xl font-mono font-bold mt-3 flex justify-center">
+                <AnimatePresence mode="wait">
+                  {loaded ? (
+                    <motion.span key="value" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                      <AnimatedCounter value={backgroundCount} /><span>+</span>
+                    </motion.span>
+                  ) : (
+                    <motion.span key="skeleton" exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="inline-block h-9 w-10 rounded-lg bg-muted-foreground/10 animate-pulse" />
+                  )}
+                </AnimatePresence>
+              </div>
             </StaggerItem>
           </StaggerContainer>
         </div>

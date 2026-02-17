@@ -116,7 +116,7 @@ const defaultSettings: EditorSettings = {
   textColor: "#faf7e9",
   // Premium defaults
   aspectRatio: "post",
-  font: "bricolage",
+  font: "dm-mono",
   template: "metrics",
   abbreviateNumbers: true,
 };
@@ -159,6 +159,18 @@ type EditorProps = {
 export default function Editor({ isPremium = false }: EditorProps) {
   const searchParams = useSearchParams();
   const importId = searchParams.get("import");
+
+  // On landing page, detect if user has a premium plan to hide the upgrade modal
+  const [hideUpgradeModal, setHideUpgradeModal] = useState(false);
+  useEffect(() => {
+    if (isPremium) return; // Dashboard already knows
+    fetch("/api/user/plan")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.plan && data.plan !== "free") setHideUpgradeModal(true);
+      })
+      .catch(() => {});
+  }, [isPremium]);
 
   const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
   const [isExporting, setIsExporting] = useState(false);
@@ -251,8 +263,8 @@ export default function Editor({ isPremium = false }: EditorProps) {
   const handleExport = useCallback(async () => {
     if (!previewRef.current || cooldown > 0) return;
 
-    // Check daily limit for free users
-    if (!isPremium && getTodayExportCount() >= FREE_DAILY_LIMIT) {
+    // Check daily limit for free users (skip for premium users even on landing page)
+    if (!isPremium && !hideUpgradeModal && getTodayExportCount() >= FREE_DAILY_LIMIT) {
       setShowUpgradeModal(true);
       return;
     }
@@ -344,10 +356,23 @@ export default function Editor({ isPremium = false }: EditorProps) {
         }
       }
 
+      // Landing page: track export for global counter + update counters in real-time
+      if (!isPremium) {
+        const followersValue = settings.metrics.find((m) => m.type === "followers")?.value ?? 0;
+        fetch("/api/stats/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ followers: followersValue }),
+        }).catch(() => {});
+        window.dispatchEvent(
+          new CustomEvent("groar:export", { detail: { followers: followersValue } })
+        );
+      }
+
       // Start cooldown after successful export
       setCooldown(5);
 
-      if (isPremium) {
+      if (isPremium || hideUpgradeModal) {
         showToast("Image downloaded successfully!");
       } else {
         // Increment export count and show upgrade modal
@@ -364,14 +389,14 @@ export default function Editor({ isPremium = false }: EditorProps) {
     } finally {
       setIsExporting(false);
     }
-  }, [settings, isPremium, showToast, cooldown, getTodayExportCount, incrementExportCount]);
+  }, [settings, isPremium, hideUpgradeModal, showToast, cooldown, getTodayExportCount, incrementExportCount]);
 
   useKeyboardShortcuts(
     useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
   );
 
   const editorContent = (
-    <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-12.5">
+    <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-18">
       <Sidebar
         settings={settings}
         onSettingsChange={setSettings}
@@ -411,10 +436,12 @@ export default function Editor({ isPremium = false }: EditorProps) {
     </section>
   );
 
+  // Dashboard: no wrapper needed
   if (isPremium) {
     return editorContent;
   }
 
+  // Landing page: wrapper with glow effects + optional upgrade modal
   return (
     <FadeIn delay={0.6} duration={0.7}>
       <div className="relative w-full max-w-6xl mx-auto mt-6">
@@ -429,11 +456,13 @@ export default function Editor({ isPremium = false }: EditorProps) {
           style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.2 } as React.CSSProperties}
         />
         {editorContent}
-        <UpgradeModal
-          open={showUpgradeModal}
-          onOpenChange={setShowUpgradeModal}
-          exportCount={todayExportCount}
-        />
+        {!hideUpgradeModal && (
+          <UpgradeModal
+            open={showUpgradeModal}
+            onOpenChange={setShowUpgradeModal}
+            exportCount={todayExportCount}
+          />
+        )}
       </div>
     </FadeIn>
   );

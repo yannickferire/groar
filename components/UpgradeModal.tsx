@@ -173,16 +173,13 @@ export default function UpgradeModal({
                       </div>
 
                       {/* Premium features list */}
-                      <div className="space-y-2.5 mb-6">
+                      <div className="space-y-2 mb-6">
                         {PRO_FEATURES.map((feature, index) => (
                           <div key={index} className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
-                              <HugeiconsIcon icon={feature.icon} size={16} strokeWidth={1.5} className="text-primary" />
+                            <div className="w-7 h-7 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
+                              <HugeiconsIcon icon={feature.icon} size={14} strokeWidth={1.5} className="text-primary" />
                             </div>
-                            <div>
-                              <p className="text-sm font-medium leading-tight">{feature.title}</p>
-                              <p className="text-xs text-background/50">{feature.description}</p>
-                            </div>
+                            <p className="text-sm font-medium leading-tight">{feature.title}</p>
                           </div>
                         ))}
                       </div>

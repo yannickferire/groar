@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import UserMenu from "./UserMenu";
@@ -21,7 +21,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { PlanType } from "@/lib/plans";
+import { PlanType, CURRENT_PRO_PRICE } from "@/lib/plans";
 
 type NavItem = {
   label: string;
@@ -51,8 +51,6 @@ export default function DashboardSidebar() {
     if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
-
-  const isFreePlan = userPlan === "free";
 
   return (
     <Sidebar>
@@ -106,7 +104,7 @@ export default function DashboardSidebar() {
             {/* Other nav items */}
             <SidebarMenu>
               {NAV_ITEMS.map((item) => {
-                const isLocked = item.premium && isFreePlan;
+                const isLocked = item.premium && userPlan === "free";
 
                 if (isLocked) {
                   return (
@@ -158,7 +156,7 @@ export default function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        {isFreePlan && (
+        {userPlan && !["pro", "friend", "agency"].includes(userPlan) ? (
           <div className="mx-2 mb-2 p-4 rounded-2xl bg-foreground text-background relative overflow-hidden">
             {/* Gradient effect */}
             <div className="absolute -bottom-10 -right-20 w-40 h-30 bg-linear-to-tl from-primary/40 via-primary/20 to-transparent blur-2xl rotate-[-25deg]" />
@@ -172,14 +170,36 @@ export default function DashboardSidebar() {
               </div>
 
               <p className="text-xs text-background/70 mb-3">
-                Unlock unlimited exports, analytics, and more.
+                Unlock unlimited exports, analytics, and more — from ${CURRENT_PRO_PRICE}/mo.
               </p>
 
               <Button asChild variant="defaultReverse" size="sm" className="w-full">
                 <Link href="/pricing">
-                  <HugeiconsIcon icon={FlashIcon} size={14} strokeWidth={2} />
-                  Upgrade
+                  <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />
+                  Upgrade to Pro
                 </Link>
+              </Button>
+            </div>
+          </div>
+        ) : userPlan && (
+          <div className="mx-2 mb-2 p-4 rounded-2xl bg-foreground text-background relative overflow-hidden">
+            {/* Gradient effect */}
+            <div className="absolute -bottom-10 -right-20 w-40 h-30 bg-linear-to-tl from-primary/40 via-primary/20 to-transparent blur-2xl rotate-[-25deg]" />
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center justify-center w-6 h-6 rounded-md bg-primary text-primary-foreground">
+                  <HugeiconsIcon icon={ChromeIcon} size={14} strokeWidth={2} />
+                </div>
+                <span className="font-heading font-bold text-sm">Chrome Extension</span>
+              </div>
+
+              <p className="text-xs text-background/70 mb-3">
+                Export your visuals and access all your analytics while scrolling X.
+              </p>
+
+              <Button variant="defaultReverse" size="sm" className="w-full opacity-50" disabled>
+                Coming soon
               </Button>
             </div>
           </div>

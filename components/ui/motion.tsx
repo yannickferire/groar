@@ -180,6 +180,7 @@ export function AnimatedCounter({
 }: AnimatedCounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.5 });
+  const hasAnimated = useRef(false);
 
   const startValue = from ?? getDefaultFrom(value);
   const motionValue = useMotionValue(startValue);
@@ -189,15 +190,24 @@ export function AnimatedCounter({
 
   useEffect(() => {
     if (inView) {
-      motionValue.set(startValue);
-      const timeout = setTimeout(() => {
-        const controls = animate(motionValue, value, {
-          duration,
+      if (hasAnimated.current) {
+        // Subsequent updates: animate from current value to new value
+        animate(motionValue, value, {
+          duration: 0.5,
           ease: "easeOut",
         });
-        return () => controls.stop();
-      }, delay * 1000);
-      return () => clearTimeout(timeout);
+      } else {
+        // First animation: start from startValue with optional delay
+        motionValue.set(startValue);
+        const timeout = setTimeout(() => {
+          animate(motionValue, value, {
+            duration,
+            ease: "easeOut",
+          });
+          hasAnimated.current = true;
+        }, delay * 1000);
+        return () => clearTimeout(timeout);
+      }
     }
   }, [inView, motionValue, value, duration, startValue, delay]);
 

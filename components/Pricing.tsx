@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PLANS, PlanType, BillingPeriod, PLAN_ORDER } from "@/lib/plans";
+import { PlanType, BillingPeriod, PLAN_ORDER } from "@/lib/plans";
 import { FadeInView } from "@/components/ui/motion";
 import PricingCards from "@/components/PricingCards";
 import { authClient } from "@/lib/auth-client";
@@ -12,14 +12,17 @@ export default function Pricing() {
 
   useEffect(() => {
     if (!session) {
-      setUserPlan(null);
-      return;
+      const id = setTimeout(() => setUserPlan(null), 0);
+      return () => clearTimeout(id);
     }
 
+    let cancelled = false;
     fetch("/api/user/plan")
       .then((res) => res.json())
-      .then((data) => setUserPlan(data.plan || "free"))
-      .catch(() => setUserPlan("free"));
+      .then((data) => { if (!cancelled) setUserPlan(data.plan || "free"); })
+      .catch(() => { if (!cancelled) setUserPlan("free"); });
+
+    return () => { cancelled = true; };
   }, [session]);
 
   const handleSelectPlan = (planKey: PlanType, billingPeriod?: BillingPeriod) => {
@@ -79,13 +82,13 @@ export default function Pricing() {
 
   return (
     <FadeInView direction="up" distance={32}>
-      <section id="pricing" className="w-full max-w-5xl mx-auto py-4 scroll-mt-12.5">
+      <section id="pricing" className="w-full max-w-5xl mx-auto py-4 scroll-mt-18">
         <div className="text-center mb-18">
           <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight mb-3">
             Simple pricing
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Try for free,<br />upgrade to pro when you need more.
+            Try for free.<br />Upgrade to pro when ready to level up your growth!
           </p>
         </div>
 
