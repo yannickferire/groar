@@ -172,7 +172,7 @@ export default function ConnectionsPage() {
                     )}
                     <span className="text-sm flex-1 truncate">
                       {(session?.user as Record<string, unknown>)?.xUsername
-                        ? `@${(session.user as Record<string, unknown>).xUsername}`
+                        ? `@${(session?.user as Record<string, unknown>).xUsername}`
                         : session?.user?.name || account.accountId}
                     </span>
                     <div className="flex items-center gap-2">
