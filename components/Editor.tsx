@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { toJpeg } from "html-to-image";
+import { inlineBackgroundImages, buildFontEmbedCSS } from "@/lib/export-preprocess";
 import Sidebar from "./editor/Sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Preview from "./editor/Preview";
@@ -310,13 +311,20 @@ export default function Editor({ isPremium = false }: EditorProps) {
       const aspectRatio = settings.aspectRatio || "post";
       const { width: exportWidth, height: exportHeight } = ASPECT_RATIOS[aspectRatio];
 
-      const baseOptions = {
+      // Safari silently fails to fetch resources in html-to-image's iframe
+      // Pre-process: inline background images + fonts as base64 on Safari only
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+      const restoreBackgrounds = await inlineBackgroundImages(previewRef.current);
+      const fontEmbedCSS = isSafari ? await buildFontEmbedCSS() : undefined;
+
+      const baseOptions: Record<string, unknown> = {
         canvasWidth: exportWidth,
         canvasHeight: exportHeight,
-        quality: 0.92,
+        quality: 0.8,
         cacheBust: true,
         skipAutoScale: true,
-        pixelRatio: 1,
+        pixelRatio: 2,
         includeQueryParams: true,
         filter: (node: Element) => {
           const tagName = node.tagName;
@@ -327,6 +335,12 @@ export default function Editor({ isPremium = false }: EditorProps) {
         },
       };
 
+      // Only pass fontEmbedCSS on Safari — on Chrome/Firefox html-to-image
+      // handles fonts natively and our custom CSS breaks it
+      if (fontEmbedCSS) {
+        baseOptions.fontEmbedCSS = fontEmbedCSS;
+      }
+
       let dataUrl: string;
       try {
         // First attempt: try with font embedding
@@ -336,6 +350,9 @@ export default function Editor({ isPremium = false }: EditorProps) {
         console.warn("Font embedding failed, retrying without fonts:", fontError);
         dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: true });
       }
+
+      // Restore original background image URLs
+      restoreBackgrounds();
 
       // Remove injected watermark if we added one
       if (injectedWatermark) {
