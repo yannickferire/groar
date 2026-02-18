@@ -81,7 +81,7 @@ export const PLAN_LIMITS = Object.fromEntries(
   ])
 ) as Record<PlanType, { maxConnectionsPerProvider: number; maxExportsPerDay: number | null }>;
 
-export const PLAN_ORDER: PlanType[] = ["free", "pro", "agency"];
+export const PLAN_ORDER: PlanType[] = ["free", "friend", "pro", "agency"];
 
 export const PRO_FEATURES: { icon: IconSvgElement; title: string }[] = [
   { icon: Layout01Icon, title: "All templates unlocked" },

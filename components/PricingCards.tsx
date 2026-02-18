@@ -342,7 +342,7 @@ export default function PricingCards({
   const getLabel = ctaLabel || defaultCtaLabel;
   const isAnyLoading = loadingPlan !== null;
 
-  const cards = PLAN_ORDER.map((planKey) => {
+  const cards = PLAN_ORDER.filter((k) => k !== "friend").map((planKey) => {
     const plan = PLANS[planKey];
     const isCurrent = currentPlan === planKey;
     const isLoading = loadingPlan === planKey;

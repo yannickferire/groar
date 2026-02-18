@@ -3,11 +3,12 @@ import { headers } from "next/headers";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
+import { getUserPlanFromDB } from "@/lib/plans-server";
 
 const MAX_FILE_SIZE = 500 * 1024; // 500KB
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
 
-// POST: Upload branding logo
+// POST: Upload branding logo (premium only)
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -15,6 +16,12 @@ export async function POST(request: NextRequest) {
 
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Only premium users can upload a branding logo
+  const plan = await getUserPlanFromDB(session.user.id);
+  if (plan === "free") {
+    return NextResponse.json({ error: "Premium feature" }, { status: 403 });
   }
 
   try {

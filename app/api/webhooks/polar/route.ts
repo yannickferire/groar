@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { setUserPlan, cancelUserSubscription } from "@/lib/plans-server";
-import { verifyWebhookSignature, parseWebhookBody, getPolarProductId } from "@/lib/polar";
+import { getPolarProductId, validateEvent, WebhookVerificationError } from "@/lib/polar";
 import type { PolarSubscriptionEvent } from "@/lib/polar";
 
-// Map Polar product IDs to plan keys
+// Map Polar product IDs to plan keys (check both monthly and annual)
 function getPlanFromProductId(productId: string): "pro" | "agency" | null {
-  if (productId === getPolarProductId("pro")) {
+  if (productId === getPolarProductId("pro", "monthly") || productId === getPolarProductId("pro", "annual")) {
     return "pro";
   }
-  if (productId === getPolarProductId("agency")) {
+  if (productId === getPolarProductId("agency", "monthly") || productId === getPolarProductId("agency", "annual")) {
     return "agency";
   }
   return null;
@@ -16,18 +16,21 @@ function getPlanFromProductId(productId: string): "pro" | "agency" | null {
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
-  const signature = request.headers.get("webhook-signature") || "";
+  const headers: Record<string, string> = {};
+  request.headers.forEach((value, key) => {
+    headers[key] = value;
+  });
 
-  // Verify signature
-  if (!verifyWebhookSignature(body, signature)) {
-    console.error("Webhook signature verification failed");
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-  }
-
-  // Parse body safely
-  const event = parseWebhookBody(body);
-  if (!event) {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  // Verify signature and parse event using Polar SDK
+  let event;
+  try {
+    event = validateEvent(body, headers, process.env.POLAR_WEBHOOK_SECRET || "");
+  } catch (error) {
+    if (error instanceof WebhookVerificationError) {
+      console.error("Webhook signature verification failed:", error.message);
+      return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+    }
+    throw error;
   }
 
   try {

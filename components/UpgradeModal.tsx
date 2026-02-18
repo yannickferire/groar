@@ -11,9 +11,9 @@ import {
   Clock01Icon,
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
-import { PRO_FEATURES, PRO_PRICING_TIERS, CURRENT_PRO_TIER, CURRENT_PRO_PRICE } from "@/lib/plans";
+import { PRO_FEATURES, PRO_PRICING_TIERS, CURRENT_PRO_TIER, CURRENT_PRO_PRICE, PLANS } from "@/lib/plans";
 
-const FREE_DAILY_LIMIT = 3;
+const FREE_DAILY_LIMIT = PLANS.free.maxExportsPerDay;
 
 type UpgradeModalProps = {
   open: boolean;

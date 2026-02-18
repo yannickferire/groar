@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PLANS, PlanType, PLAN_ORDER, BillingPeriod } from "@/lib/plans";
 import Link from "next/link";
 import PricingCards from "@/components/PricingCards";
+import { toast } from "sonner";
 
 type PlanData = {
   plan: PlanType;
@@ -41,7 +42,7 @@ export default function PlanPage() {
     fetchPlan();
   }, [fetchPlan]);
 
-  const isPaidPlan = planData && planData.plan !== "free";
+  const isPaidPlan = planData && planData.plan !== "free" && planData.plan !== "friend";
 
   const handleUpgrade = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") return;
@@ -80,7 +81,7 @@ export default function PlanPage() {
         window.location.href = data.portalUrl;
       } else {
         console.error("No portal URL returned:", data);
-        alert(data.error || "Failed to open billing portal. Please try again.");
+        toast.error(data.error || "Failed to open billing portal. Please try again.");
         setOpeningPortal(false);
       }
     } catch (error) {
@@ -135,7 +136,7 @@ export default function PlanPage() {
                 Manage subscription
               </Button>
             )}
-            {!loading && planData && planData.plan !== "agency" && (
+            {!loading && planData && planData.plan !== "agency" && planData.plan !== "friend" && (
               <Button asChild variant="default">
                 <Link href="/pricing">
                   Upgrade
@@ -170,11 +171,11 @@ export default function PlanPage() {
           <h3 className="text-lg font-heading font-semibold mb-4">All plans</h3>
           <PricingCards
             onSelectPlan={handleUpgrade}
-            currentPlan={planData.plan}
+            currentPlan={planData.plan === "friend" ? "pro" : planData.plan}
             disabledPlans={[planData.plan]}
             loadingPlan={upgrading}
-            showProFeatures={false}
-            proHighlighted={false}
+            showProFeatures={true}
+            proHighlighted={true}
             ctaLabel={(planKey) => {
               if (planData.plan === planKey) return "Current plan";
               const planIndex = PLAN_ORDER.indexOf(planKey);

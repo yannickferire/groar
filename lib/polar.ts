@@ -45,19 +45,15 @@ type PolarPortalResponse = {
   customer_portal_url: string;
 };
 
-// Validate required env vars
-function validateEnv(): { accessToken: string; webhookSecret: string } {
+// Validate required env vars (webhook secret is handled by Polar SDK directly)
+function validateEnv(): { accessToken: string } {
   const accessToken = process.env.POLAR_ACCESS_TOKEN;
-  const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
 
   if (!accessToken) {
     throw new Error("POLAR_ACCESS_TOKEN is not configured");
   }
-  if (!webhookSecret) {
-    throw new Error("POLAR_WEBHOOK_SECRET is not configured");
-  }
 
-  return { accessToken, webhookSecret };
+  return { accessToken };
 }
 
 // Get Polar product ID from env or fallback
@@ -145,37 +141,5 @@ export async function createPortalSession(customerId: string): Promise<{ url: st
   }
 }
 
-// Verify webhook signature
-import crypto from "crypto";
-
-export function verifyWebhookSignature(body: string, signature: string): boolean {
-  try {
-    const { webhookSecret } = validateEnv();
-
-    const expectedSignature = crypto
-      .createHmac("sha256", webhookSecret)
-      .update(body)
-      .digest("hex");
-
-    if (signature.length !== expectedSignature.length) {
-      return false;
-    }
-
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
-  } catch {
-    return false;
-  }
-}
-
-// Parse webhook body safely
-export function parseWebhookBody(body: string): PolarWebhookEvent | null {
-  try {
-    return JSON.parse(body) as PolarWebhookEvent;
-  } catch {
-    console.error("Failed to parse webhook body as JSON");
-    return null;
-  }
-}
+// Re-export validateEvent from Polar SDK for webhook verification
+export { validateEvent, WebhookVerificationError } from "@polar-sh/sdk/webhooks";

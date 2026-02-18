@@ -28,7 +28,10 @@
       "Bash(export PATH=\"/Users/yannickferire/.nvm/versions/node/v22.21.1/bin:/usr/bin:/bin:$PATH\")",
       "WebFetch(domain:www.better-auth.com)",
       "WebFetch(domain:docs.x.com)",
-      "WebFetch(domain:superx.so)"
+      "WebFetch(domain:superx.so)",
+      "WebFetch(domain:polar.sh)",
+      "WebFetch(domain:www.standardwebhooks.com)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
