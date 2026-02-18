@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Mono, Inter, Playfair_Display, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import Script from "next/script";
 import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
 
@@ -117,6 +118,12 @@ export default function RootLayout({
         {children}
         <Toaster />
         <Analytics />
+        <Script
+          src="https://datafa.st/js/script.js"
+          data-website-id="dfid_KCoXqvjnSG1gNXFzbmksp"
+          data-domain="groar.app"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
