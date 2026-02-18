@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { getUserPlanFromDB } from "@/lib/plans-server";
 
-const MAX_FILE_SIZE = 500 * 1024; // 500KB
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
 
 // POST: Upload branding logo (premium only)
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     // Validate file size
     if (logo.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "File too large. Maximum size: 500KB" },
+        { error: "File too large. Maximum size: 2MB" },
         { status: 400 }
       );
     }
@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get file extension
+    // Get file extension — use timestamp in filename to bust cache
     const ext = logo.name.split(".").pop() || "png";
-    const fileName = `${session.user.id}/branding/logo.${ext}`;
+    const fileName = `${session.user.id}/branding/logo-${Date.now()}.${ext}`;
 
     // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage

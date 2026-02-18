@@ -23,6 +23,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Calendar03Icon, Download04Icon, LockIcon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon } from "@hugeicons/core-free-icons";
 import { TEMPLATE_LIST } from "@/lib/templates";
+import { compressImage } from "@/lib/image-compress";
 import { TemplateType } from "../Editor";
 import Link from "next/link";
 import Image from "next/image";
@@ -273,10 +274,16 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 10 * 1024 * 1024) {
+      alert("File too large. Maximum size: 10MB");
+      return;
+    }
+
     setIsUploadingLogo(true);
     try {
+      const compressed = await compressImage(file);
       const formData = new FormData();
-      formData.append("logo", file);
+      formData.append("logo", compressed);
 
       const res = await fetch("/api/user/branding", {
         method: "POST",
@@ -786,7 +793,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   className={`text-muted-foreground ${isUploadingLogo ? "animate-spin" : ""}`}
                 />
                 <span className="text-sm text-muted-foreground">
-                  {isUploadingLogo ? "Uploading..." : "Upload logo (max 500KB)"}
+                  {isUploadingLogo ? "Uploading..." : "Upload logo"}
                 </span>
               </label>
             )}
