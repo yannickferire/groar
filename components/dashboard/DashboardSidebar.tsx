@@ -21,7 +21,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { PlanType, CURRENT_PRO_PRICE } from "@/lib/plans";
+import { PlanType, PLANS, ProTierInfo } from "@/lib/plans";
 
 type NavItem = {
   label: string;
@@ -39,12 +39,17 @@ const NAV_ITEMS: NavItem[] = [
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const [userPlan, setUserPlan] = useState<PlanType | null>(null);
+  const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
 
   useEffect(() => {
     fetch("/api/user/plan")
       .then((res) => res.json())
       .then((data) => setUserPlan(data.plan))
       .catch(() => setUserPlan("free"));
+    fetch("/api/pricing")
+      .then((res) => res.json())
+      .then((data) => setProTierInfo(data.proTier))
+      .catch(() => {});
   }, []);
 
   const isActive = (href: string) => {
@@ -170,7 +175,7 @@ export default function DashboardSidebar() {
               </div>
 
               <p className="text-xs text-background/70 mb-3">
-                Unlock unlimited exports, analytics, and more — from ${CURRENT_PRO_PRICE}/mo.
+                Unlock unlimited exports, analytics, and more — from ${proTierInfo?.price ?? PLANS.pro.price}/mo.
               </p>
 
               <Button asChild variant="defaultReverse" size="sm" className="w-full">

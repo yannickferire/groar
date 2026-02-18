@@ -2,7 +2,7 @@
 // This file should only be imported in server components and API routes
 
 import { pool } from "./db";
-import { PLANS, PlanType } from "./plans";
+import { PLANS, PlanType, PRO_PRICING_TIERS } from "./plans";
 
 // Get user plan from database
 export async function getUserPlanFromDB(userId: string): Promise<PlanType> {
@@ -73,6 +73,52 @@ export async function getUserSubscription(userId: string) {
     console.error("Error fetching user subscription:", error);
     return null;
   }
+}
+
+// Get the number of active Pro subscribers
+export async function getProSubscriberCount(): Promise<number> {
+  try {
+    const result = await pool.query(
+      `SELECT COUNT(*) FROM subscription WHERE plan = 'pro' AND status = 'active'`
+    );
+    return parseInt(result.rows[0].count);
+  } catch (error) {
+    console.error("Error counting pro subscribers:", error);
+    return 0;
+  }
+}
+
+// Compute current Pro tier info from subscriber count
+export async function getProTierInfo(): Promise<{
+  price: number;
+  spotsLeft: number | null;
+  nextPrice: number | null;
+} | null> {
+  const count = await getProSubscriberCount();
+
+  let accumulated = 0;
+  for (let i = 0; i < PRO_PRICING_TIERS.length; i++) {
+    const tier = PRO_PRICING_TIERS[i];
+    if (tier.spots === null) {
+      // Final tier, unlimited spots
+      return { price: tier.price, spotsLeft: null, nextPrice: null };
+    }
+
+    accumulated += tier.spots;
+    if (count < accumulated) {
+      const spotsLeft = accumulated - count;
+      const nextTier = PRO_PRICING_TIERS[i + 1];
+      return {
+        price: tier.price,
+        spotsLeft,
+        nextPrice: nextTier ? nextTier.price : null,
+      };
+    }
+  }
+
+  // Shouldn't reach here, but fallback to last tier
+  const last = PRO_PRICING_TIERS[PRO_PRICING_TIERS.length - 1];
+  return { price: last.price, spotsLeft: null, nextPrice: null };
 }
 
 // Cancel user subscription (set status to canceled, keep plan until period end)

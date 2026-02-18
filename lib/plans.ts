@@ -110,7 +110,7 @@ export function getAnnualMonthlyPrice(monthlyPrice: number): number {
 }
 
 // Early adopter pricing tiers for Pro plan
-// Update currentTier index manually as you hit each tier
+// Spots are cumulative — tier info is computed server-side from subscriber count
 export const PRO_PRICING_TIERS = [
   { price: 5, spots: 8 },
   { price: 6, spots: 12 },
@@ -119,7 +119,9 @@ export const PRO_PRICING_TIERS = [
   { price: 9, spots: null }, // final price, unlimited
 ] as const;
 
-export const CURRENT_PRO_TIER = 0; // change this as you move through tiers
-
-// Current Pro price derived from tier — single source of truth
-export const CURRENT_PRO_PRICE = PRO_PRICING_TIERS[CURRENT_PRO_TIER].price;
+// Pro tier info type returned by /api/pricing
+export type ProTierInfo = {
+  price: number;
+  spotsLeft: number | null;
+  nextPrice: number | null;
+};

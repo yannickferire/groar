@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon, Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, BillingPeriod } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo } from "@/lib/plans";
 import Link from "next/link";
 import PricingCards from "@/components/PricingCards";
 import { toast } from "sonner";
@@ -29,12 +29,18 @@ export default function PlanPage() {
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState<PlanType | null>(null);
   const [openingPortal, setOpeningPortal] = useState(false);
+  const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
 
   const fetchPlan = useCallback(async () => {
     try {
-      const res = await fetch("/api/user/plan");
-      const data = await res.json();
+      const [planRes, pricingRes] = await Promise.all([
+        fetch("/api/user/plan"),
+        fetch("/api/pricing"),
+      ]);
+      const data = await planRes.json();
       setPlanData(data);
+      const pricingData = await pricingRes.json();
+      setProTierInfo(pricingData.proTier);
     } finally {
       setLoading(false);
     }
@@ -205,6 +211,7 @@ export default function PlanPage() {
             loadingPlan={upgrading}
             showProFeatures={true}
             proHighlighted={true}
+            proTierInfo={proTierInfo}
             ctaLabel={(planKey) => {
               if (planData.plan === planKey) return "Current plan";
               const planIndex = PLAN_ORDER.indexOf(planKey);

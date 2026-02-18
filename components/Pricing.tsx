@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlanType, BillingPeriod, PLAN_ORDER } from "@/lib/plans";
+import { PlanType, BillingPeriod, PLAN_ORDER, ProTierInfo } from "@/lib/plans";
 import { FadeInView } from "@/components/ui/motion";
 import PricingCards from "@/components/PricingCards";
 import { authClient } from "@/lib/auth-client";
@@ -9,6 +9,14 @@ import { authClient } from "@/lib/auth-client";
 export default function Pricing() {
   const { data: session } = authClient.useSession();
   const [userPlan, setUserPlan] = useState<PlanType | null>(null);
+  const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then((res) => res.json())
+      .then((data) => setProTierInfo(data.proTier))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!session) {
@@ -99,6 +107,7 @@ export default function Pricing() {
           animated={true}
           showProFeatures={true}
           proHighlighted={true}
+          proTierInfo={proTierInfo}
           ctaLabel={getCtaLabel}
         />
       </section>

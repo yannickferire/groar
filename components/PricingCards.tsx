@@ -3,7 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, PRO_PRICING_TIERS, CURRENT_PRO_TIER, CURRENT_PRO_PRICE, BillingPeriod, getAnnualPrice } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, getAnnualPrice, ProTierInfo } from "@/lib/plans";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -18,6 +18,7 @@ type PricingCardsProps = {
   animated?: boolean;
   showBillingToggle?: boolean;
   disabledPlans?: PlanType[];
+  proTierInfo?: ProTierInfo | null;
 };
 
 function ProCard({
@@ -30,6 +31,7 @@ function ProCard({
   onSelect,
   disabled,
   billingPeriod,
+  proTierInfo,
 }: {
   plan: typeof PLANS.pro;
   planKey: PlanType;
@@ -41,7 +43,9 @@ function ProCard({
   onSelect: () => void;
   disabled: boolean;
   billingPeriod: BillingPeriod;
+  proTierInfo?: ProTierInfo | null;
 }) {
+  const proPrice = proTierInfo?.price ?? plan.price;
   return (
     <div className={proHighlighted ? "md:-my-6 md:-mx-4 relative z-10" : ""}>
       <div className="relative rounded-3xl p-6 md:p-8 flex flex-col bg-foreground text-background overflow-hidden">
@@ -83,35 +87,25 @@ function ProCard({
               {billingPeriod === "annual" ? (
                 <>
                   <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
-                  <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{getAnnualPrice(CURRENT_PRO_PRICE)}</span>
+                  <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{getAnnualPrice(proPrice)}</span>
                   <span className="text-background/60 text-sm ml-0.5">/year</span>
-                  <span className="text-sm text-background/40 line-through ml-1">${CURRENT_PRO_PRICE * 12}</span>
+                  <span className="text-sm text-background/40 line-through ml-1">${proPrice * 12}</span>
                   <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
                 </>
               ) : (
                 <>
                   <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
-                  <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{CURRENT_PRO_PRICE}</span>
+                  <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{proPrice}</span>
                   <span className="text-background/60 text-sm ml-0.5">/month</span>
                   <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
                 </>
               )}
             </div>
-            {(() => {
-              const tier = PRO_PRICING_TIERS[CURRENT_PRO_TIER];
-              const nextTier = PRO_PRICING_TIERS[CURRENT_PRO_TIER + 1];
-              if (tier && tier.spots !== null && nextTier) {
-                const nextPrice = billingPeriod === "annual"
-                  ? `$${getAnnualPrice(nextTier.price)}/yr`
-                  : `$${nextTier.price}/mo`;
-                return (
-                  <p className="text-xs text-background/50 mt-1.5">
-                    Launch price – <span className="text-primary font-medium">{tier.spots} spots left</span> – Next: {nextPrice}
-                  </p>
-                );
-              }
-              return null;
-            })()}
+            {proTierInfo && proTierInfo.spotsLeft !== null && proTierInfo.nextPrice !== null && (
+              <p className="text-xs text-background/50 mt-1.5">
+                Launch price – <span className="text-primary font-medium">{proTierInfo.spotsLeft} spots left</span> – Next: {billingPeriod === "annual" ? `$${getAnnualPrice(proTierInfo.nextPrice)}/yr` : `$${proTierInfo.nextPrice}/mo`}
+              </p>
+            )}
           </div>
 
           {/* Premium features icons */}
@@ -337,6 +331,7 @@ export default function PricingCards({
   animated = false,
   showBillingToggle = true,
   disabledPlans = [],
+  proTierInfo,
 }: PricingCardsProps) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
 
@@ -367,6 +362,7 @@ export default function PricingCards({
         proHighlighted={proHighlighted}
         onSelect={() => onSelectPlan(planKey, billingPeriod)}
         disabled={isDisabled}
+        proTierInfo={proTierInfo}
         billingPeriod={billingPeriod}
       />
     ) : (
@@ -398,6 +394,7 @@ export default function PricingCards({
               onSelect={() => onSelectPlan(planKey, billingPeriod)}
               disabled={isDisabled}
               billingPeriod={billingPeriod}
+              proTierInfo={proTierInfo}
             />
           ) : (
             <PlanCard

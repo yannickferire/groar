@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { PLANS, PlanType, BillingPeriod } from "@/lib/plans";
+import { Suspense, useEffect, useState } from "react";
+import { PlanType, BillingPeriod, ProTierInfo } from "@/lib/plans";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { FadeInView } from "@/components/ui/motion";
@@ -11,6 +11,14 @@ import PricingCards from "@/components/PricingCards";
 function PricingContent() {
   const { data: session } = authClient.useSession();
   const [upgrading, setUpgrading] = useState<PlanType | null>(null);
+  const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then((res) => res.json())
+      .then((data) => setProTierInfo(data.proTier))
+      .catch(() => {});
+  }, []);
 
   const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") {
@@ -64,6 +72,7 @@ function PricingContent() {
             animated={true}
             showProFeatures={true}
             proHighlighted={true}
+            proTierInfo={proTierInfo}
             ctaLabel={(planKey) => {
               if (planKey === "free") return "Try for free";
               if (planKey === "pro") return "Claim your spot";

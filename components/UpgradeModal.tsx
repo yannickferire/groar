@@ -11,7 +11,8 @@ import {
   Clock01Icon,
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
-import { PRO_FEATURES, PRO_PRICING_TIERS, CURRENT_PRO_TIER, CURRENT_PRO_PRICE, PLANS } from "@/lib/plans";
+import { useEffect, useState } from "react";
+import { PRO_FEATURES, PLANS, ProTierInfo } from "@/lib/plans";
 
 const FREE_DAILY_LIMIT = PLANS.free.maxExportsPerDay;
 
@@ -28,6 +29,18 @@ export default function UpgradeModal({
 }: UpgradeModalProps) {
   const remaining = Math.max(0, FREE_DAILY_LIMIT - exportCount);
   const isAtLimit = remaining === 0;
+  const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      fetch("/api/pricing")
+        .then((res) => res.json())
+        .then((data) => setProTierInfo(data.proTier))
+        .catch(() => {});
+    }
+  }, [open]);
+
+  const proPrice = proTierInfo?.price ?? PLANS.pro.price;
 
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -158,18 +171,11 @@ export default function UpgradeModal({
                           <span className="inline-block">🐯</span> GROAR Pro
                         </h4>
                         <p className="text-sm text-background/60">Unlimited exports + premium features</p>
-                        {(() => {
-                          const tier = PRO_PRICING_TIERS[CURRENT_PRO_TIER];
-                          const nextTier = PRO_PRICING_TIERS[CURRENT_PRO_TIER + 1];
-                          if (tier && tier.spots !== null && nextTier) {
-                            return (
-                              <p className="text-xs text-background/50 mt-1.5">
-                                Launch price – <span className="text-primary font-medium">{tier.spots} spots left</span> – Next: ${nextTier.price}/mo
-                              </p>
-                            );
-                          }
-                          return null;
-                        })()}
+                        {proTierInfo && proTierInfo.spotsLeft !== null && proTierInfo.nextPrice !== null && (
+                          <p className="text-xs text-background/50 mt-1.5">
+                            Launch price – <span className="text-primary font-medium">{proTierInfo.spotsLeft} spots left</span> – Next: ${proTierInfo.nextPrice}/mo
+                          </p>
+                        )}
                       </div>
 
                       {/* Premium features list */}
@@ -188,7 +194,7 @@ export default function UpgradeModal({
                       <div className="flex flex-col gap-2">
                         <Button asChild variant="defaultReverse" size="lg" className="w-full">
                           <Link href="/pricing">
-                            Upgrade to Pro — ${CURRENT_PRO_PRICE}/month
+                            Upgrade to Pro — ${proPrice}/month
                           </Link>
                         </Button>
                         <button
