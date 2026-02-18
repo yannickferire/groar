@@ -1,13 +1,22 @@
 import { MetricType } from "@/components/Editor";
 
 /**
- * Parse values like "10k", "1.5M", "100" into numbers
+ * Detect a leading "+" prefix in the input
+ */
+export const detectPrefix = (input: string): string | undefined => {
+  const trimmed = input.trim();
+  if (trimmed.startsWith("+")) return "+";
+  return undefined;
+};
+
+/**
+ * Parse values like "10k", "1.5M", "100", "+39" into numbers
  */
 export const parseMetricInput = (input: string, metricType: MetricType): number | null => {
   // Strip thousands separators (commas and dots used as grouping)
   // Dots followed by exactly 3 digits are treated as thousands separators (e.g., 1.500 -> 1500)
   const trimmed = input.trim().replace(/,/g, "").replace(/\.(?=\d{3}(?:\D|$))/g, "").toLowerCase();
-  if (trimmed === "" || trimmed === "-") return 0;
+  if (trimmed === "" || trimmed === "-" || trimmed === "+") return 0;
 
   // For engagement rate, allow decimals but cap at 100
   if (metricType === "engagementRate") {
@@ -16,7 +25,7 @@ export const parseMetricInput = (input: string, metricType: MetricType): number 
     return Math.min(100, Math.max(0, num));
   }
 
-  const match = trimmed.match(/^(-?\d+\.?\d*)\s*(k|m|b)?$/);
+  const match = trimmed.match(/^([+-]?\d+\.?\d*)\s*(k|m|b)?$/);
   if (!match) return null;
 
   const num = parseFloat(match[1]);
@@ -37,28 +46,44 @@ export const parseMetricInput = (input: string, metricType: MetricType): number 
 };
 
 /**
- * Format a number for display in preview (e.g., 10000 -> "10.0K")
+ * Format a number abbreviated (e.g., 1450 -> "1.45K", 10000 -> "10K")
+ * Keeps enough decimal places to avoid losing precision, removes trailing zeros.
  */
-export const formatNumber = (value: number): string => {
+export const formatNumberShort = (value: number): string => {
   if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
+    const divided = value / 1000000;
+    const decimals = divided < 10 ? 2 : divided < 100 ? 1 : 0;
+    return `${parseFloat(divided.toFixed(decimals))}M`;
   }
   if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`;
+    const divided = value / 1000;
+    const decimals = divided < 10 ? 2 : divided < 100 ? 1 : 0;
+    return `${parseFloat(divided.toFixed(decimals))}K`;
   }
   return value.toString();
 };
 
 /**
+ * Format a number with thousands separators (e.g., 10000 -> "10,000")
+ */
+export const formatNumberFull = (value: number): string => {
+  return value.toLocaleString("en-US");
+};
+
+/**
+ * Format a number for display in preview (abbreviated or full)
+ */
+export const formatNumber = (value: number, abbreviate = true): string => {
+  return abbreviate ? formatNumberShort(value) : formatNumberFull(value);
+};
+
+/**
  * Format a metric value for display based on its type
  */
-export const formatMetricValue = (type: MetricType, value: number): string => {
-  if (type === "followers") {
-    const sign = value >= 0 ? "+" : "";
-    return `${sign}${formatNumber(value)}`;
-  }
+export const formatMetricValue = (type: MetricType, value: number, abbreviate = true, prefix?: string): string => {
   if (type === "engagementRate") {
     return `${value}%`;
   }
-  return formatNumber(value);
+  const formatted = formatNumber(value, abbreviate);
+  return prefix ? `${prefix}${formatted}` : formatted;
 };

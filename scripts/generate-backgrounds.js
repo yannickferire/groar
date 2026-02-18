@@ -18,7 +18,13 @@ function generateBackgrounds() {
     .map((file) => {
       const rawName = path.basename(file, path.extname(file));
       // Remove numeric prefix (e.g., "01-tokyo-streets" -> "tokyo-streets")
-      const name = rawName.replace(/^\d+-/, "");
+      let name = rawName.replace(/^\d+-/, "");
+      // Check if it's a premium background (prefix "premium-")
+      const isPremium = name.startsWith("premium-");
+      // Remove premium prefix for the id and display name
+      if (isPremium) {
+        name = name.replace(/^premium-/, "");
+      }
       // Convert filename to display name (e.g., "tokyo-streets" -> "Tokyo Streets")
       const displayName = name
         .split("-")
@@ -26,9 +32,10 @@ function generateBackgrounds() {
         .join(" ");
 
       return {
-        id: name,
+        id: isPremium ? `premium-${name}` : name,
         name: displayName,
         image: `/backgrounds/${file}`,
+        premium: isPremium,
       };
     });
 

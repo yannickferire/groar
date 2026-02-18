@@ -27,7 +27,7 @@ export default function HowItWorks() {
     <section className="w-full max-w-4xl mx-auto py-4">
       <FadeInView>
         <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
+          <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
             Create in 10 seconds
           </h2>
           <p className="text-muted-foreground">
@@ -36,16 +36,16 @@ export default function HowItWorks() {
         </div>
       </FadeInView>
 
-      <StaggerContainer as="ul" className="flex flex-col md:flex-row items-stretch gap-4" staggerDelay={0.15}>
+      <StaggerContainer as="ul" className="flex flex-col md:flex-row items-stretch gap-3 md:gap-4" staggerDelay={0.15}>
         {steps.map((step, index) => (
           <StaggerItem
             as="li"
             key={index}
             className="flex-1 relative p-4 rounded-3xl border-fade"
           >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <HugeiconsIcon icon={step.icon} size={24} strokeWidth={1.5} className="text-primary" />
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <HugeiconsIcon icon={step.icon} size={20} strokeWidth={1.5} className="text-primary md:w-6! md:h-6!" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">

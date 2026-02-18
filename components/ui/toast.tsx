@@ -47,9 +47,10 @@ export function Toaster() {
 
 export function useToast() {
   return {
-    showToast: (message: string, type: "success" | "error" = "success") => {
+    showToast: (message: string, type: "success" | "error" = "success", duration?: number) => {
       if (type === "error") {
         toast.error(message, {
+          duration,
           style: {
             "--normal-bg": "var(--destructive)",
             "--normal-text": "#ffffff",
@@ -57,7 +58,7 @@ export function useToast() {
           } as React.CSSProperties,
         });
       } else {
-        toast.success(message);
+        toast.success(message, { duration });
       }
     },
   };

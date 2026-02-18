@@ -11,11 +11,11 @@ export default function PrivacyPage() {
   return (
     <div className="flex flex-col min-h-screen px-4">
       <Header />
-      <main className="flex-1 py-8">
+      <main className="flex-1 py-8 mt-4 md:mt-10">
         <article className="max-w-2xl mx-auto">
           <header className="mb-12">
             <h1 className="text-4xl font-bold tracking-tight mb-2">Privacy Policy</h1>
-            <p className="text-muted-foreground">Last updated: January 2025</p>
+            <p className="text-muted-foreground">Last updated: February 2026</p>
           </header>
 
           <div className="space-y-8 text-foreground/80">
@@ -34,13 +34,15 @@ export default function PrivacyPage() {
               <h3 className="text-lg font-medium mb-2 text-foreground/90">Information You Provide</h3>
               <ul className="list-disc list-inside space-y-2 mb-4 ml-2">
                 <li>
-                  <strong className="text-foreground">Email address:</strong> When you sign up for our waitlist or
-                  newsletter, we collect your email address to send you updates about Groar.
+                  <strong className="text-foreground">Account information:</strong> When you sign in
+                  via X (Twitter) OAuth, we receive your public profile information
+                  (name, handle, profile picture). We do not access your X password.
                 </li>
                 <li>
-                  <strong className="text-foreground">Social media handles:</strong> You may enter social media
-                  handles to create visual content. This information is processed
-                  locally and not stored on our servers.
+                  <strong className="text-foreground">Social media metrics:</strong> You may enter social media
+                  metrics to create visual content. For free users, this information is processed
+                  locally. For paid plan users, exported images and their associated metrics
+                  are stored on our servers solely so you can access and reuse them later.
                 </li>
               </ul>
 
@@ -70,18 +72,21 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3 text-foreground">Data Storage and Security</h2>
               <p className="leading-relaxed">
-                Your visual creations are generated locally in your browser. We do not
-                store your created images on our servers. Email addresses collected
-                for our waitlist are stored securely and will not be shared with third
-                parties.
+                Your visual creations are generated locally in your browser. For free
+                users, images are not stored on our servers. For paid plan users,
+                exported images are stored securely on our servers solely for you to
+                access and reuse them — we do not use your images for any other
+                purpose. Your account data is stored securely and will not be shared
+                with third parties.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3 text-foreground">Third-Party Services</h2>
-              <p className="mb-2">We may use third-party services for:</p>
+              <p className="mb-2">We use the following third-party services:</p>
               <ul className="list-disc list-inside space-y-2 ml-2">
-                <li>Email delivery (Resend)</li>
+                <li>Authentication (X / Twitter OAuth)</li>
+                <li>Payment processing (Polar)</li>
                 <li>Analytics (privacy-focused)</li>
                 <li>Hosting (Vercel)</li>
               </ul>

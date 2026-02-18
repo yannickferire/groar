@@ -7,8 +7,8 @@ import { FadeInView } from "@/components/ui/motion";
 export default function Footer() {
   return (
     <FadeInView direction="down" distance={24} amount={0.8}>
-      <footer className="w-full max-w-6xl mx-auto border-t border-border mt-24">
-        <div className="py-8 flex flex-col md:flex-row items-start justify-between gap-6">
+      <footer className="w-full max-w-6xl mx-auto border-t border-border mt-12 md:mt-24">
+        <div className="py-8 flex flex-col md:flex-row items-center md:items-start justify-between gap-4 md:gap-6">
           <div className="flex flex-col items-center md:items-start gap-2">
             <Logo />
             <p className="text-sm text-muted-foreground">

@@ -1,28 +1,62 @@
 "use client";
 
+import Link from "next/link";
 import Logo from "./Logo";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { SparklesIcon } from "@hugeicons/core-free-icons";
+import { SparklesIcon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
+import { authClient } from "@/lib/auth-client";
+
+function smoothScrollTo(id: string, offset: number) {
+  const el = document.getElementById(id);
+  if (el) {
+    const y = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  }
+}
 
 export default function Header() {
-  const scrollToEditor = () => {
-    const editor = document.getElementById("editor");
-    if (editor) {
-      editor.scrollIntoView({ behavior: "smooth" });
-    }
-  };
+  const { data: session } = authClient.useSession();
 
   return (
-    <FadeIn delay={0} duration={0.6} direction="none">
-      <header className="w-full max-w-4xl mx-auto mt-4 flex items-center justify-between py-4 mb-16">
-        <Logo />
-        <Button onClick={scrollToEditor} variant="default" size="default">
-          <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-          Try it
-        </Button>
-      </header>
-    </FadeIn>
+    <div className="md:sticky md:top-0 z-50 md:bg-background/80 md:backdrop-blur-lg">
+      <FadeIn delay={0} duration={0.6} direction="none">
+        <header className="w-full max-w-5xl mx-auto flex items-center justify-center md:justify-between py-4">
+          <Logo />
+          <nav className="hidden md:flex items-center gap-6">
+            <button
+              onClick={() => smoothScrollTo("editor", 72)}
+              className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              Try for free
+            </button>
+            <button
+              onClick={() => smoothScrollTo("pricing", 72)}
+              className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              Pricing
+            </button>
+            <div className="hidden md:block">
+              {session ? (
+                <Button asChild variant="default" size="default">
+                  <Link href="/dashboard">
+                    <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} aria-hidden="true" />
+                    Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild variant="default" size="default">
+                  <Link href="/login">
+                    <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+                    Get Started
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </nav>
+        </header>
+      </FadeIn>
+    </div>
   );
 }

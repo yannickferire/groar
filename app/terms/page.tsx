@@ -11,11 +11,11 @@ export default function TermsPage() {
   return (
     <div className="flex flex-col min-h-screen px-4">
       <Header />
-      <main className="flex-1 py-8">
+      <main className="flex-1 py-8 mt-4 md:mt-10">
         <article className="max-w-2xl mx-auto">
           <header className="mb-12">
             <h1 className="text-4xl font-bold tracking-tight mb-2">Terms of Service</h1>
-            <p className="text-muted-foreground">Last updated: January 2025</p>
+            <p className="text-muted-foreground">Last updated: February 2026</p>
           </header>
 
           <div className="space-y-8 text-foreground/80">
@@ -30,10 +30,17 @@ export default function TermsPage() {
 
             <section>
               <h2 className="text-xl font-semibold mb-3 text-foreground">2. Description of Service</h2>
-              <p className="leading-relaxed">
+              <p className="leading-relaxed mb-3">
                 Groar is a web application that allows users to create shareable
                 visual content from social media metrics. The service is provided
                 &quot;as is&quot; and may be updated or modified at any time.
+              </p>
+              <p className="leading-relaxed">
+                Groar offers a free tier with limited features and paid plans
+                (Pro and Agency) with additional capabilities such as premium
+                templates, custom branding, and more backgrounds. Paid
+                subscriptions are billed monthly or annually through our payment
+                provider, Polar.
               </p>
             </section>
 
@@ -63,8 +70,9 @@ export default function TermsPage() {
               <h2 className="text-xl font-semibold mb-3 text-foreground">5. User Content</h2>
               <p className="mb-2">
                 You are solely responsible for the content you create and share using
-                Groar. We do not store your created images on our servers. You agree
-                not to create content that is:
+                Groar. For paid plan users, exported images are stored on our servers
+                solely so you can access and reuse them later. We do not use your
+                images for any other purpose. You agree not to create content that is:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-2">
                 <li>Illegal or promotes illegal activities</li>
