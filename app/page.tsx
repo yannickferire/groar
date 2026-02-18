@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/Hero";
@@ -13,7 +14,9 @@ export default function Home() {
       <main className="flex-1 flex flex-col gap-10 md:gap-24 mt-6 md:mt-16">
         <Hero />
         <GlobalStats />
-        <Editor />
+        <Suspense>
+          <Editor />
+        </Suspense>
         <HowItWorks />
         <Pricing />
       </main>
