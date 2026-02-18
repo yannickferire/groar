@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { GoogleIcon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { PlanType } from "@/lib/plans";
 
-export default function LoginPage() {
+function LoginContent() {
   const [loading, setLoading] = useState<"google" | "twitter" | null>(null);
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan") as PlanType | null;
@@ -119,5 +119,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }
