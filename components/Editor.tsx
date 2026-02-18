@@ -258,6 +258,11 @@ export default function Editor({ isPremium = false }: EditorProps) {
         loaded.aspectRatio = defaultSettings.aspectRatio;
         loaded.abbreviateNumbers = defaultSettings.abbreviateNumbers;
         loaded.branding = undefined;
+        // Reset premium background to default
+        const selectedBg = ALL_BACKGROUNDS.find((b) => b.id === loaded.background.presetId);
+        if (selectedBg?.premium) {
+          loaded.background = { ...defaultSettings.background };
+        }
       }
       setSettings(loaded);
     }
