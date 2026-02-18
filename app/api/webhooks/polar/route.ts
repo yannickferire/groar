@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { setUserPlan, cancelUserSubscription } from "@/lib/plans-server";
 import { getPolarProductId, validateEvent, WebhookVerificationError } from "@/lib/polar";
-import type { PolarSubscriptionEvent } from "@/lib/polar";
 
 // Map Polar product IDs to plan keys (check both monthly and annual)
 function getPlanFromProductId(productId: string): "pro" | "agency" | null {
@@ -12,6 +11,19 @@ function getPlanFromProductId(productId: string): "pro" | "agency" | null {
     return "agency";
   }
   return null;
+}
+
+// Extract subscription fields from webhook event.data
+function parseSubscriptionData(data: Record<string, unknown>) {
+  const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
+  return {
+    id: data.id as string,
+    status: data.status as string,
+    productId: (data.product_id ?? data.productId ?? "") as string,
+    customerId: (data.customer_id ?? data.customerId ?? "") as string,
+    currentPeriodEnd: (data.current_period_end ?? data.currentPeriodEnd) as string | undefined,
+    userId: metadata.userId,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -41,61 +53,56 @@ export async function POST(request: NextRequest) {
       }
 
       case "checkout.updated": {
-        const checkout = event.data as { id: string; status: string };
-        if (checkout.status === "succeeded") {
-          console.log("Checkout succeeded:", checkout.id);
+        if ((event.data as { status?: string }).status === "succeeded") {
+          console.log("Checkout succeeded:", event.data.id);
         }
         break;
       }
 
       case "subscription.created":
       case "subscription.updated": {
-        const subscription = (event as PolarSubscriptionEvent).data;
-        const userId = subscription.metadata?.userId;
-        const productId = subscription.product_id;
+        const sub = parseSubscriptionData(event.data as Record<string, unknown>);
 
-        if (!userId) {
+        if (!sub.userId) {
           console.error("No userId in subscription metadata");
           return NextResponse.json({ error: "Missing userId" }, { status: 400 });
         }
 
-        const plan = getPlanFromProductId(productId);
+        const plan = getPlanFromProductId(sub.productId);
         if (!plan) {
-          console.error("Unknown product ID:", productId);
+          console.error("Unknown product ID:", sub.productId);
           return NextResponse.json({ error: "Unknown product" }, { status: 400 });
         }
 
-        if (subscription.status === "active") {
-          await setUserPlan(userId, plan, {
-            externalId: subscription.id,
-            externalCustomerId: subscription.customer_id,
-            currentPeriodEnd: subscription.current_period_end
-              ? new Date(subscription.current_period_end)
+        if (sub.status === "active") {
+          await setUserPlan(sub.userId, plan, {
+            externalId: sub.id,
+            externalCustomerId: sub.customerId,
+            currentPeriodEnd: sub.currentPeriodEnd
+              ? new Date(sub.currentPeriodEnd)
               : undefined,
           });
-          console.log(`Set plan ${plan} for user ${userId} (subscription: ${subscription.id})`);
+          console.log(`Set plan ${plan} for user ${sub.userId} (subscription: ${sub.id})`);
         }
         break;
       }
 
       case "subscription.canceled": {
-        const subscription = (event as PolarSubscriptionEvent).data;
-        const userId = subscription.metadata?.userId;
+        const sub = parseSubscriptionData(event.data as Record<string, unknown>);
 
-        if (userId) {
-          await cancelUserSubscription(userId);
-          console.log(`Marked subscription as canceled for user ${userId}`);
+        if (sub.userId) {
+          await cancelUserSubscription(sub.userId);
+          console.log(`Marked subscription as canceled for user ${sub.userId}`);
         }
         break;
       }
 
       case "subscription.revoked": {
-        const subscription = (event as PolarSubscriptionEvent).data;
-        const userId = subscription.metadata?.userId;
+        const sub = parseSubscriptionData(event.data as Record<string, unknown>);
 
-        if (userId) {
-          await setUserPlan(userId, "free");
-          console.log(`Reverted user ${userId} to free plan (subscription revoked)`);
+        if (sub.userId) {
+          await setUserPlan(sub.userId, "free");
+          console.log(`Reverted user ${sub.userId} to free plan (subscription revoked)`);
         }
         break;
       }

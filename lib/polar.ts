@@ -7,21 +7,6 @@ export type PolarWebhookEvent = {
   data: Record<string, unknown>;
 };
 
-export type PolarSubscriptionEvent = {
-  type: "subscription.created" | "subscription.updated" | "subscription.canceled" | "subscription.revoked";
-  data: {
-    id: string;
-    status: "active" | "canceled" | "incomplete" | "incomplete_expired" | "past_due" | "trialing" | "unpaid";
-    product_id: string;
-    customer_id: string;
-    current_period_end?: string;
-    metadata?: {
-      userId?: string;
-      plan?: string;
-    };
-  };
-};
-
 export type PolarCheckoutEvent = {
   type: "checkout.created" | "checkout.updated";
   data: {

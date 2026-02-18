@@ -150,16 +150,18 @@ function DashboardContent() {
         </p>
       </div>
 
-      {/* CTA */}
-      <Button asChild variant="default" size="lg">
-        <Link href="/dashboard/editor">
-          <HugeiconsIcon icon={AddSquareIcon} size={18} strokeWidth={2} />
-          Create new visual
-        </Link>
-      </Button>
+      {/* CTA – mobile only */}
+      <div className="md:hidden">
+        <Button asChild variant="default" size="lg">
+          <Link href="/dashboard/editor">
+            <HugeiconsIcon icon={AddSquareIcon} size={18} strokeWidth={2} />
+            Create new visual
+          </Link>
+        </Button>
+      </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/dashboard/plan" className="rounded-2xl border-fade hover-effect p-5">
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={CrownIcon} size={14} strokeWidth={1.5} />Current plan</p>
           {loading ? (
@@ -233,14 +235,24 @@ function DashboardContent() {
       {/* Recent exports */}
       <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-heading font-semibold">Recent exports</h2>
-          <Link
-            href="/dashboard/history"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-          >
-            View all
-            <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
-          </Link>
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-heading font-semibold">Recent exports</h2>
+            <Link
+              href="/dashboard/history"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              View all
+              <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
+            </Link>
+          </div>
+          {hasExports && (
+            <Button asChild variant="default" className="hidden md:inline-flex">
+              <Link href="/dashboard/editor">
+                <HugeiconsIcon icon={AddSquareIcon} size={18} strokeWidth={2} />
+                Create new
+              </Link>
+            </Button>
+          )}
         </div>
 
         {loading ? (
@@ -318,7 +330,7 @@ export default function DashboardPage() {
           <div className="h-8 w-32 rounded bg-sidebar" />
           <div className="h-4 w-64 rounded bg-sidebar mt-2" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="rounded-2xl border-fade p-5">
               <div className="h-3 w-20 rounded bg-sidebar" />
