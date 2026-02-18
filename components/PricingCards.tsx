@@ -86,12 +86,14 @@ function ProCard({
                   <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{getAnnualPrice(CURRENT_PRO_PRICE)}</span>
                   <span className="text-background/60 text-sm ml-0.5">/year</span>
                   <span className="text-sm text-background/40 line-through ml-1">${CURRENT_PRO_PRICE * 12}</span>
+                  <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
                 </>
               ) : (
                 <>
                   <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
                   <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{CURRENT_PRO_PRICE}</span>
                   <span className="text-background/60 text-sm ml-0.5">/month</span>
+                  <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
                 </>
               )}
             </div>
@@ -213,15 +215,19 @@ function PlanCard({
                 /year
               </span>
               <span className={`text-sm line-through ml-1 ${isCurrent ? "text-background/30" : "text-muted-foreground/40"}`}>${plan.price * 12}</span>
+              <span className={`text-xs ml-1 ${isCurrent ? "text-background/30" : "text-muted-foreground/40"}`}>(+ applicable tax)</span>
             </>
           ) : (
             <>
               <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
               <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{plan.price}</span>
               {plan.price > 0 && (
-                <span className={`ml-0.5 ${isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}`}>
-                  /month
-                </span>
+                <>
+                  <span className={`ml-0.5 ${isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}`}>
+                    /month
+                  </span>
+                  <span className={`text-xs ml-1 ${isCurrent ? "text-background/30" : "text-muted-foreground/40"}`}>(+ applicable tax)</span>
+                </>
               )}
             </>
           )}
