@@ -46,6 +46,8 @@ export const dailyAnalyticsFetch = inngest.createFunction(
             return {
               accountId: account.id,
               email: account.email,
+              success: false as const,
+              alreadyFetched: false,
               error: error instanceof Error ? error.message : "Unknown error",
             };
           }
