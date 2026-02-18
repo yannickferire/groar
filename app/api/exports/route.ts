@@ -78,6 +78,16 @@ export async function POST(request: NextRequest) {
       [session.user.id, imageUrl, metrics]
     );
 
+    // Track background and template usage
+    const backgroundId = metrics?.background?.presetId;
+    const template = metrics?.template;
+    if (backgroundId && template) {
+      await pool.query(
+        `INSERT INTO export_usage ("backgroundId", "template") VALUES ($1, $2)`,
+        [backgroundId, template]
+      ).catch(() => {}); // Non-blocking
+    }
+
     return NextResponse.json({ export: result.rows[0] });
   } catch (error) {
     console.error("Export save error:", error);

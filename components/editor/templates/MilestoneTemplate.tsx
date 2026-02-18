@@ -53,17 +53,18 @@ export default function MilestoneTemplate({ settings }: MilestoneTemplateProps) 
 
   const abbreviate = settings.abbreviateNumbers !== false;
   const textShadow = "0 1px 2px rgba(0,0,0,0.15)";
+  const isBanner = settings.aspectRatio === "banner";
 
   return (
     <div
       className="relative z-10 flex flex-col items-center justify-center"
-      style={{ color: settings.textColor, textShadow, gap: "0.3cqi" }}
+      style={{ color: settings.textColor, textShadow, gap: isBanner ? "0.15cqi" : "0.3cqi" }}
     >
       {/* Far previous milestone */}
       {farPreviousMilestone >= 0 && (
         <p
           className="font-medium opacity-20"
-          style={{ fontSize: "2.5cqi" }}
+          style={{ fontSize: isBanner ? "2cqi" : "2.5cqi" }}
         >
           {formatMetricValue(primaryMetric?.type || "followers", farPreviousMilestone, abbreviate)}
         </p>
@@ -73,7 +74,7 @@ export default function MilestoneTemplate({ settings }: MilestoneTemplateProps) 
       {previousMilestone >= 0 && (
         <p
           className="font-medium opacity-40"
-          style={{ fontSize: "4cqi" }}
+          style={{ fontSize: isBanner ? "3cqi" : "4cqi" }}
         >
           {formatMetricValue(primaryMetric?.type || "followers", previousMilestone, abbreviate)}
         </p>
@@ -83,17 +84,17 @@ export default function MilestoneTemplate({ settings }: MilestoneTemplateProps) 
       <div className="flex flex-col items-center">
         <p
           className="font-bold tracking-tight"
-          style={{ fontSize: "12cqi", lineHeight: "1" }}
+          style={{ fontSize: isBanner ? "9cqi" : "12cqi", lineHeight: "1" }}
         >
           {formatMetricValue(primaryMetric?.type || "followers", value, abbreviate)}
         </p>
         <p
           className="font-semibold opacity-80 flex items-center"
-          style={{ fontSize: "3.6cqi", marginTop: "0.5cqi", marginBottom: "1cqi", gap: "1cqi" }}
+          style={{ fontSize: isBanner ? "2.8cqi" : "3.6cqi", marginTop: isBanner ? "0.4cqi" : "0.5cqi", marginBottom: isBanner ? "0.75cqi" : "1cqi", gap: isBanner ? "0.75cqi" : "1cqi" }}
         >
           <HugeiconsIcon
             icon={METRIC_ICONS[primaryMetric?.type || "followers"]}
-            style={{ width: "3.6cqi", height: "3.6cqi" }}
+            style={{ width: isBanner ? "2.8cqi" : "3.6cqi", height: isBanner ? "2.8cqi" : "3.6cqi" }}
             strokeWidth={2}
             color="currentColor"
           />
@@ -104,7 +105,7 @@ export default function MilestoneTemplate({ settings }: MilestoneTemplateProps) 
       {/* Next milestone */}
       <p
         className="font-medium opacity-40"
-        style={{ fontSize: "4cqi" }}
+        style={{ fontSize: isBanner ? "3cqi" : "4cqi" }}
       >
         {formatMetricValue(primaryMetric?.type || "followers", nextMilestone, abbreviate)}
       </p>
@@ -112,7 +113,7 @@ export default function MilestoneTemplate({ settings }: MilestoneTemplateProps) 
       {/* Far next milestone */}
       <p
         className="font-medium opacity-20"
-        style={{ fontSize: "2.5cqi" }}
+        style={{ fontSize: isBanner ? "2cqi" : "2.5cqi" }}
       >
         {formatMetricValue(primaryMetric?.type || "followers", farNextMilestone, abbreviate)}
       </p>

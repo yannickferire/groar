@@ -127,7 +127,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
     <div className="flex flex-col items-center gap-3">
       {/* Row 1: Background presets */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground shrink-0">Background</span>
+        <span className="text-xs text-muted-foreground shrink-0 sr-only">Background</span>
         {orderedBackgrounds.map((preset) => (
           preset.color ? (
             <div

@@ -77,16 +77,17 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
   const progressColor = getProgressColor(progress);
 
   const textShadow = "0 1px 2px rgba(0,0,0,0.15)";
+  const isBanner = settings.aspectRatio === "banner";
 
   return (
     <div
       className="relative z-10 flex flex-col items-center justify-center"
-      style={{ color: settings.textColor, textShadow, gap: "2cqi", width: "70%" }}
+      style={{ color: settings.textColor, textShadow, gap: isBanner ? "1cqi" : "2cqi", width: "70%" }}
     >
       {/* Goal label */}
       <p
         className="uppercase tracking-widest opacity-60"
-        style={{ fontSize: "2cqi" }}
+        style={{ fontSize: isBanner ? "1.6cqi" : "2cqi" }}
       >
         Goal: {formatMetricValue(primaryMetric?.type || "followers", goal, settings.abbreviateNumbers !== false)} {METRIC_LABELS[primaryMetric?.type || "followers"].toLowerCase()}
       </p>
@@ -94,11 +95,11 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
       {/* Current value - big */}
       <p
         className="font-bold tracking-tight flex items-center"
-        style={{ fontSize: "12cqi", gap: "2cqi" }}
+        style={{ fontSize: isBanner ? "9cqi" : "12cqi", gap: isBanner ? "1.5cqi" : "2cqi" }}
       >
         <HugeiconsIcon
           icon={METRIC_ICONS[primaryMetric?.type || "followers"]}
-          style={{ width: "10cqi", height: "10cqi" }}
+          style={{ width: isBanner ? "7.5cqi" : "10cqi", height: isBanner ? "7.5cqi" : "10cqi" }}
           strokeWidth={1.5}
           color="currentColor"
         />
@@ -109,7 +110,7 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
       <div
         className="w-full rounded-full overflow-hidden"
         style={{
-          height: "3.5cqi",
+          height: isBanner ? "2.8cqi" : "3.5cqi",
           backgroundColor: "rgba(255,255,255,0.2)",
         }}
       >
@@ -126,7 +127,7 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
       {/* Percentage */}
       <p
         className="font-semibold"
-        style={{ fontSize: "3cqi" }}
+        style={{ fontSize: isBanner ? "2.4cqi" : "3cqi" }}
       >
         {Math.round(progress)}% complete
       </p>

@@ -373,7 +373,11 @@ export default function Editor({ isPremium = false }: EditorProps) {
         fetch("/api/stats/track", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ followers: followersValue }),
+          body: JSON.stringify({
+            followers: followersValue,
+            backgroundId: settings.background.presetId,
+            template: settings.template,
+          }),
         }).catch(() => {});
         window.dispatchEvent(
           new CustomEvent("groar:export", { detail: { followers: followersValue } })
@@ -447,9 +451,18 @@ export default function Editor({ isPremium = false }: EditorProps) {
     </section>
   );
 
-  // Dashboard: no wrapper needed
+  // Dashboard: show share CTA + editor
   if (isPremium) {
-    return editorContent;
+    return (
+      <>
+        <div className="text-center text-sm text-muted-foreground mb-4">
+          When you share your visuals, tag{" "}
+          <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a>
+          , I will repost you!
+        </div>
+        {editorContent}
+      </>
+    );
   }
 
   // Landing page: wrapper with glow effects + optional upgrade modal
