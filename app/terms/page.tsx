@@ -11,7 +11,7 @@ export default function TermsPage() {
   return (
     <div className="flex flex-col min-h-screen px-4">
       <Header />
-      <main className="flex-1 py-8 mt-10">
+      <main className="flex-1 py-8 mt-4 md:mt-10">
         <article className="max-w-2xl mx-auto">
           <header className="mb-12">
             <h1 className="text-4xl font-bold tracking-tight mb-2">Terms of Service</h1>

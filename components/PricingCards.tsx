@@ -44,7 +44,7 @@ function ProCard({
 }) {
   return (
     <div className={proHighlighted ? "md:-my-6 md:-mx-4 relative z-10" : ""}>
-      <div className="relative rounded-3xl p-8 flex flex-col bg-foreground text-background overflow-hidden">
+      <div className="relative rounded-3xl p-6 md:p-8 flex flex-col bg-foreground text-background overflow-hidden">
         {/* Badge */}
         {!isCurrent && (
           <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-[14px] z-20 flex items-center gap-1">
@@ -82,15 +82,15 @@ function ProCard({
             <div className="flex items-baseline gap-0.5">
               {billingPeriod === "annual" ? (
                 <>
-                  <span className="text-[32px] font-heading font-extrabold leading-none">$</span>
-                  <span className="text-[42px] font-mono font-black leading-none">{getAnnualPrice(CURRENT_PRO_PRICE)}</span>
+                  <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
+                  <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{getAnnualPrice(CURRENT_PRO_PRICE)}</span>
                   <span className="text-background/60 text-sm ml-0.5">/year</span>
                   <span className="text-sm text-background/40 line-through ml-1">${CURRENT_PRO_PRICE * 12}</span>
                 </>
               ) : (
                 <>
-                  <span className="text-[32px] font-heading font-extrabold leading-none">$</span>
-                  <span className="text-[42px] font-mono font-black leading-none">{CURRENT_PRO_PRICE}</span>
+                  <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
+                  <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{CURRENT_PRO_PRICE}</span>
                   <span className="text-background/60 text-sm ml-0.5">/month</span>
                 </>
               )}
@@ -185,7 +185,7 @@ function PlanCard({
 }) {
   return (
     <div
-      className={`relative p-7 h-full flex flex-col rounded-3xl ${
+      className={`relative p-5 md:p-7 h-full flex flex-col rounded-3xl ${
         planKey === "free" ? "md:rounded-r-none" : planKey === "agency" ? "md:rounded-l-none" : ""
       } ${isCurrent ? "bg-foreground text-background" : "bg-card border-fade"}`}
     >
@@ -207,8 +207,8 @@ function PlanCard({
         <div className="flex items-baseline gap-0.5">
           {plan.price > 0 && billingPeriod === "annual" ? (
             <>
-              <span className="text-[32px] font-heading font-extrabold leading-none">$</span>
-              <span className="text-[42px] font-mono font-black leading-none">{getAnnualPrice(plan.price)}</span>
+              <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
+              <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{getAnnualPrice(plan.price)}</span>
               <span className={`ml-0.5 ${isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}`}>
                 /year
               </span>
@@ -216,8 +216,8 @@ function PlanCard({
             </>
           ) : (
             <>
-              <span className="text-[32px] font-heading font-extrabold leading-none">$</span>
-              <span className="text-[42px] font-mono font-black leading-none">{plan.price}</span>
+              <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
+              <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{plan.price}</span>
               {plan.price > 0 && (
                 <span className={`ml-0.5 ${isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}`}>
                   /month
@@ -281,7 +281,7 @@ function PlanCard({
 
 function BillingToggle({ period, onChange }: { period: BillingPeriod; onChange: (p: BillingPeriod) => void }) {
   return (
-    <div className="flex items-center justify-center mb-10 -mt-2">
+    <div className="flex items-center justify-center mb-6 md:mb-10 -mt-1 md:-mt-2">
       <div className="flex items-center bg-muted rounded-full p-1">
         <button
           onClick={() => onChange("monthly")}

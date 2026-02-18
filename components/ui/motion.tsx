@@ -81,6 +81,7 @@ type StaggerContainerProps = HTMLMotionProps<"div"> & {
   children: ReactNode;
   staggerDelay?: number;
   delayChildren?: number;
+  amount?: number;
   as?: keyof JSX.IntrinsicElements;
 };
 
@@ -88,6 +89,7 @@ export function StaggerContainer({
   children,
   staggerDelay = 0.12,
   delayChildren = 0,
+  amount = 0.15,
   as,
   ...props
 }: StaggerContainerProps) {
@@ -97,7 +99,7 @@ export function StaggerContainer({
     <Component
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.5 }}
+      viewport={{ once: true, amount }}
       variants={{
         hidden: {},
         visible: {

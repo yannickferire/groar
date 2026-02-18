@@ -20,38 +20,40 @@ export default function Header() {
   const { data: session } = authClient.useSession();
 
   return (
-    <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg">
+    <div className="md:sticky md:top-0 z-50 md:bg-background/80 md:backdrop-blur-lg">
       <FadeIn delay={0} duration={0.6} direction="none">
-        <header className="w-full max-w-5xl mx-auto flex items-center justify-between py-4">
+        <header className="w-full max-w-5xl mx-auto flex items-center justify-center md:justify-between py-4">
           <Logo />
-          <nav className="flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-6">
             <button
               onClick={() => smoothScrollTo("editor", 72)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Try for free
             </button>
             <button
               onClick={() => smoothScrollTo("pricing", 72)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Pricing
             </button>
-            {session ? (
-              <Button asChild variant="default" size="default">
-                <Link href="/dashboard">
-                  <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} aria-hidden="true" />
-                  Dashboard
-                </Link>
-              </Button>
-            ) : (
-              <Button asChild variant="default" size="default">
-                <Link href="/login">
-                  <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                  Get Started
-                </Link>
-              </Button>
-            )}
+            <div className="hidden md:block">
+              {session ? (
+                <Button asChild variant="default" size="default">
+                  <Link href="/dashboard">
+                    <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} aria-hidden="true" />
+                    Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild variant="default" size="default">
+                  <Link href="/login">
+                    <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+                    Get Started
+                  </Link>
+                </Button>
+              )}
+            </div>
           </nav>
         </header>
       </FadeIn>

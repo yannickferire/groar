@@ -3,20 +3,46 @@
 import XLogo from "@/components/icons/XLogo";
 import { FadeIn } from "@/components/ui/motion";
 import LovedBy from "@/components/LovedBy";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { SparklesIcon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
+import { authClient } from "@/lib/auth-client";
 
 export default function Hero() {
+  const { data: session } = authClient.useSession();
+
   return (
-    <section className="max-w-3xl text-balance text-center flex flex-col gap-6 mx-auto">
+    <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto">
       <FadeIn delay={0.25} duration={0.6}>
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-          Make your <XLogo className="w-10! h-10! md:w-12! md:h-12! rounded-xl! align-middle -mt-1 -rotate-2 [&>svg]:w-5! [&>svg]:h-5! md:[&>svg]:w-6! md:[&>svg]:h-6!" /> social metrics <span className="highlighted">Roaaar</span>
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">
+          Make your <XLogo className="w-7! h-7! sm:w-8! sm:h-8! md:w-12! md:h-12! rounded-lg! md:rounded-xl! align-middle -mt-1 -rotate-2 [&>svg]:w-3.5! [&>svg]:h-3.5! sm:[&>svg]:w-4! sm:[&>svg]:h-4! md:[&>svg]:w-6! md:[&>svg]:h-6!" /> social metrics <span className="highlighted">Roaaar</span>
         </h1>
       </FadeIn>
       <FadeIn delay={0.35} duration={0.6}>
-        <p className="text-lg md:text-xl max-w-2xl mx-auto text-muted-foreground">
+        <p className="text-base md:text-xl max-w-2xl mx-auto text-muted-foreground">
           Turn cold data analytics into high-signal visuals.<br className="hidden md:block" />
           Share your wins and watch the engagement grow.
         </p>
+      </FadeIn>
+      <FadeIn delay={0.45} duration={0.6}>
+        <div className="md:hidden">
+          {session ? (
+            <Button asChild variant="default" size="lg">
+              <Link href="/dashboard">
+                <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} aria-hidden="true" />
+                Dashboard
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild variant="default" size="lg">
+              <Link href="/login">
+                <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+                Get Started
+              </Link>
+            </Button>
+          )}
+        </div>
       </FadeIn>
       {/* <FadeIn delay={0.45} duration={0.6}>
         <LovedBy />

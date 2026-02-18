@@ -69,19 +69,19 @@ export default function GlobalStats() {
 
   return (
     <FadeInView delay={0.3} duration={0.6}>
-      <section className="w-full max-w-5xl mx-auto -mb-6 md:-mb-12">
+      <section className="w-full max-w-5xl mx-auto -mb-6 md:-mt-6 md:-mb-12">
         <div className="rounded-3xl border-fade border-fade-reverse p-6 md:p-8">
           <StaggerContainer
             staggerDelay={0.15}
             delayChildren={0.2}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center"
+            className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 text-center"
           >
             <StaggerItem>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
                 <HugeiconsIcon icon={Download04Icon} size={18} strokeWidth={2} />
                 Visuals exported
               </p>
-              <div className="text-3xl font-mono font-bold mt-3 flex justify-center">
+              <div className="text-2xl sm:text-3xl font-mono font-bold mt-1.5 sm:mt-3 flex justify-center">
                 <AnimatePresence mode="wait">
                   {loaded ? (
                     <motion.span key="value" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
@@ -99,7 +99,7 @@ export default function GlobalStats() {
                 <HugeiconsIcon icon={UserLove01Icon} size={18} strokeWidth={2} />
                 Followers announced
               </p>
-              <div className="text-3xl font-mono font-bold mt-3 flex justify-center">
+              <div className="text-2xl sm:text-3xl font-mono font-bold mt-1.5 sm:mt-3 flex justify-center">
                 <AnimatePresence mode="wait">
                   {loaded ? (
                     <motion.span key="value" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
@@ -117,7 +117,7 @@ export default function GlobalStats() {
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} />
                 Templates
               </p>
-              <div className="text-3xl font-mono font-bold mt-3 flex justify-center">
+              <div className="text-2xl sm:text-3xl font-mono font-bold mt-1.5 sm:mt-3 flex justify-center">
                 <AnimatePresence mode="wait">
                   {loaded ? (
                     <motion.span key="value" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
@@ -135,7 +135,7 @@ export default function GlobalStats() {
                 <HugeiconsIcon icon={Image01Icon} size={18} strokeWidth={2} />
                 Backgrounds
               </p>
-              <div className="text-3xl font-mono font-bold mt-3 flex justify-center">
+              <div className="text-2xl sm:text-3xl font-mono font-bold mt-1.5 sm:mt-3 flex justify-center">
                 <AnimatePresence mode="wait">
                   {loaded ? (
                     <motion.span key="value" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>

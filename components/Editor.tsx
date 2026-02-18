@@ -468,7 +468,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
   // Landing page: wrapper with glow effects + optional upgrade modal
   return (
     <FadeIn delay={0.6} duration={0.7}>
-      <div className="relative w-full max-w-6xl mx-auto mt-6">
+      <div className="relative w-full max-w-6xl mx-auto mt-6 overflow-hidden">
         {/* Top horizontal glow */}
         <div
           className="absolute -top-24 left-1/2 w-[140%] h-48 rounded-[100%] blur-3xl pointer-events-none animate-[glowRise_0.8s_ease-out_0.95s_forwards]"

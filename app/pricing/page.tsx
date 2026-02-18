@@ -45,7 +45,7 @@ export default function PricingPage() {
   return (
     <div className="flex flex-col min-h-screen px-4">
       <Header />
-      <main className="flex-1 flex flex-col items-center justify-center py-16 mt-10">
+      <main className="flex-1 flex flex-col items-center justify-center py-8 md:py-16 mt-4 md:mt-10">
         <FadeInView direction="up" distance={32}>
           <div className="text-center mb-20">
             <h1 className="text-4xl md:text-5xl font-heading font-bold tracking-tight mb-4">

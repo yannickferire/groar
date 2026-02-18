@@ -81,10 +81,10 @@ export default function Pricing() {
   if (effectivePlan === "agency") disabledPlans.push("agency");
 
   return (
-    <FadeInView direction="up" distance={32}>
+    <FadeInView direction="up" distance={32} amount={0.1}>
       <section id="pricing" className="w-full max-w-5xl mx-auto py-4 scroll-mt-18">
-        <div className="text-center mb-18">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight mb-3">
+        <div className="text-center mb-8 md:mb-18">
+          <h2 className="text-2xl md:text-4xl font-heading font-bold tracking-tight mb-3">
             Simple pricing
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
