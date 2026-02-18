@@ -13,6 +13,14 @@ function getPlanFromProductId(productId: string): "pro" | "agency" | null {
   return null;
 }
 
+// Derive billing period from Polar product ID
+function getBillingPeriodFromProductId(productId: string): "monthly" | "annual" {
+  if (productId === getPolarProductId("pro", "annual") || productId === getPolarProductId("agency", "annual")) {
+    return "annual";
+  }
+  return "monthly";
+}
+
 // Extract subscription fields from webhook event.data
 function parseSubscriptionData(data: Record<string, unknown>) {
   const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
@@ -22,6 +30,7 @@ function parseSubscriptionData(data: Record<string, unknown>) {
     productId: (data.product_id ?? data.productId ?? "") as string,
     customerId: (data.customer_id ?? data.customerId ?? "") as string,
     currentPeriodEnd: (data.current_period_end ?? data.currentPeriodEnd) as string | undefined,
+    currentPeriodStart: (data.current_period_start ?? data.currentPeriodStart) as string | undefined,
     userId: metadata.userId,
   };
 }
@@ -75,14 +84,19 @@ export async function POST(request: NextRequest) {
         }
 
         if (sub.status === "active") {
+          const billingPeriod = getBillingPeriodFromProductId(sub.productId);
           await setUserPlan(sub.userId, plan, {
             externalId: sub.id,
             externalCustomerId: sub.customerId,
             currentPeriodEnd: sub.currentPeriodEnd
               ? new Date(sub.currentPeriodEnd)
               : undefined,
+            currentPeriodStart: sub.currentPeriodStart
+              ? new Date(sub.currentPeriodStart)
+              : undefined,
+            billingPeriod,
           });
-          console.log(`Set plan ${plan} for user ${sub.userId} (subscription: ${sub.id})`);
+          console.log(`Set plan ${plan} (${billingPeriod}) for user ${sub.userId} (subscription: ${sub.id})`);
         }
         break;
       }

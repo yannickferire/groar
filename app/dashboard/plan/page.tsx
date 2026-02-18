@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRight01Icon, CreditCardIcon, Loading03Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { PLANS, PlanType, PLAN_ORDER, BillingPeriod } from "@/lib/plans";
 import Link from "next/link";
@@ -20,6 +20,8 @@ type PlanData = {
   };
   status?: string;
   currentPeriodEnd?: string;
+  currentPeriodStart?: string;
+  billingPeriod?: "monthly" | "annual";
 };
 
 export default function PlanPage() {
@@ -161,6 +163,33 @@ export default function PlanPage() {
                 {planData.limits.maxConnectionsPerProvider === 0 ? "None" : planData.limits.maxConnectionsPerProvider}
               </p>
             </div>
+          </div>
+        )}
+
+        {!loading && isPaidPlan && planData?.currentPeriodEnd && (
+          <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
+            {planData.billingPeriod && (
+              <div className="flex items-center gap-1.5">
+                <HugeiconsIcon icon={RepeatIcon} size={14} strokeWidth={2} />
+                <span>{planData.billingPeriod === "annual" ? "Annual" : "Monthly"} billing</span>
+              </div>
+            )}
+            {planData.currentPeriodStart && (
+              <div className="flex items-center gap-1.5">
+                <HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={2} />
+                <span>
+                  Current period: {new Date(planData.currentPeriodStart).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {new Date(planData.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              </div>
+            )}
+            {!planData.currentPeriodStart && (
+              <div className="flex items-center gap-1.5">
+                <HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={2} />
+                <span>
+                  {planData.status === "canceled" ? "Ends" : "Renews"} {new Date(planData.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>

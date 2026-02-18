@@ -37,6 +37,8 @@ export async function GET() {
     exportsToday,
     status: subscription?.status,
     currentPeriodEnd: subscription?.currentPeriodEnd,
+    currentPeriodStart: subscription?.currentPeriodStart,
+    billingPeriod: subscription?.billingPeriod,
   });
 }
 

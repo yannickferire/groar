@@ -34,12 +34,14 @@ export async function setUserPlan(
     externalId?: string;
     externalCustomerId?: string;
     currentPeriodEnd?: Date;
+    currentPeriodStart?: Date;
+    billingPeriod?: string;
   }
 ): Promise<void> {
   try {
     await pool.query(
-      `INSERT INTO subscription ("userId", plan, status, "externalId", "externalCustomerId", "currentPeriodEnd", "createdAt", "updatedAt")
-       VALUES ($1, $2, 'active', $3, $4, $5, NOW(), NOW())
+      `INSERT INTO subscription ("userId", plan, status, "externalId", "externalCustomerId", "currentPeriodEnd", "currentPeriodStart", "billingPeriod", "createdAt", "updatedAt")
+       VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, NOW(), NOW())
        ON CONFLICT ("userId")
        DO UPDATE SET
          plan = $2,
@@ -47,8 +49,10 @@ export async function setUserPlan(
          "externalId" = COALESCE($3, subscription."externalId"),
          "externalCustomerId" = COALESCE($4, subscription."externalCustomerId"),
          "currentPeriodEnd" = COALESCE($5, subscription."currentPeriodEnd"),
+         "currentPeriodStart" = COALESCE($6, subscription."currentPeriodStart"),
+         "billingPeriod" = COALESCE($7, subscription."billingPeriod"),
          "updatedAt" = NOW()`,
-      [userId, plan, options?.externalId || null, options?.externalCustomerId || null, options?.currentPeriodEnd || null]
+      [userId, plan, options?.externalId || null, options?.externalCustomerId || null, options?.currentPeriodEnd || null, options?.currentPeriodStart || null, options?.billingPeriod || null]
     );
   } catch (error) {
     console.error("Error setting user plan:", error);
@@ -60,7 +64,7 @@ export async function setUserPlan(
 export async function getUserSubscription(userId: string) {
   try {
     const result = await pool.query(
-      `SELECT plan, status, "externalId", "externalCustomerId", "currentPeriodEnd"
+      `SELECT plan, status, "externalId", "externalCustomerId", "currentPeriodEnd", "currentPeriodStart", "billingPeriod"
        FROM subscription WHERE "userId" = $1`,
       [userId]
     );
