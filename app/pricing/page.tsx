@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { PLANS, PlanType, BillingPeriod } from "@/lib/plans";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -8,7 +8,7 @@ import { FadeInView } from "@/components/ui/motion";
 import { authClient } from "@/lib/auth-client";
 import PricingCards from "@/components/PricingCards";
 
-export default function PricingPage() {
+function PricingContent() {
   const { data: session } = authClient.useSession();
   const [upgrading, setUpgrading] = useState<PlanType | null>(null);
 
@@ -75,5 +75,13 @@ export default function PricingPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense>
+      <PricingContent />
+    </Suspense>
   );
 }

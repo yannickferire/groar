@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserCircleIcon, Mail01Icon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { data: session } = authClient.useSession();
 
   return (
@@ -61,5 +62,13 @@ export default function SettingsPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense>
+      <SettingsContent />
+    </Suspense>
   );
 }

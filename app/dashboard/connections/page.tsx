@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link01Icon, Add01Icon, Rocket01Icon, Delete02Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
@@ -39,7 +39,7 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
   },
 ];
 
-export default function ConnectionsPage() {
+function ConnectionsContent() {
   const { data: session } = authClient.useSession();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [plan, setPlan] = useState<PlanType>("free");
@@ -238,5 +238,13 @@ export default function ConnectionsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ConnectionsPage() {
+  return (
+    <Suspense>
+      <ConnectionsContent />
+    </Suspense>
   );
 }
