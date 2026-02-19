@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { getUserPlanFromDB } from "@/lib/plans-server";
 
 export async function DELETE(
   _request: NextRequest,
@@ -13,6 +14,11 @@ export async function DELETE(
 
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const plan = await getUserPlanFromDB(session.user.id);
+  if (plan === "free") {
+    return NextResponse.json({ error: "Premium feature" }, { status: 403 });
   }
 
   const { id } = await params;

@@ -1,9 +1,9 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon, DashboardSquare02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, getAnnualPrice, ProTierInfo } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, getAnnualPrice, ProTierInfo, TRIAL_DURATION_DAYS } from "@/lib/plans";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -12,13 +12,14 @@ type PricingCardsProps = {
   onSelectPlan: (planKey: PlanType, billingPeriod?: BillingPeriod) => void;
   currentPlan?: PlanType;
   loadingPlan?: PlanType | null;
-  ctaLabel?: (planKey: PlanType) => string;
+  ctaLabel?: (planKey: PlanType, billingPeriod?: BillingPeriod) => string;
   showProFeatures?: boolean;
   proHighlighted?: boolean;
   animated?: boolean;
   showBillingToggle?: boolean;
   disabledPlans?: PlanType[];
   proTierInfo?: ProTierInfo | null;
+  canTrial?: boolean;
 };
 
 function ProCard({
@@ -32,6 +33,7 @@ function ProCard({
   disabled,
   billingPeriod,
   proTierInfo,
+  canTrial,
 }: {
   plan: typeof PLANS.pro;
   planKey: PlanType;
@@ -44,15 +46,17 @@ function ProCard({
   disabled: boolean;
   billingPeriod: BillingPeriod;
   proTierInfo?: ProTierInfo | null;
+  canTrial?: boolean;
 }) {
   const proPrice = proTierInfo?.price ?? plan.price;
+  const showTrialPricing = canTrial && billingPeriod === "monthly";
   return (
     <div className={proHighlighted ? "md:-my-6 md:-mx-4 relative z-10" : ""}>
       <div className="relative rounded-3xl p-6 md:p-8 flex flex-col bg-foreground text-background overflow-hidden">
         {/* Badge */}
         {!isCurrent && (
-          <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-[14px] z-20 flex items-center gap-1">
-            <HugeiconsIcon icon={StarIcon} size={12} strokeWidth={3} />
+          <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-medium px-2.5 py-1 rounded-full z-20 flex items-center gap-1">
+            <HugeiconsIcon icon={StarIcon} size={12} strokeWidth={2} />
             Popular
           </div>
         )}
@@ -147,13 +151,18 @@ function ProCard({
               <HugeiconsIcon icon={Loading03Icon} size={18} strokeWidth={2} className="animate-spin" />
             ) : (
               <>
-                {ctaLabel !== "Dashboard" && (
+                {ctaLabel === "Dashboard" ? (
+                  <HugeiconsIcon icon={DashboardSquare02Icon} size={18} strokeWidth={2} aria-hidden="true" />
+                ) : (
                   <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
                 )}
                 {ctaLabel}
               </>
             )}
           </Button>
+          {showTrialPricing && !isCurrent && (
+            <p className="text-xs text-background/50 text-center mt-2">No credit card required</p>
+          )}
         </div>
       </div>
     </div>
@@ -181,11 +190,11 @@ function PlanCard({
 }) {
   return (
     <div
-      className={`relative p-5 md:p-7 h-full flex flex-col rounded-3xl ${
+      className={`relative p-5 md:p-7 flex flex-col rounded-3xl md:mt-10 ${
         planKey === "free" ? "md:rounded-r-none" : planKey === "agency" ? "md:rounded-l-none" : ""
-      } ${isCurrent ? "bg-foreground text-background" : "bg-card border-fade"}`}
+      } bg-card border-fade`}
     >
-      {isCurrent && (
+      {isCurrent && planKey !== "free" && (
         <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-medium px-2.5 py-1 rounded-full">
           Current
         </div>
@@ -195,7 +204,7 @@ function PlanCard({
         <div className="flex items-baseline gap-2 mb-2">
           <h3 className="text-lg font-heading font-bold">{plan.name}</h3>
           {"subtitle" in plan && (plan as { subtitle?: string }).subtitle && (
-            <span className={`text-sm ${isCurrent ? "text-background/40" : "text-muted-foreground/50"}`}>
+            <span className="text-sm text-muted-foreground/50">
               – {(plan as { subtitle: string }).subtitle}
             </span>
           )}
@@ -205,11 +214,11 @@ function PlanCard({
             <>
               <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
               <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{getAnnualPrice(plan.price)}</span>
-              <span className={`ml-0.5 ${isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}`}>
+              <span className="text-muted-foreground text-sm ml-0.5">
                 /year
               </span>
-              <span className={`text-sm line-through ml-1 ${isCurrent ? "text-background/30" : "text-muted-foreground/40"}`}>${plan.price * 12}</span>
-              <span className={`text-xs ml-1 ${isCurrent ? "text-background/30" : "text-muted-foreground/40"}`}>(+ applicable tax)</span>
+              <span className="text-sm text-muted-foreground/40 line-through ml-1">${plan.price * 12}</span>
+              <span className="text-xs text-muted-foreground/40 ml-1">(+ applicable tax)</span>
             </>
           ) : (
             <>
@@ -217,10 +226,10 @@ function PlanCard({
               <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{plan.price}</span>
               {plan.price > 0 && (
                 <>
-                  <span className={`ml-0.5 ${isCurrent ? "text-background/60 text-sm" : "text-muted-foreground text-sm"}`}>
+                  <span className="text-muted-foreground text-sm ml-0.5">
                     /month
                   </span>
-                  <span className={`text-xs ml-1 ${isCurrent ? "text-background/30" : "text-muted-foreground/40"}`}>(+ applicable tax)</span>
+                  <span className="text-xs text-muted-foreground/40 ml-1">(+ applicable tax)</span>
                 </>
               )}
             </>
@@ -238,7 +247,7 @@ function PlanCard({
                 strokeWidth={2}
                 className="text-primary mt-0.5 shrink-0"
               />
-              <span className={`text-sm ${isCurrent ? "text-background/80" : "text-muted-foreground"}`}>
+              <span className="text-sm text-muted-foreground">
                 {feature}
               </span>
             </li>
@@ -252,9 +261,9 @@ function PlanCard({
                   icon={MinusSignIcon}
                   size={16}
                   strokeWidth={1.5}
-                  className={`mt-0.5 shrink-0 ${isCurrent ? "text-background/30" : "text-muted-foreground/40"}`}
+                  className="mt-0.5 shrink-0 text-muted-foreground/40"
                 />
-                <span className={`text-sm ${isCurrent ? "text-background/40" : "text-muted-foreground/60"}`}>
+                <span className="text-sm text-muted-foreground/60">
                   {limit}
                 </span>
               </li>
@@ -264,7 +273,7 @@ function PlanCard({
       </div>
 
       <Button
-        variant={isCurrent ? "defaultReverse" : "outline"}
+        variant="outline"
         className="w-full"
         onClick={onSelect}
         disabled={disabled}
@@ -332,6 +341,7 @@ export default function PricingCards({
   showBillingToggle = true,
   disabledPlans = [],
   proTierInfo,
+  canTrial,
 }: PricingCardsProps) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
 
@@ -357,13 +367,14 @@ export default function PricingCards({
         planKey={planKey}
         isCurrent={isCurrent}
         isLoading={isLoading}
-        ctaLabel={getLabel(planKey)}
+        ctaLabel={getLabel(planKey, billingPeriod)}
         showProFeatures={showProFeatures}
         proHighlighted={proHighlighted}
         onSelect={() => onSelectPlan(planKey, billingPeriod)}
         disabled={isDisabled}
         proTierInfo={proTierInfo}
         billingPeriod={billingPeriod}
+        canTrial={canTrial}
       />
     ) : (
       <PlanCard
@@ -372,7 +383,7 @@ export default function PricingCards({
         planKey={planKey}
         isCurrent={isCurrent}
         isLoading={isLoading}
-        ctaLabel={getLabel(planKey)}
+        ctaLabel={getLabel(planKey, billingPeriod)}
         onSelect={() => onSelectPlan(planKey, billingPeriod)}
         disabled={isDisabled}
         billingPeriod={billingPeriod}
@@ -388,13 +399,14 @@ export default function PricingCards({
               planKey={planKey}
               isCurrent={isCurrent}
               isLoading={isLoading}
-              ctaLabel={getLabel(planKey)}
+              ctaLabel={getLabel(planKey, billingPeriod)}
               showProFeatures={showProFeatures}
               proHighlighted={false}
               onSelect={() => onSelectPlan(planKey, billingPeriod)}
               disabled={isDisabled}
               billingPeriod={billingPeriod}
               proTierInfo={proTierInfo}
+              canTrial={canTrial}
             />
           ) : (
             <PlanCard
@@ -402,7 +414,7 @@ export default function PricingCards({
               planKey={planKey}
               isCurrent={isCurrent}
               isLoading={isLoading}
-              ctaLabel={getLabel(planKey)}
+              ctaLabel={getLabel(planKey, billingPeriod)}
               onSelect={() => onSelectPlan(planKey, billingPeriod)}
               disabled={isDisabled}
               billingPeriod={billingPeriod}
@@ -427,7 +439,7 @@ export default function PricingCards({
             <BillingToggle period={billingPeriod} onChange={setBillingPeriod} />
           </StaggerItem>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-start">
           {cards}
         </div>
       </StaggerContainer>
@@ -437,7 +449,7 @@ export default function PricingCards({
   return (
     <div>
       {toggle}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-start">
         {cards}
       </div>
     </div>

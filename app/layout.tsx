@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, DM_Mono, Inter, Playfair_Display, Space_Grotesk } from "next/font/google";
+import { Averia_Serif_Libre, Bricolage_Grotesque, DM_Mono, DM_Serif_Display, Inter, Playfair_Display, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Script from "next/script";
 import { Toaster } from "@/components/ui/toast";
@@ -33,6 +33,21 @@ const playfair = Playfair_Display({
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+const averiaSerifLibre = Averia_Serif_Libre({
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
+  variable: "--font-averia-serif-libre",
+  display: "swap",
+});
+
+const dmSerifDisplay = DM_Serif_Display({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-dm-serif-display",
   display: "swap",
 });
 
@@ -113,7 +128,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${bricolage.variable} ${dmMono.variable} ${inter.variable} ${playfair.variable} ${spaceGrotesk.variable} antialiased`}
+        className={`${bricolage.variable} ${dmMono.variable} ${inter.variable} ${playfair.variable} ${spaceGrotesk.variable} ${averiaSerifLibre.variable} ${dmSerifDisplay.variable} antialiased`}
       >
         {children}
         <Toaster />

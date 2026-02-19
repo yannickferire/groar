@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRight01Icon, Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon, CrownIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo } from "@/lib/plans";
 import Link from "next/link";
 import PricingCards from "@/components/PricingCards";
+import TrialBanner from "@/components/dashboard/TrialBanner";
 import { toast } from "sonner";
 
 type PlanData = {
@@ -16,12 +18,15 @@ type PlanData = {
   features: string[];
   limits: {
     maxConnectionsPerProvider: number;
-    maxExportsPerDay: number | null;
+    maxExportsPerWeek: number | null;
   };
   status?: string;
   currentPeriodEnd?: string;
   currentPeriodStart?: string;
   billingPeriod?: "monthly" | "annual";
+  isTrialing?: boolean;
+  trialEnd?: string;
+  hasUsedTrial?: boolean;
 };
 
 export default function PlanPage() {
@@ -109,6 +114,16 @@ export default function PlanPage() {
         </p>
       </div>
 
+      {!loading && planData && (
+        <TrialBanner
+          isTrialing={!!planData.isTrialing}
+          trialEnd={planData.trialEnd || null}
+          plan={planData.plan}
+          proTierInfo={proTierInfo}
+          hasUsedTrial={!!planData.hasUsedTrial}
+        />
+      )}
+
       {/* Current Plan */}
       <div className="rounded-2xl border-fade p-6">
         <div className="flex items-center justify-between mb-6">
@@ -121,6 +136,11 @@ export default function PlanPage() {
             ) : (
               <div className="flex items-center gap-3">
                 <h2 className="text-2xl font-heading font-bold">{planData?.name}</h2>
+                {planData?.isTrialing && (
+                  <span className="text-xs font-medium bg-primary/10 text-primary px-2.5 py-1 rounded-full">
+                    Trial
+                  </span>
+                )}
                 {planData?.status === "canceled" && planData?.currentPeriodEnd && (
                   <span className="text-xs font-medium bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full">
                     Ends {new Date(planData.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -130,7 +150,7 @@ export default function PlanPage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {!loading && isPaidPlan && (
+            {!loading && isPaidPlan && !planData?.isTrialing && (
               <Button
                 variant="outline"
                 onClick={handleManageSubscription}
@@ -144,7 +164,7 @@ export default function PlanPage() {
                 Manage subscription
               </Button>
             )}
-            {!loading && planData && planData.plan !== "agency" && planData.plan !== "friend" && (
+            {!loading && planData && !planData.isTrialing && planData.plan !== "agency" && planData.plan !== "friend" && (
               <Button asChild variant="default">
                 <Link href="/pricing">
                   Upgrade
@@ -158,9 +178,9 @@ export default function PlanPage() {
         {!loading && planData && (
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-xl bg-sidebar p-4">
-              <p className="text-xs text-muted-foreground mb-1">Exports per day</p>
+              <p className="text-xs text-muted-foreground mb-1">Exports per week</p>
               <p className="text-lg font-semibold">
-                {planData.limits.maxExportsPerDay === null ? "Unlimited" : planData.limits.maxExportsPerDay}
+                {planData.limits.maxExportsPerWeek === null ? "Unlimited" : planData.limits.maxExportsPerWeek}
               </p>
             </div>
             <div className="rounded-xl bg-sidebar p-4">
@@ -172,7 +192,7 @@ export default function PlanPage() {
           </div>
         )}
 
-        {!loading && isPaidPlan && planData?.currentPeriodEnd && (
+        {!loading && isPaidPlan && !planData?.isTrialing && planData?.currentPeriodEnd && (
           <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
             {planData.billingPeriod && (
               <div className="flex items-center gap-1.5">
@@ -198,6 +218,16 @@ export default function PlanPage() {
             )}
           </div>
         )}
+
+        {/* Trial-specific: show when trial ends */}
+        {!loading && planData?.isTrialing && planData?.trialEnd && (
+          <div className="mt-4 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={2} />
+            <span>
+              Trial ends {new Date(planData.trialEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} — your account will revert to the Free plan
+            </span>
+          </div>
+        )}
       </div>
 
       {/* All Plans */}
@@ -206,17 +236,18 @@ export default function PlanPage() {
           <h3 className="text-lg font-heading font-semibold mb-4">All plans</h3>
           <PricingCards
             onSelectPlan={handleUpgrade}
-            currentPlan={planData.plan === "friend" ? "pro" : planData.plan}
-            disabledPlans={[planData.plan]}
+            currentPlan={planData.isTrialing ? undefined : (planData.plan === "friend" ? "pro" : planData.plan)}
+            disabledPlans={planData.isTrialing ? [] : [planData.plan]}
             loadingPlan={upgrading}
             showProFeatures={true}
             proHighlighted={true}
             proTierInfo={proTierInfo}
             ctaLabel={(planKey) => {
-              if (planData.plan === planKey) return "Current plan";
+              if (planData.isTrialing && planKey === "pro") return "Claim your spot";
+              if (planData.plan === planKey && !planData.isTrialing) return "Current plan";
               const planIndex = PLAN_ORDER.indexOf(planKey);
               if (planIndex > currentPlanIndex) return `Upgrade to ${PLANS[planKey].name}`;
-              if (planIndex < currentPlanIndex && isPaidPlan) return "Switch plan";
+              if (planIndex < currentPlanIndex && isPaidPlan && !planData.isTrialing) return "Switch plan";
               return `Choose ${PLANS[planKey].name}`;
             }}
           />

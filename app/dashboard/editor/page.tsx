@@ -13,7 +13,7 @@ export default async function DashboardEditorPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto">
-      <Editor isPremium={isPremium} />
+      <Editor isPremium={isPremium} isDashboard={true} />
     </div>
   );
 }

@@ -2,17 +2,25 @@
 // This file should only be imported in server components and API routes
 
 import { pool } from "./db";
-import { PLANS, PlanType, PRO_PRICING_TIERS } from "./plans";
+import { PLANS, PlanType, PRO_PRICING_TIERS, TRIAL_DURATION_DAYS } from "./plans";
 
-// Get user plan from database
+// Get user plan from database (accounts for trial expiration)
 export async function getUserPlanFromDB(userId: string): Promise<PlanType> {
   try {
     const result = await pool.query(
-      `SELECT plan FROM subscription WHERE "userId" = $1`,
+      `SELECT plan, status, "trialEnd" FROM subscription WHERE "userId" = $1`,
       [userId]
     );
 
-    const plan = result.rows[0]?.plan as PlanType | undefined;
+    const row = result.rows[0];
+    if (!row) return "free";
+
+    const plan = row.plan as PlanType | undefined;
+
+    // Trial expired → treat as free
+    if (row.status === "trialing" && row.trialEnd && new Date(row.trialEnd) <= new Date()) {
+      return "free";
+    }
 
     // Validate that the plan exists in our PLANS config
     if (plan && plan in PLANS) {
@@ -60,11 +68,11 @@ export async function setUserPlan(
   }
 }
 
-// Get user subscription details (including Polar IDs)
+// Get user subscription details (including Polar IDs and trial info)
 export async function getUserSubscription(userId: string) {
   try {
     const result = await pool.query(
-      `SELECT plan, status, "externalId", "externalCustomerId", "currentPeriodEnd", "currentPeriodStart", "billingPeriod"
+      `SELECT plan, status, "externalId", "externalCustomerId", "currentPeriodEnd", "currentPeriodStart", "billingPeriod", "trialStart", "trialEnd"
        FROM subscription WHERE "userId" = $1`,
       [userId]
     );
@@ -73,6 +81,42 @@ export async function getUserSubscription(userId: string) {
     console.error("Error fetching user subscription:", error);
     return null;
   }
+}
+
+// Start a free trial for a user (3 days of Pro)
+// Only succeeds if user has never had a trial (trialStart is null)
+export async function startTrial(userId: string): Promise<{ trialEnd: Date }> {
+  const now = new Date();
+  const trialEnd = new Date(now.getTime() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
+  const result = await pool.query(
+    `INSERT INTO subscription ("userId", plan, status, "trialStart", "trialEnd", "createdAt", "updatedAt")
+     VALUES ($1, 'pro', 'trialing', $2, $3, NOW(), NOW())
+     ON CONFLICT ("userId")
+     DO UPDATE SET
+       plan = 'pro',
+       status = 'trialing',
+       "trialStart" = $2,
+       "trialEnd" = $3,
+       "updatedAt" = NOW()
+     WHERE subscription."trialStart" IS NULL AND subscription.status != 'active'`,
+    [userId, now, trialEnd]
+  );
+
+  if (result.rowCount === 0) {
+    throw new Error("Trial already used or active subscription exists");
+  }
+
+  return { trialEnd };
+}
+
+// Check if a user has already used their trial
+export async function hasUsedTrial(userId: string): Promise<boolean> {
+  const result = await pool.query(
+    `SELECT "trialStart" FROM subscription WHERE "userId" = $1`,
+    [userId]
+  );
+  return result.rows[0]?.trialStart != null;
 }
 
 // Get the number of active Pro subscribers

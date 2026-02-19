@@ -40,11 +40,17 @@ export default function DashboardSidebar() {
   const pathname = usePathname();
   const [userPlan, setUserPlan] = useState<PlanType | null>(null);
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+  const [isTrialing, setIsTrialing] = useState(false);
+  const [trialEnd, setTrialEnd] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/user/plan")
       .then((res) => res.json())
-      .then((data) => setUserPlan(data.plan))
+      .then((data) => {
+        setUserPlan(data.plan);
+        setIsTrialing(!!data.isTrialing);
+        setTrialEnd(data.trialEnd || null);
+      })
       .catch(() => setUserPlan("free"));
     fetch("/api/pricing")
       .then((res) => res.json())
@@ -161,7 +167,25 @@ export default function DashboardSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        {userPlan && !["pro", "friend", "agency"].includes(userPlan) ? (
+        {/* Trial banner — above Chrome extension for trialing users */}
+        {isTrialing && trialEnd && (
+          <div className="mx-2 mb-2 rounded-2xl bg-primary/10 border border-primary/20 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <HugeiconsIcon icon={CrownIcon} size={16} strokeWidth={2} className="text-primary" />
+              <span className="font-heading font-bold text-sm">
+                Pro trial — {Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} day{Math.ceil((new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) !== 1 ? "s" : ""} left
+              </span>
+            </div>
+            <Button asChild variant="default" size="sm" className="w-full mt-1">
+              <Link href="/pricing">
+                <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />
+                Claim your spot
+              </Link>
+            </Button>
+          </div>
+        )}
+
+        {userPlan && !["pro", "friend", "agency"].includes(userPlan) && !isTrialing ? (
           <div className="mx-2 mb-2 p-4 rounded-2xl bg-foreground text-background relative overflow-hidden">
             {/* Gradient effect */}
             <div className="absolute -bottom-10 -right-20 w-40 h-30 bg-linear-to-tl from-primary/40 via-primary/20 to-transparent blur-2xl rotate-[-25deg]" />
@@ -193,7 +217,7 @@ export default function DashboardSidebar() {
 
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center justify-center w-6 h-6 rounded-md bg-primary text-primary-foreground">
+                <div className="flex items-center justify-center w-6 h-6 rounded-md bg-background/20">
                   <HugeiconsIcon icon={ChromeIcon} size={14} strokeWidth={2} />
                 </div>
                 <span className="font-heading font-bold text-sm">Chrome Extension</span>
@@ -203,7 +227,7 @@ export default function DashboardSidebar() {
                 Export your visuals and access all your analytics while scrolling X.
               </p>
 
-              <Button variant="defaultReverse" size="sm" className="w-full opacity-50" disabled>
+              <Button variant="outline" size="sm" className="w-full bg-background/10 border-background/20 text-background hover:bg-background/20" disabled>
                 Coming soon
               </Button>
             </div>

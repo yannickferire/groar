@@ -175,7 +175,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         )}
 
         {!isPremium && (
-          <footer className="absolute bottom-[3%] z-10 groar-watermark">
+          <footer className={`absolute z-10 groar-watermark ${isBanner ? "bottom-[6%] right-[3%]" : "bottom-[3%]"}`}>
             <p
               className="whitespace-nowrap"
               style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "1.7cqi" : "2cqi" }}

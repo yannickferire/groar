@@ -14,16 +14,32 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [plan, subscription, todayExportsResult] = await Promise.all([
+  const [plan, subscription] = await Promise.all([
     getUserPlanFromDB(session.user.id),
     getUserSubscription(session.user.id),
-    pool.query(
-      `SELECT COUNT(*) FROM export WHERE "userId" = $1 AND "createdAt" >= CURRENT_DATE`,
-      [session.user.id]
-    ),
   ]);
   const planDetails = PLANS[plan];
-  const exportsToday = parseInt(todayExportsResult.rows[0].count);
+
+  // For free users with expired trial, only count exports after trial ended
+  let countSinceClause = `date_trunc('week', CURRENT_DATE)`;
+  const countParams: (string | Date)[] = [session.user.id];
+  if (plan === "free" && subscription?.trialEnd && new Date(subscription.trialEnd) <= new Date()) {
+    const trialEndDate = new Date(subscription.trialEnd);
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    if (trialEndDate > weekStart) {
+      countSinceClause = `$2::timestamptz`;
+      countParams.push(trialEndDate);
+    }
+  }
+  const weekExportsResult = await pool.query(
+    `SELECT COUNT(*) FROM export WHERE "userId" = $1 AND "createdAt" >= ${countSinceClause}`,
+    countParams
+  );
+  const exportsThisWeek = parseInt(weekExportsResult.rows[0].count);
+
+  const isTrialing = subscription?.status === "trialing" && subscription?.trialEnd && new Date(subscription.trialEnd) > new Date();
 
   return NextResponse.json({
     plan,
@@ -32,13 +48,16 @@ export async function GET() {
     features: planDetails.features,
     limits: {
       maxConnectionsPerProvider: planDetails.maxConnectionsPerProvider,
-      maxExportsPerDay: planDetails.maxExportsPerDay,
+      maxExportsPerWeek: planDetails.maxExportsPerWeek,
     },
-    exportsToday,
+    exportsThisWeek,
     status: subscription?.status,
     currentPeriodEnd: subscription?.currentPeriodEnd,
     currentPeriodStart: subscription?.currentPeriodStart,
     billingPeriod: subscription?.billingPeriod,
+    isTrialing: !!isTrialing,
+    trialEnd: subscription?.trialEnd || null,
+    hasUsedTrial: subscription?.trialStart != null,
   });
 }
 

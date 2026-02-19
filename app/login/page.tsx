@@ -8,16 +8,21 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GoogleIcon, Loading03Icon } from "@hugeicons/core-free-icons";
-import { PlanType } from "@/lib/plans";
+import { PlanType, TRIAL_DURATION_DAYS } from "@/lib/plans";
 
 function LoginContent() {
   const [loading, setLoading] = useState<"google" | "twitter" | null>(null);
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan") as PlanType | null;
   const billingParam = searchParams.get("billing");
+  const callbackUrlParam = searchParams.get("callbackUrl");
 
-  // Determine callback URL based on plan
+  // Determine callback URL based on params
   const getCallbackURL = () => {
+    // Explicit callbackUrl takes priority (e.g., from trial signup flow)
+    if (callbackUrlParam) {
+      return callbackUrlParam;
+    }
     if (!planParam) {
       // No plan selected, go to onboarding to choose
       return "/onboarding";
@@ -59,10 +64,16 @@ function LoginContent() {
         <div className="w-full rounded-3xl border-fade p-8 flex flex-col gap-6">
           <div className="text-center">
             <h1 className="text-xl font-heading font-bold">
-              {planParam ? `Get started with ${planParam === "free" ? "Free" : planParam === "pro" ? "Pro" : "Agency"}` : "Welcome back"}
+              {callbackUrlParam?.includes("trial=start")
+                ? "Start your free trial"
+                : planParam
+                  ? `Get started with ${planParam === "free" ? "Free" : planParam === "pro" ? "Pro" : "Agency"}`
+                  : "Welcome back"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Sign in to access your dashboard
+              {callbackUrlParam?.includes("trial=start")
+                ? `Create your account to unlock ${TRIAL_DURATION_DAYS} days of Pro`
+                : "Sign in to access your dashboard"}
             </p>
           </div>
 

@@ -9,26 +9,32 @@ import {
   StarIcon,
   Cancel01Icon,
   Clock01Icon,
+  CrownIcon,
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { PRO_FEATURES, PLANS, ProTierInfo } from "@/lib/plans";
 
-const FREE_DAILY_LIMIT = PLANS.free.maxExportsPerDay;
+const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
 
 type UpgradeModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   exportCount: number;
+  reason?: "limit" | "premium-features";
+  premiumFeatures?: string[];
 };
 
 export default function UpgradeModal({
   open,
   onOpenChange,
   exportCount,
+  reason = "limit",
+  premiumFeatures = [],
 }: UpgradeModalProps) {
-  const remaining = Math.max(0, FREE_DAILY_LIMIT - exportCount);
+  const remaining = Math.max(0, FREE_WEEKLY_LIMIT - exportCount);
   const isAtLimit = remaining === 0;
+  const isPremiumBlock = reason === "premium-features";
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
 
   useEffect(() => {
@@ -107,7 +113,24 @@ export default function UpgradeModal({
                   {/* Header - light */}
                   <div className="p-6 pb-5">
                     <div className="flex items-center gap-4">
-                      {isAtLimit ? (
+                      {isPremiumBlock ? (
+                        <>
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <HugeiconsIcon
+                              icon={CrownIcon}
+                              size={24}
+                              strokeWidth={2}
+                              className="text-primary"
+                            />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-heading font-bold text-foreground">Your design uses Pro features</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {premiumFeatures.join(" · ")}
+                            </p>
+                          </div>
+                        </>
+                      ) : isAtLimit ? (
                         <>
                           <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                             <HugeiconsIcon
@@ -118,9 +141,9 @@ export default function UpgradeModal({
                             />
                           </div>
                           <div>
-                            <h3 className="text-xl font-heading font-bold text-foreground">Daily limit reached</h3>
+                            <h3 className="text-xl font-heading font-bold text-foreground">Weekly limit reached</h3>
                             <p className="text-sm text-muted-foreground">
-                              You&apos;ve used all {FREE_DAILY_LIMIT} free exports for today
+                              You&apos;ve used all {FREE_WEEKLY_LIMIT} free exports this week
                             </p>
                           </div>
                         </>
@@ -137,7 +160,7 @@ export default function UpgradeModal({
                           <div>
                             <h3 className="text-xl font-heading font-bold text-foreground">Image downloaded!</h3>
                             <p className="text-sm text-muted-foreground">
-                              Export {exportCount} of {FREE_DAILY_LIMIT} today
+                              Export {exportCount} of {FREE_WEEKLY_LIMIT} this week
                               {remaining === 1 && <span className="text-amber-600 font-medium"> — last one!</span>}
                             </p>
                           </div>
@@ -201,7 +224,7 @@ export default function UpgradeModal({
                           onClick={() => onOpenChange(false)}
                           className="text-sm text-background/50 hover:text-background/70 transition-colors py-1.5"
                         >
-                          {isAtLimit ? "Come back tomorrow" : "Maybe later"}
+                          {isPremiumBlock ? "Go back to the editor" : isAtLimit ? "Come back next week" : "Maybe later"}
                         </button>
                       </div>
                     </div>
@@ -217,4 +240,4 @@ export default function UpgradeModal({
   );
 }
 
-export { FREE_DAILY_LIMIT };
+export { FREE_WEEKLY_LIMIT };

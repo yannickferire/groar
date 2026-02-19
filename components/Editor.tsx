@@ -10,10 +10,14 @@ import Preview from "./editor/Preview";
 import StyleControls from "./editor/StyleControls";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
+import { FONTS } from "@/lib/fonts";
+import { TEMPLATES } from "@/lib/templates";
 import { useToast } from "@/components/ui/toast";
 import { FadeIn } from "@/components/ui/motion";
 import { motion, AnimatePresence } from "framer-motion";
-import UpgradeModal, { FREE_DAILY_LIMIT } from "@/components/UpgradeModal";
+import UpgradeModal, { FREE_WEEKLY_LIMIT } from "@/components/UpgradeModal";
+import TrialSignupModal from "@/components/TrialSignupModal";
+import { checkPremiumFeatures } from "@/lib/premium-check";
 
 // Convert data URL to File for upload
 function dataURLtoFile(dataUrl: string, filename: string): File {
@@ -155,69 +159,99 @@ function saveSettings(settings: EditorSettings) {
 
 type EditorProps = {
   isPremium?: boolean;
+  isDashboard?: boolean;
 };
 
-export default function Editor({ isPremium = false }: EditorProps) {
+export default function Editor({ isPremium = false, isDashboard = false }: EditorProps) {
   const searchParams = useSearchParams();
   const importId = searchParams.get("import");
 
   // On landing page, detect if user has a premium plan to hide the upgrade modal
   // Also sync today's export count from DB when logged in
   const [hideUpgradeModal, setHideUpgradeModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const dbExportCountLoaded = useRef(false);
   useEffect(() => {
-    if (isPremium) return; // Dashboard already knows
+    if (isDashboard) return; // Dashboard already knows
     fetch("/api/user/plan")
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) return null; // Not logged in
+        return res.json();
+      })
       .then((data) => {
+        if (!data) return; // Not logged in
+        setIsLoggedIn(true);
         if (data.plan && data.plan !== "free") setHideUpgradeModal(true);
+        // Track if user has already used their trial (trialing or expired)
+        if (data.trialEnd) setHasUsedTrial(true);
         // Sync export count from DB (more accurate than localStorage)
-        if (data.exportsToday !== undefined) {
-          const dbCount = Number(data.exportsToday);
-          const localCount = parseInt(localStorage.getItem(`groar-exports-${new Date().toISOString().split("T")[0]}`) || "0", 10);
+        if (data.exportsThisWeek !== undefined) {
+          const dbCount = Number(data.exportsThisWeek);
+          const localCount = parseInt(localStorage.getItem(getWeekKey()) || "0", 10);
           const maxCount = Math.max(dbCount, localCount);
-          localStorage.setItem(`groar-exports-${new Date().toISOString().split("T")[0]}`, maxCount.toString());
-          setTodayExportCount(maxCount);
+          localStorage.setItem(getWeekKey(), maxCount.toString());
+          setWeekExportCount(maxCount);
           dbExportCountLoaded.current = true;
         }
       })
       .catch(() => {});
-  }, [isPremium]);
+  }, [isDashboard]);
 
-  const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
+  const lockPremiumFeatures = isDashboard && !isPremium;
+
+  const [settings, setSettings] = useState<EditorSettings>(() => {
+    const loaded = loadSettings();
+    if (!isPremium) loaded.branding = undefined;
+    // Dashboard trial expired: reset any premium features to free defaults
+    if (lockPremiumFeatures) {
+      const bg = ALL_BACKGROUNDS.find(b => b.id === loaded.background.presetId);
+      if (bg?.premium) loaded.background = defaultSettings.background;
+      if (loaded.font && FONTS[loaded.font]?.premium) loaded.font = defaultSettings.font;
+      if (loaded.template && TEMPLATES[loaded.template]?.premium) loaded.template = defaultSettings.template;
+      if (loaded.aspectRatio && ASPECT_RATIOS[loaded.aspectRatio]?.premium) loaded.aspectRatio = defaultSettings.aspectRatio;
+    }
+    return loaded;
+  });
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!importId);
   const [cooldown, setCooldown] = useState(0);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [todayExportCount, setTodayExportCount] = useState(0);
+  const [showTrialModal, setShowTrialModal] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<"limit" | "premium-features">("limit");
+  const [trialReason, setTrialReason] = useState<"limit" | "premium-features" | undefined>();
+  const [premiumFeaturesList, setPremiumFeaturesList] = useState<string[]>([]);
+  const [weekExportCount, setWeekExportCount] = useState(0);
   const previewRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
 
-  // Track daily exports for free users
-  const getExportCountKey = () => {
-    const today = new Date().toISOString().split("T")[0];
-    return `groar-exports-${today}`;
+  // Track weekly exports for free users
+  const getWeekKey = () => {
+    const now = new Date();
+    const jan1 = new Date(now.getFullYear(), 0, 1);
+    const week = Math.ceil(((now.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7);
+    return `groar-exports-${now.getFullYear()}-w${week}`;
   };
 
-  const getTodayExportCount = useCallback(() => {
+  const getWeekExportCount = useCallback(() => {
     if (typeof window === "undefined") return 0;
-    const count = localStorage.getItem(getExportCountKey());
+    const count = localStorage.getItem(getWeekKey());
     return count ? parseInt(count, 10) : 0;
   }, []);
 
   const incrementExportCount = useCallback(() => {
-    const key = getExportCountKey();
-    const current = getTodayExportCount();
+    const key = getWeekKey();
+    const current = getWeekExportCount();
     const newCount = current + 1;
     localStorage.setItem(key, newCount.toString());
-    setTodayExportCount(newCount);
+    setWeekExportCount(newCount);
     return newCount;
-  }, [getTodayExportCount]);
+  }, [getWeekExportCount]);
 
-  // Load today's export count on mount
+  // Load week's export count on mount
   useEffect(() => {
-    setTodayExportCount(getTodayExportCount());
-  }, [getTodayExportCount]);
+    setWeekExportCount(getWeekExportCount());
+  }, [getWeekExportCount]);
 
   // Cooldown timer
   useEffect(() => {
@@ -226,48 +260,30 @@ export default function Editor({ isPremium = false }: EditorProps) {
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  // Load settings from localStorage on mount, or from import if specified
+  // Load settings from import if specified (localStorage is already loaded via useState initializer)
   useEffect(() => {
-    if (importId) {
-      setIsLoading(true);
-      fetch(`/api/exports/${importId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.export?.metrics) {
-            const raw = data.export.metrics;
-            const imported = (typeof raw === "string" ? JSON.parse(raw) : raw) as Partial<EditorSettings>;
-            setSettings({
-              ...defaultSettings,
-              ...imported,
-              // Ensure nested objects are properly merged
-              background: { ...defaultSettings.background, ...imported.background },
-            });
-          }
-        })
-        .catch(() => {
-          setSettings(loadSettings());
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    } else {
-      const loaded = loadSettings();
-      if (!isPremium) {
-        // Landing page: always use default premium settings
-        loaded.template = defaultSettings.template;
-        loaded.font = defaultSettings.font;
-        loaded.aspectRatio = defaultSettings.aspectRatio;
-        loaded.abbreviateNumbers = defaultSettings.abbreviateNumbers;
-        loaded.branding = undefined;
-        // Reset premium background to default
-        const selectedBg = ALL_BACKGROUNDS.find((b) => b.id === loaded.background.presetId);
-        if (selectedBg?.premium) {
-          loaded.background = { ...defaultSettings.background };
+    if (!importId) return;
+    setIsLoading(true);
+    fetch(`/api/exports/${importId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.export?.metrics) {
+          const raw = data.export.metrics;
+          const imported = (typeof raw === "string" ? JSON.parse(raw) : raw) as Partial<EditorSettings>;
+          setSettings({
+            ...defaultSettings,
+            ...imported,
+            background: { ...defaultSettings.background, ...imported.background },
+          });
         }
-      }
-      setSettings(loaded);
-    }
-  }, [importId, isPremium]);
+      })
+      .catch(() => {
+        setSettings(loadSettings());
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [importId]);
 
   // Save settings to localStorage when they change (debounced)
   useEffect(() => {
@@ -277,13 +293,48 @@ export default function Editor({ isPremium = false }: EditorProps) {
     return () => clearTimeout(timeout);
   }, [settings]);
 
+  // Smooth scroll to re-center editor when aspect ratio changes
+  const prevAspectRatio = useRef(settings.aspectRatio);
+  useEffect(() => {
+    if (settings.aspectRatio !== prevAspectRatio.current) {
+      prevAspectRatio.current = settings.aspectRatio;
+      requestAnimationFrame(() => {
+        previewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+  }, [settings.aspectRatio]);
+
   const handleExport = useCallback(async () => {
     if (!previewRef.current || cooldown > 0) return;
 
-    // Check daily limit for free users (skip for premium users even on landing page)
-    if (!isPremium && !hideUpgradeModal && getTodayExportCount() >= FREE_DAILY_LIMIT) {
-      setShowUpgradeModal(true);
-      return;
+    // Free user checks (premium features + weekly limit) — landing page only
+    // Dashboard handles premium gating at the UI level (lockPremiumFeatures)
+    if (!isPremium && !isDashboard && !hideUpgradeModal) {
+      // Check premium features
+      const usage = checkPremiumFeatures(settings, ALL_BACKGROUNDS);
+      if (usage.isPremium) {
+        setPremiumFeaturesList(usage.features);
+        if (hasUsedTrial) {
+          setUpgradeReason("premium-features");
+          setShowUpgradeModal(true);
+        } else {
+          setTrialReason("premium-features");
+          setShowTrialModal(true);
+        }
+        return;
+      }
+
+      // Check weekly limit
+      if (getWeekExportCount() >= FREE_WEEKLY_LIMIT) {
+        if (hasUsedTrial) {
+          setUpgradeReason("limit");
+          setShowUpgradeModal(true);
+        } else {
+          setTrialReason("limit");
+          setShowTrialModal(true);
+        }
+        return;
+      }
     }
 
     setIsExporting(true);
@@ -412,9 +463,15 @@ export default function Editor({ isPremium = false }: EditorProps) {
       if (isPremium || hideUpgradeModal) {
         showToast("Image downloaded successfully!");
       } else {
-        // Increment export count and show upgrade modal
+        // Increment export count and show upsell
         incrementExportCount();
-        setShowUpgradeModal(true);
+        if (hasUsedTrial) {
+          setUpgradeReason("limit");
+          setShowUpgradeModal(true);
+        } else {
+          setTrialReason(undefined); // post-export
+          setShowTrialModal(true);
+        }
       }
     } catch (error) {
       console.error("Export failed:", error);
@@ -426,11 +483,28 @@ export default function Editor({ isPremium = false }: EditorProps) {
     } finally {
       setIsExporting(false);
     }
-  }, [settings, isPremium, hideUpgradeModal, showToast, cooldown, getTodayExportCount, incrementExportCount]);
+  }, [settings, isPremium, isDashboard, hideUpgradeModal, isLoggedIn, hasUsedTrial, showToast, cooldown, getWeekExportCount, incrementExportCount]);
 
   useKeyboardShortcuts(
     useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
   );
+
+  // Auto-export when returning from trial signup
+  const autoExportParam = searchParams.get("autoexport") === "1";
+  const handleExportRef = useRef(handleExport);
+  useEffect(() => { handleExportRef.current = handleExport; }, [handleExport]);
+  useEffect(() => {
+    if (!isPremium || isLoading) return;
+    let pending = false;
+    try { pending = localStorage.getItem("groar-pending-export") === "true"; } catch {}
+    if (!pending && !autoExportParam) return;
+    // Remove flag inside the timeout so React strict mode double-run doesn't clear it prematurely
+    const timer = setTimeout(() => {
+      try { localStorage.removeItem("groar-pending-export"); } catch {}
+      handleExportRef.current();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [isPremium, isLoading, autoExportParam]);
 
   const editorContent = (
     <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-18">
@@ -441,6 +515,7 @@ export default function Editor({ isPremium = false }: EditorProps) {
         isExporting={isExporting}
         cooldown={cooldown}
         isPremium={isPremium}
+        lockPremiumFeatures={lockPremiumFeatures}
       />
       <div className="flex-1 flex flex-col gap-3">
         <AnimatePresence mode="wait">
@@ -468,20 +543,28 @@ export default function Editor({ isPremium = false }: EditorProps) {
           onSettingsChange={setSettings}
           backgrounds={ALL_BACKGROUNDS}
           isPremium={isPremium}
+          lockPremiumFeatures={lockPremiumFeatures}
         />
       </div>
     </section>
   );
 
-  // Dashboard: show share CTA + editor
-  if (isPremium) {
+  // Dashboard: show share CTA or upgrade banner + editor
+  if (isDashboard) {
     return (
       <>
-        <div className="text-center text-sm text-muted-foreground mb-4">
-          When you share your visuals, tag{" "}
-          <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a>
-          , I will repost you!
-        </div>
+        {isPremium ? (
+          <div className="text-center text-sm text-muted-foreground mb-4">
+            When you share your visuals, tag{" "}
+            <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a>
+            , I will repost you!
+          </div>
+        ) : (
+          <div className="text-center text-sm text-muted-foreground mb-4">
+            Upgrade to Pro to unlock all backgrounds, fonts, templates, and more.{" "}
+            <a href="/pricing" className="text-primary hover:underline font-medium">See plans</a>
+          </div>
+        )}
         {editorContent}
       </>
     );
@@ -503,11 +586,22 @@ export default function Editor({ isPremium = false }: EditorProps) {
         />
         {editorContent}
         {!hideUpgradeModal && (
-          <UpgradeModal
-            open={showUpgradeModal}
-            onOpenChange={setShowUpgradeModal}
-            exportCount={todayExportCount}
-          />
+          <>
+            <UpgradeModal
+              open={showUpgradeModal}
+              onOpenChange={setShowUpgradeModal}
+              exportCount={weekExportCount}
+              reason={upgradeReason}
+              premiumFeatures={premiumFeaturesList}
+            />
+            <TrialSignupModal
+              open={showTrialModal}
+              onOpenChange={setShowTrialModal}
+              reason={trialReason}
+              exportCount={weekExportCount}
+              premiumFeatures={premiumFeaturesList}
+            />
+          </>
         )}
       </div>
     </FadeIn>

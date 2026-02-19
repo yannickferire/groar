@@ -5,7 +5,7 @@ import Logo from "./Logo";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { SparklesIcon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
+import { SparklesIcon, DashboardSquare02Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
 
 function smoothScrollTo(id: string, offset: number) {
@@ -29,7 +29,7 @@ export default function Header() {
               onClick={() => smoothScrollTo("editor", 72)}
               className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              Try for free
+              Playground
             </button>
             <button
               onClick={() => smoothScrollTo("pricing", 72)}
@@ -41,15 +41,15 @@ export default function Header() {
               {session ? (
                 <Button asChild variant="default" size="default">
                   <Link href="/dashboard">
-                    <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} aria-hidden="true" />
+                    <HugeiconsIcon icon={DashboardSquare02Icon} size={18} strokeWidth={2} aria-hidden="true" />
                     Dashboard
                   </Link>
                 </Button>
               ) : (
                 <Button asChild variant="default" size="default">
-                  <Link href="/login">
+                  <Link href="/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart">
                     <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                    Get Started
+                    Start for free
                   </Link>
                 </Button>
               )}

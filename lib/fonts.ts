@@ -1,6 +1,6 @@
 // Font configuration for the editor
 
-export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono";
+export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono" | "averia-serif-libre" | "dm-serif-display";
 
 export type FontConfig = {
   name: string;
@@ -9,6 +9,11 @@ export type FontConfig = {
 };
 
 export const FONTS: Record<FontFamily, FontConfig> = {
+  "dm-mono": {
+    name: "DM Mono",
+    variable: "--font-dm-mono",
+    premium: false,
+  },
   bricolage: {
     name: "Bricolage Grotesque",
     variable: "--font-bricolage",
@@ -19,15 +24,20 @@ export const FONTS: Record<FontFamily, FontConfig> = {
     variable: "--font-inter",
     premium: true,
   },
-"space-grotesk": {
+  "space-grotesk": {
     name: "Space Grotesk",
     variable: "--font-space-grotesk",
     premium: true,
   },
-  "dm-mono": {
-    name: "DM Mono",
-    variable: "--font-dm-mono",
-    premium: false,
+  "averia-serif-libre": {
+    name: "Averia Serif Libre",
+    variable: "--font-averia-serif-libre",
+    premium: true,
+  },
+  "dm-serif-display": {
+    name: "DM Serif Display",
+    variable: "--font-dm-serif-display",
+    premium: true,
   },
 };
 

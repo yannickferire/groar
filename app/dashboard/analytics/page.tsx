@@ -147,6 +147,11 @@ export default function AnalyticsPage() {
 
     try {
       const res = await fetch("/api/analytics?days=30");
+      if (res.status === 403) {
+        setError("premium");
+        setIsLoading(false);
+        return;
+      }
       if (!res.ok) {
         throw new Error("Failed to fetch analytics");
       }
@@ -262,10 +267,24 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="w-full max-w-5xl mx-auto">
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <p className="text-muted-foreground">{error}</p>
-          {needsReconnect ? (
+      <div className={`w-full max-w-5xl mx-auto ${error === "premium" ? "flex items-center justify-center py-32" : ""}`}>
+        <div className={`flex flex-col items-center justify-center ${error === "premium" ? "space-y-6 max-w-md text-center" : "h-64 gap-4"}`}>
+          {error === "premium" ? (
+            <>
+              <p className="text-8xl">🦁</p>
+              <h1 className="text-4xl font-bold font-heading">Pro feature</h1>
+              <p className="text-xl text-muted-foreground">
+                Only the king of the jungle can access this.
+              </p>
+            </>
+          ) : (
+            <p className="text-muted-foreground">{error}</p>
+          )}
+          {error === "premium" ? (
+            <Button asChild size="lg">
+              <Link href="/pricing">Upgrade to Pro</Link>
+            </Button>
+          ) : needsReconnect ? (
             <Button asChild>
               <Link href="/dashboard/connections">
                 <HugeiconsIcon icon={Link01Icon} size={16} strokeWidth={2} />

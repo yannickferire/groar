@@ -52,6 +52,7 @@ type SidebarProps = {
   isExporting: boolean;
   cooldown?: number;
   isPremium?: boolean;
+  lockPremiumFeatures?: boolean;
 };
 
 const ALL_METRICS: MetricType[] = ["followers", "followings", "posts", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
@@ -206,7 +207,7 @@ type ConnectedAccount = {
   } | null;
 };
 
-export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false }: SidebarProps) {
+export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false }: SidebarProps) {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isDeletingLogo, setIsDeletingLogo] = useState(false);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
@@ -392,8 +393,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
 
   return (
     <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-3xl bg-card min-h-full">
-      {/* Template Selector - Premium only */}
-      {isPremium && (
+      {/* Template Selector */}
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
@@ -408,11 +408,16 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                 <button
                   key={template.id}
                   type="button"
-                  onClick={() => updateSetting("template", template.id as TemplateType)}
+                  onClick={() => {
+                    if (lockPremiumFeatures && template.premium) return;
+                    updateSetting("template", template.id as TemplateType);
+                  }}
                   className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
-                    isSelected
-                      ? "border-primary bg-white"
-                      : "border-transparent bg-white hover:border-muted"
+                    lockPremiumFeatures && template.premium
+                      ? "opacity-50 cursor-not-allowed border-transparent bg-white"
+                      : isSelected
+                        ? "border-primary bg-white"
+                        : "border-transparent bg-white hover:border-muted"
                   }`}
                 >
                   {/* Mini preview */}
@@ -441,6 +446,18 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                     )}
                   </div>
 
+                  {/* Pro badge */}
+                  {!isPremium && template.premium && (
+                    <span className={`absolute -bottom-1.5 -right-1.5 rounded-full px-1.5 py-0.5 flex items-center gap-0.5 text-[9px] font-bold leading-none ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card text-muted-foreground border border-border"
+                    }`}>
+                      <HugeiconsIcon icon={CrownIcon} size={10} strokeWidth={2} />
+                      PRO
+                    </span>
+                  )}
+
                   {/* Label */}
                   <span className={`text-[10px] font-semibold transition-colors ${
                     isSelected ? "text-primary" : "text-muted-foreground"
@@ -452,7 +469,6 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
             })}
           </div>
         </div>
-      )}
 
       {/* Main Info */}
       <div className="flex flex-col gap-4">

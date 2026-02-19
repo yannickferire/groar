@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlanType, BillingPeriod, PLAN_ORDER, ProTierInfo } from "@/lib/plans";
+import { PlanType, BillingPeriod, PLAN_ORDER, ProTierInfo, TRIAL_DURATION_DAYS } from "@/lib/plans";
 import { FadeInView } from "@/components/ui/motion";
 import PricingCards from "@/components/PricingCards";
 import { authClient } from "@/lib/auth-client";
@@ -10,6 +10,8 @@ export default function Pricing() {
   const { data: session } = authClient.useSession();
   const [userPlan, setUserPlan] = useState<PlanType | null>(null);
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+  const [hasUsedTrial, setHasUsedTrial] = useState(false);
+  const [trialChecked, setTrialChecked] = useState(false);
 
   useEffect(() => {
     fetch("/api/pricing")
@@ -21,17 +23,25 @@ export default function Pricing() {
   useEffect(() => {
     if (!session) {
       const id = setTimeout(() => setUserPlan(null), 0);
+      setTrialChecked(true);
       return () => clearTimeout(id);
     }
 
     let cancelled = false;
     fetch("/api/user/plan")
       .then((res) => res.json())
-      .then((data) => { if (!cancelled) setUserPlan(data.plan || "free"); })
-      .catch(() => { if (!cancelled) setUserPlan("free"); });
+      .then((data) => {
+        if (cancelled) return;
+        setUserPlan(data.plan || "free");
+        if (data.trialEnd) setHasUsedTrial(true);
+        setTrialChecked(true);
+      })
+      .catch(() => { if (!cancelled) { setUserPlan("free"); setTrialChecked(true); } });
 
     return () => { cancelled = true; };
   }, [session]);
+
+  const canTrial = trialChecked && !hasUsedTrial;
 
   const handleSelectPlan = (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") {
@@ -39,6 +49,19 @@ export default function Pricing() {
       if (editor) {
         const y = editor.getBoundingClientRect().top + window.scrollY - 50;
         window.scrollTo({ top: y, behavior: "smooth" });
+      }
+      return;
+    }
+
+    // Trial flow for Pro monthly
+    if (canTrial && planKey === "pro" && billingPeriod !== "annual") {
+      if (!session) {
+        try { localStorage.setItem("groar-pending-export", "true"); } catch {}
+        window.location.href = `/login?callbackUrl=${encodeURIComponent("/dashboard?trial=start")}`;
+      } else {
+        fetch("/api/user/trial", { method: "POST" })
+          .then(() => { window.location.href = "/dashboard/editor"; })
+          .catch(() => { window.location.href = "/dashboard?trial=start"; });
       }
       return;
     }
@@ -59,12 +82,12 @@ export default function Pricing() {
     window.location.href = `/login?${params.toString()}`;
   };
 
-  const getCtaLabel = (planKey: PlanType): string => {
+  const getCtaLabel = (planKey: PlanType, billingPeriod?: BillingPeriod): string => {
     if (planKey === "free") return "Try for free";
 
     // Not logged in OR free plan: same CTAs
     if (!userPlan || userPlan === "free") {
-      if (planKey === "pro") return "Claim your spot";
+      if (planKey === "pro") return canTrial && billingPeriod !== "annual" ? `Start ${TRIAL_DURATION_DAYS}-day free trial` : "Claim your spot";
       return "Get started";
     }
 
@@ -108,6 +131,7 @@ export default function Pricing() {
           showProFeatures={true}
           proHighlighted={true}
           proTierInfo={proTierInfo}
+          canTrial={canTrial}
           ctaLabel={getCtaLabel}
         />
       </section>

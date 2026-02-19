@@ -7,8 +7,9 @@ import { AddSquareIcon, ArrowRight01Icon, CheckmarkCircle02Icon, UserLove01Icon,
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import ExportsEmptyState from "@/components/dashboard/ExportsEmptyState";
+import TrialBanner from "@/components/dashboard/TrialBanner";
 import ExportCard, { ExportCardSkeleton } from "@/components/dashboard/ExportCard";
-import { PlanType, PLANS } from "@/lib/plans";
+import { PlanType, PLANS, ProTierInfo } from "@/lib/plans";
 import XLogo from "@/components/icons/XLogo";
 import GoogleLogo from "@/components/icons/GoogleLogo";
 import { authClient } from "@/lib/auth-client";
@@ -45,6 +46,10 @@ function DashboardContent() {
   const [pendingPlan, setPendingPlan] = useState<PlanType | null>(null);
   const [planActivated, setPlanActivated] = useState(false);
   const [analyticsAccounts, setAnalyticsAccounts] = useState<AnalyticsAccount[]>([]);
+  const [isTrialing, setIsTrialing] = useState(false);
+  const [trialEnd, setTrialEnd] = useState<string | null>(null);
+  const [hasUsedTrial, setHasUsedTrial] = useState(true);
+  const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
 
   // Get first name from session
   const firstName = session?.user?.name?.split(" ")[0];
@@ -55,19 +60,25 @@ function DashboardContent() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [exportsRes, connectionsRes, planRes, analyticsRes] = await Promise.all([
+      const [exportsRes, connectionsRes, planRes, analyticsRes, pricingRes] = await Promise.all([
         fetch("/api/exports"),
         fetch("/api/connections"),
         fetch("/api/user/plan"),
         fetch("/api/analytics?days=30"),
+        fetch("/api/pricing"),
       ]);
       const exportsData = await exportsRes.json();
       const connectionsData = await connectionsRes.json();
       const planData = await planRes.json();
       const analyticsData = await analyticsRes.json();
+      const pricingData = await pricingRes.json();
+      setProTierInfo(pricingData.proTier || null);
       setExports(exportsData.exports || []);
       setConnectedAccounts(connectionsData.accounts || []);
       setPlan(planData.plan || "free");
+      setIsTrialing(!!planData.isTrialing);
+      setTrialEnd(planData.trialEnd || null);
+      setHasUsedTrial(!!planData.hasUsedTrial);
       setAnalyticsAccounts(analyticsData.accounts || []);
       return planData.plan || "free";
     } finally {
@@ -78,6 +89,38 @@ function DashboardContent() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Handle trial start from landing page signup
+  const trialStart = searchParams.get("trial") === "start";
+  const hasPendingExport = typeof window !== "undefined" && localStorage.getItem("groar-pending-export") === "true";
+  useEffect(() => {
+    if (!trialStart) return;
+    fetch("/api/user/trial", { method: "POST" })
+      .finally(() => {
+        if (hasPendingExport) {
+          // Redirect to editor with autoexport to finish the pending export
+          router.replace("/dashboard/editor?autoexport=1");
+        } else {
+          // No pending export — just activate trial and stay on dashboard
+          router.replace("/dashboard");
+        }
+      });
+  }, [trialStart, router, hasPendingExport]);
+
+  // Show minimal loading when trial redirect is in progress (only for pending export)
+  if (trialStart && hasPendingExport) {
+    return (
+      <div className="w-full max-w-5xl mx-auto flex items-center justify-center py-32">
+        <div className="space-y-6 max-w-md text-center">
+          <p className="text-8xl">🐯</p>
+          <p className="text-xl text-muted-foreground">Sharpening the claws...</p>
+          <div className="flex justify-center">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Handle checkout success - poll for plan activation
   useEffect(() => {
@@ -118,9 +161,12 @@ function DashboardContent() {
   const xConnectionCount = connectedAccounts.filter(a => a.providerId === "twitter").length;
   const isFree = plan === "free";
 
-  // Today's exports count
-  const today = new Date().toDateString();
-  const exportsToday = exports.filter(e => new Date(e.createdAt).toDateString() === today).length;
+  // This week's exports count
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const exportsThisWeek = exports.filter(e => new Date(e.createdAt) >= startOfWeek).length;
 
   // Streak: count consecutive days with at least 1 export (including today)
   const streak = (() => {
@@ -149,6 +195,8 @@ function DashboardContent() {
           Welcome back{firstName ? `, ${firstName}` : ""}. Here&apos;s an overview of your activity.
         </p>
       </div>
+
+      <TrialBanner isTrialing={isTrialing} trialEnd={trialEnd} plan={plan} proTierInfo={proTierInfo} hasUsedTrial={hasUsedTrial} />
 
       {/* CTA – mobile only */}
       <div className="md:hidden">
@@ -220,8 +268,8 @@ function DashboardContent() {
             </>
           ) : isFree ? (
             <>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={1.5} />Exports available today</p>
-              <p className="text-3xl font-mono font-bold mt-1">{Math.max(PLANS.free.maxExportsPerDay - exportsToday, 0)}<span className="text-lg text-muted-foreground font-normal">/{PLANS.free.maxExportsPerDay}</span></p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-1.5"><HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={1.5} />Exports this week</p>
+              <p className="text-3xl font-mono font-bold mt-1">{Math.max(PLANS.free.maxExportsPerWeek - exportsThisWeek, 0)}<span className="text-lg text-muted-foreground font-normal">/{PLANS.free.maxExportsPerWeek}</span></p>
             </>
           ) : (
             <>

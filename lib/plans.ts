@@ -17,10 +17,10 @@ export const PLANS = {
     subtitle: "for hobby growers",
     price: 0,
     maxConnectionsPerProvider: 0,
-    maxExportsPerDay: 3,
+    maxExportsPerWeek: 3,
     features: [
       "Full access to the editor",
-      "3 exports per day",
+      "3 exports per week",
       "5 backgrounds included",
       "Metric template",
     ],
@@ -33,7 +33,7 @@ export const PLANS = {
     subtitle: "for you",
     price: 5,
     maxConnectionsPerProvider: 2,
-    maxExportsPerDay: null, // unlimited
+    maxExportsPerWeek: null, // unlimited
     features: [
       "Unlimited exports",
       "Unlimited backgrounds",
@@ -46,7 +46,7 @@ export const PLANS = {
     subtitle: "for your clients",
     price: 19,
     maxConnectionsPerProvider: 10,
-    maxExportsPerDay: null, // unlimited
+    maxExportsPerWeek: null, // unlimited
     features: [
       "Everything in Pro",
       "Connect 10 accounts per platform",
@@ -59,7 +59,7 @@ export const PLANS = {
     name: "Friend",
     price: 0,
     maxConnectionsPerProvider: 999, // unlimited
-    maxExportsPerDay: null, // unlimited
+    maxExportsPerWeek: null, // unlimited
     features: [
       "Everything in Agency",
       "Gift plan",
@@ -76,17 +76,17 @@ export const PLAN_LIMITS = Object.fromEntries(
     key,
     {
       maxConnectionsPerProvider: plan.maxConnectionsPerProvider,
-      maxExportsPerDay: plan.maxExportsPerDay,
+      maxExportsPerWeek: plan.maxExportsPerWeek,
     },
   ])
-) as Record<PlanType, { maxConnectionsPerProvider: number; maxExportsPerDay: number | null }>;
+) as Record<PlanType, { maxConnectionsPerProvider: number; maxExportsPerWeek: number | null }>;
 
 export const PLAN_ORDER: PlanType[] = ["free", "friend", "pro", "agency"];
 
 export const PRO_FEATURES: { icon: IconSvgElement; title: string }[] = [
   { icon: Layout01Icon, title: "All templates unlocked" },
   { icon: Image01Icon, title: "Full background library" },
-  { icon: Setting06Icon, title: "Custom branding" },
+  { icon: Setting06Icon, title: "Custom branding & no watermark" },
   { icon: Clock01Icon, title: "Export history & re-import" },
   { icon: ChromeIcon, title: "Chrome extension (coming soon)" },
 ];
@@ -96,6 +96,9 @@ export const PRO_CHECKS: string[] = [
   "Unlimited exports",
   "Connect 2 accounts per platform",
 ];
+
+// Trial
+export const TRIAL_DURATION_DAYS = 3;
 
 // Annual pricing
 export const ANNUAL_DISCOUNT = 0.2; // 20% off
