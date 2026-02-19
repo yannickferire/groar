@@ -4,7 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Logout01Icon, UserCircleIcon, CreditCardIcon, MoreVerticalIcon, Settings03Icon } from "@hugeicons/core-free-icons";
+import { Logout01Icon, UserCircleIcon, CreditCardIcon, MoreVerticalIcon, Settings03Icon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export default function UserMenu() {
+export default function UserMenu({ isAdmin }: { isAdmin?: boolean }) {
   const { data: session } = authClient.useSession();
   const router = useRouter();
 
@@ -45,6 +45,14 @@ export default function UserMenu() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side="top" className="w-56">
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/g0-ctrl" className="cursor-pointer text-blue-500">
+              <HugeiconsIcon icon={DashboardSquare01Icon} size={16} strokeWidth={1.5} />
+              Admin
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/dashboard/plan" className="cursor-pointer">
             <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={1.5} />

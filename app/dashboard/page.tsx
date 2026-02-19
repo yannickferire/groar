@@ -91,10 +91,16 @@ function DashboardContent() {
   }, [fetchData]);
 
   // Handle trial start from landing page signup
-  const trialStart = searchParams.get("trial") === "start";
+  const trialIntent = typeof window !== "undefined" && localStorage.getItem("groar-trial-intent") === "true";
+  const trialStart = searchParams.get("trial") === "start" || trialIntent;
   const hasPendingExport = typeof window !== "undefined" && localStorage.getItem("groar-pending-export") === "true";
   useEffect(() => {
     if (!trialStart) return;
+    // Clean up localStorage flags
+    try {
+      localStorage.removeItem("groar-trial-intent");
+      localStorage.removeItem("groar-pending-export");
+    } catch {}
     fetch("/api/user/trial", { method: "POST" })
       .finally(() => {
         if (hasPendingExport) {

@@ -42,6 +42,7 @@ export default function DashboardSidebar() {
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
   const [isTrialing, setIsTrialing] = useState(false);
   const [trialEnd, setTrialEnd] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetch("/api/user/plan")
@@ -50,6 +51,7 @@ export default function DashboardSidebar() {
         setUserPlan(data.plan);
         setIsTrialing(!!data.isTrialing);
         setTrialEnd(data.trialEnd || null);
+        setIsAdmin(!!data.isAdmin);
       })
       .catch(() => setUserPlan("free"));
     fetch("/api/pricing")
@@ -234,7 +236,7 @@ export default function DashboardSidebar() {
           </div>
         )}
         <SidebarSeparator />
-        <UserMenu />
+        <UserMenu isAdmin={isAdmin} />
       </SidebarFooter>
     </Sidebar>
   );

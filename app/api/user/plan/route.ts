@@ -5,6 +5,8 @@ import { PLANS, PlanType } from "@/lib/plans";
 import { getUserPlanFromDB, getUserSubscription, setUserPlan } from "@/lib/plans-server";
 import { pool } from "@/lib/db";
 
+const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
+
 export async function GET() {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -58,6 +60,7 @@ export async function GET() {
     isTrialing: !!isTrialing,
     trialEnd: subscription?.trialEnd || null,
     hasUsedTrial: subscription?.trialStart != null,
+    isAdmin: session.user.id === ADMIN_USER_ID,
   });
 }
 

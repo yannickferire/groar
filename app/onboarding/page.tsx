@@ -14,6 +14,13 @@ function OnboardingContent() {
   const searchParams = useSearchParams();
   const [selecting, setSelecting] = useState<PlanType | null>(null);
 
+  // If user came from the trial signup modal, skip onboarding and start trial
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("groar-trial-intent") === "true") {
+      router.replace("/dashboard?trial=start");
+    }
+  }, [router]);
+
   // Note: auto-checkout redirect is now handled by /checkout-redirect page
 
   const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {

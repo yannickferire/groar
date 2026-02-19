@@ -54,13 +54,19 @@ export default function TrialSignupModal({
 
   const handleTwitter = () => {
     setLoading("twitter");
-    try { localStorage.setItem("groar-pending-export", "true"); } catch {}
+    try {
+      localStorage.setItem("groar-pending-export", "true");
+      localStorage.setItem("groar-trial-intent", "true");
+    } catch {}
     authClient.signIn.social({ provider: "twitter", callbackURL });
   };
 
   const handleGoogle = () => {
     setLoading("google");
-    try { localStorage.setItem("groar-pending-export", "true"); } catch {}
+    try {
+      localStorage.setItem("groar-pending-export", "true");
+      localStorage.setItem("groar-trial-intent", "true");
+    } catch {}
     authClient.signIn.social({ provider: "google", callbackURL });
   };
 
