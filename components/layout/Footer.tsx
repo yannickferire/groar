@@ -9,7 +9,7 @@ export default function Footer() {
     <FadeInView direction="down" distance={24} amount={0.8}>
       <footer className="w-full max-w-6xl mx-auto border-t border-border mt-12 md:mt-24">
         <div className="py-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
-          <div className="flex flex-col items-center md:items-start gap-2 md:w-1/3 shrink-0">
+          <div className="flex flex-col items-center md:items-start gap-2 md:w-2/5 shrink-0">
             <Logo />
             <p className="text-sm text-muted-foreground">
               Turn your social media metrics
