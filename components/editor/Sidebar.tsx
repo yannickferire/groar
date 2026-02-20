@@ -141,6 +141,9 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
       // If user typed a shortcut like "2k", replace with expanded value
       if (/[kmb]$/i.test(value)) {
         setInputValue(prefix ? `${prefix}${parsed}` : parsed.toString());
+      // If user typed a decimal like "0.4" for non-rate metrics, show rounded value
+      } else if (metric.type !== "engagementRate" && /^[+-]?0\.\d+$/.test(value.trim())) {
+        setInputValue(prefix ? `${prefix}${parsed}` : parsed.toString());
       }
     }
   };
