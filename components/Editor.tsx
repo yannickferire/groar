@@ -170,7 +170,6 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   // On landing page, detect if user has a premium plan to hide the upgrade modal
   // Also sync today's export count from DB when logged in
   const [hideUpgradeModal, setHideUpgradeModal] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const dbExportCountLoaded = useRef(false);
   useEffect(() => {
@@ -182,7 +181,6 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       })
       .then((data) => {
         if (!data) return; // Not logged in
-        setIsLoggedIn(true);
         if (data.plan && data.plan !== "free") setHideUpgradeModal(true);
         // Track if user has already used their trial (trialing or expired)
         if (data.trialEnd) setHasUsedTrial(true);
@@ -518,7 +516,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     } finally {
       setIsExporting(false);
     }
-  }, [settings, isPremium, isDashboard, hideUpgradeModal, isLoggedIn, hasUsedTrial, showToast, cooldown, getWeekExportCount, incrementExportCount]);
+  }, [settings, isPremium, isDashboard, hideUpgradeModal, hasUsedTrial, showToast, cooldown, getWeekExportCount, incrementExportCount]);
 
   useKeyboardShortcuts(
     useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
