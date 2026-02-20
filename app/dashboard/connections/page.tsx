@@ -197,7 +197,7 @@ function ConnectionsContent() {
                     {session?.user?.image ? (
                       <Image
                         src={session.user.image}
-                        alt=""
+                        alt="Account avatar"
                         width={28}
                         height={28}
                         className="rounded-full shrink-0"

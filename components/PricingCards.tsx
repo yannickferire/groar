@@ -78,9 +78,9 @@ function ProCard({
         <div className="relative z-10">
           <div className="mb-5">
             <div className="flex items-baseline gap-2 mb-2">
-              <h3 className="text-xl font-heading font-bold">
+              <h2 className="text-xl font-heading font-bold">
                 <span className="inline-block">🐯</span> GROAR Pro
-              </h3>
+              </h2>
               {"subtitle" in plan && (plan as { subtitle?: string }).subtitle && (
                 <span className="text-sm text-background/40">
                   – {(plan as { subtitle: string }).subtitle}
@@ -202,7 +202,7 @@ function PlanCard({
 
       <div className="mb-5">
         <div className="flex items-baseline gap-2 mb-2">
-          <h3 className="text-lg font-heading font-bold">{plan.name}</h3>
+          <h2 className="text-lg font-heading font-bold">{plan.name}</h2>
           {"subtitle" in plan && (plan as { subtitle?: string }).subtitle && (
             <span className="text-sm text-muted-foreground/50">
               – {(plan as { subtitle: string }).subtitle}

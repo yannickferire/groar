@@ -43,7 +43,7 @@ export default function ExportCard({ id, imageUrl, handle, createdAt, isPremium 
         <div className="aspect-video relative">
           <Image
             src={imageUrl}
-            alt="Export"
+            alt={handle ? `Export for ${handle}` : "Export"}
             fill
             className="object-cover"
           />

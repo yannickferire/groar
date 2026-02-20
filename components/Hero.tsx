@@ -3,6 +3,7 @@
 import XLogo from "@/components/icons/XLogo";
 import { FadeIn } from "@/components/ui/motion";
 import LovedBy from "@/components/LovedBy";
+import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -28,6 +29,23 @@ export default function Hero() {
       <FadeIn delay={0.45} duration={0.6}>
         <LovedBy />
       </FadeIn>
+      {/* TODO: uncomment when Marc Lou confirms
+      <FadeIn delay={0.5} duration={0.6}>
+        <figure className="-mt-3 flex items-center justify-center gap-3">
+          <Image
+            src="/testimonials/marc-lou.jpg"
+            alt="Marc Lou"
+            width={32}
+            height={32}
+            className="w-8 h-8 rounded-full"
+          />
+          <blockquote className="text-sm text-muted-foreground">
+            &ldquo;I love the design!&rdquo;
+            <span className="ml-1.5 font-medium text-foreground">— @marclou</span>
+          </blockquote>
+        </figure>
+      </FadeIn>
+      */}
       <FadeIn delay={0.55} duration={0.6}>
         <div className="mt-4">
           {session ? (
