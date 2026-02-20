@@ -6,7 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { CrownIcon, SparklesIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ProTierInfo, TRIAL_DURATION_DAYS } from "@/lib/plans";
+import { ProTierInfo, TRIAL_DURATION_DAYS, LIFETIME_PRICE } from "@/lib/plans";
 
 type TrialBannerProps = {
   isTrialing: boolean;
@@ -43,11 +43,12 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, h
             <p className="text-sm font-medium">
               Try Pro free for {TRIAL_DURATION_DAYS} days — no credit card required
             </p>
-            {proTierInfo?.spotsLeft && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Launch price: ${proTierInfo.price}/mo — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {proTierInfo?.spotsLeft
+                ? <>Launch price: ${proTierInfo.price}/mo or ${LIFETIME_PRICE} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
+                : <>Then ${proTierInfo?.price ?? 5}/mo or ${LIFETIME_PRICE} one-time</>
+              }
+            </p>
           </div>
         </div>
         <Button variant="default" size="sm" className="shrink-0" onClick={handleStartTrial} disabled={starting}>
@@ -73,11 +74,12 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, h
             <p className="text-sm font-medium">
               Pro trial — {daysLeft} {daysLabel} remaining
             </p>
-            {proTierInfo?.spotsLeft && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Launch price: ${proTierInfo.price}/mo — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {proTierInfo?.spotsLeft
+                ? <>Launch price: ${proTierInfo.price}/mo or ${LIFETIME_PRICE} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
+                : <>From ${proTierInfo?.price ?? 5}/mo or ${LIFETIME_PRICE} one-time</>
+              }
+            </p>
           </div>
         </div>
         <Button asChild variant="default" size="sm" className="shrink-0">
@@ -101,11 +103,12 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, h
             <p className="text-sm font-medium text-amber-900">
               Your Pro trial has ended — upgrade to keep your premium features
             </p>
-            {proTierInfo?.spotsLeft && (
-              <p className="text-xs text-amber-700/70 mt-0.5">
-                Launch price: ${proTierInfo.price}/mo — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}
-              </p>
-            )}
+            <p className="text-xs text-amber-700/70 mt-0.5">
+              {proTierInfo?.spotsLeft
+                ? <>Launch price: ${proTierInfo.price}/mo or ${LIFETIME_PRICE} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
+                : <>From ${proTierInfo?.price ?? 5}/mo or ${LIFETIME_PRICE} one-time</>
+              }
+            </p>
           </div>
         </div>
         <Button asChild variant="default" size="sm" className="shrink-0">

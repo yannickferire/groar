@@ -15,7 +15,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { PRO_FEATURES, PLANS, TRIAL_DURATION_DAYS, ProTierInfo } from "@/lib/plans";
+import { PRO_FEATURES, PLANS, TRIAL_DURATION_DAYS, LIFETIME_PRICE, ProTierInfo } from "@/lib/plans";
 import posthog from "posthog-js";
 
 const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
@@ -194,7 +194,10 @@ export default function TrialSignupModal({
                             <span className="inline-block">🐯</span> GROAR Pro
                           </h4>
                           <p className="text-sm text-background/60">
-                            $0 trial, then ${proPrice}/mo · No credit card required
+                            $0 trial, then ${proPrice}/mo or ${LIFETIME_PRICE}$ one-time
+                          </p>
+                          <p className="text-xs text-background/40">
+                            No credit card required
                           </p>
                         </div>
 

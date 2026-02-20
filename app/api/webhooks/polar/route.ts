@@ -3,21 +3,21 @@ import { setUserPlan, cancelUserSubscription, getUserSubscription } from "@/lib/
 import { getPolarProductId, validateEvent, WebhookVerificationError } from "@/lib/polar";
 import { getPostHogClient } from "@/lib/posthog-server";
 
-// Map Polar product IDs to plan keys (check both monthly and annual)
-function getPlanFromProductId(productId: string): "pro" | "agency" | null {
-  if (productId === getPolarProductId("pro", "monthly") || productId === getPolarProductId("pro", "annual")) {
+// Map Polar product IDs to plan keys
+function getPlanFromProductId(productId: string): "pro" | null {
+  if (
+    productId === getPolarProductId("pro", "monthly") ||
+    productId === getPolarProductId("pro", "lifetime")
+  ) {
     return "pro";
-  }
-  if (productId === getPolarProductId("agency", "monthly") || productId === getPolarProductId("agency", "annual")) {
-    return "agency";
   }
   return null;
 }
 
 // Derive billing period from Polar product ID
-function getBillingPeriodFromProductId(productId: string): "monthly" | "annual" {
-  if (productId === getPolarProductId("pro", "annual") || productId === getPolarProductId("agency", "annual")) {
-    return "annual";
+function getBillingPeriodFromProductId(productId: string): "monthly" | "lifetime" {
+  if (productId === getPolarProductId("pro", "lifetime")) {
+    return "lifetime";
   }
   return "monthly";
 }

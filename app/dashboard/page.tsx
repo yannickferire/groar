@@ -91,11 +91,13 @@ function DashboardContent() {
   }, [fetchData]);
 
   // Handle trial start from landing page signup
-  const trialIntent = typeof window !== "undefined" && localStorage.getItem("groar-trial-intent") === "true";
-  const trialStart = searchParams.get("trial") === "start" || trialIntent;
-  const hasPendingExport = typeof window !== "undefined" && localStorage.getItem("groar-pending-export") === "true";
+  const trialParam = searchParams.get("trial") === "start";
   useEffect(() => {
-    if (!trialStart) return;
+    const trialIntent = localStorage.getItem("groar-trial-intent") === "true";
+    const shouldStartTrial = trialParam || trialIntent;
+    if (!shouldStartTrial) return;
+
+    const hasPendingExport = localStorage.getItem("groar-pending-export") === "true";
     // Clean up localStorage flags
     try {
       localStorage.removeItem("groar-trial-intent");
@@ -111,10 +113,19 @@ function DashboardContent() {
           router.replace("/dashboard");
         }
       });
-  }, [trialStart, router, hasPendingExport]);
+  }, [trialParam, router]);
 
-  // Show minimal loading when trial redirect is in progress (only for pending export)
-  if (trialStart && hasPendingExport) {
+  // Show minimal loading when trial redirect is in progress
+  const [trialRedirecting, setTrialRedirecting] = useState(false);
+  useEffect(() => {
+    if (trialParam || localStorage.getItem("groar-trial-intent") === "true") {
+      if (localStorage.getItem("groar-pending-export") === "true") {
+        setTrialRedirecting(true);
+      }
+    }
+  }, [trialParam]);
+
+  if (trialRedirecting) {
     return (
       <div className="w-full max-w-5xl mx-auto flex items-center justify-center py-32">
         <div className="space-y-6 max-w-md text-center">

@@ -37,7 +37,7 @@ const features: Feature[] = [
   { name: "Presentations & documents", groar: false, competitor: true },
   { name: "Video editing", groar: false, competitor: true },
   { name: "Free plan", groar: true, competitor: true },
-  { name: "Starting price", groar: "$5/mo", competitor: "$15/mo" },
+  { name: "Starting price", groar: "$5/mo or $19 one-time", competitor: "$15/mo" },
 ];
 
 const faqs = [
@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     question: "Is GROAR free to use?",
-    answer: "Yes, GROAR has a free plan that includes full access to the editor, 3 exports per week, and 5 backgrounds. The Pro plan at $5/month unlocks unlimited exports, all backgrounds, and removes the watermark.",
+    answer: "Yes, GROAR has a free plan that includes full access to the editor, 3 exports per week, and 5 backgrounds. The Pro plan starts at $5/month (or $19 one-time for lifetime access) and unlocks unlimited exports, all backgrounds, and removes the watermark.",
   },
   {
     question: "Can I use GROAR to create visuals for X (Twitter)?",
@@ -55,7 +55,7 @@ const faqs = [
   },
   {
     question: "How much does GROAR cost compared to Canva?",
-    answer: "GROAR Pro is $5/month. Canva Pro starts at $15/month — that's 3x more expensive. And with Canva, you still have to design everything yourself, while GROAR gives you ready-to-export metric visuals in seconds.",
+    answer: "GROAR Pro is $5/month or $19 one-time for lifetime access. Canva Pro starts at $15/month — that's 3x more expensive. And with Canva, you still have to design everything yourself, while GROAR gives you ready-to-export metric visuals in seconds.",
   },
   {
     question: "Do I need design skills to use GROAR?",
@@ -213,7 +213,7 @@ export default function VsCanvaPage() {
             <div>
               <h3 className="text-lg font-semibold mb-2">3x cheaper</h3>
               <p className="text-muted-foreground leading-relaxed">
-                GROAR Pro is $5/month and includes everything you need: unlimited exports, premium backgrounds, and no watermark.
+                GROAR Pro is $5/month (or $19 one-time for lifetime access) and includes everything you need: unlimited exports, premium backgrounds, and no watermark.
                 <br /><br />
                 Canva Pro starts at $15/month — and you still have to do all the design work yourself.
               </p>

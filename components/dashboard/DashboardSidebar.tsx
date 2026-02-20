@@ -187,7 +187,7 @@ export default function DashboardSidebar() {
           </div>
         )}
 
-        {userPlan && !["pro", "friend", "agency"].includes(userPlan) && !isTrialing ? (
+        {userPlan && !["pro", "friend"].includes(userPlan) && !isTrialing ? (
           <div className="mx-2 mb-2 p-4 rounded-2xl bg-foreground text-background relative overflow-hidden">
             {/* Gradient effect */}
             <div className="absolute -bottom-10 -right-20 w-40 h-30 bg-linear-to-tl from-primary/40 via-primary/20 to-transparent blur-2xl rotate-[-25deg]" />

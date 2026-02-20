@@ -43,7 +43,7 @@ export default function Pricing() {
 
   const canTrial = trialChecked && !hasUsedTrial;
 
-  const handleSelectPlan = (planKey: PlanType, billingPeriod?: BillingPeriod) => {
+  const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") {
       const editor = document.getElementById("editor");
       if (editor) {
@@ -53,8 +53,8 @@ export default function Pricing() {
       return;
     }
 
-    // Trial flow for Pro monthly
-    if (canTrial && planKey === "pro" && billingPeriod !== "annual") {
+    // Trial flow for Pro (only for free/non-logged-in users)
+    if (canTrial && planKey === "pro" && (!userPlan || userPlan === "free")) {
       if (!session) {
         try { localStorage.setItem("groar-pending-export", "true"); } catch {}
         window.location.href = `/login?callbackUrl=${encodeURIComponent("/dashboard?trial=start")}`;
@@ -68,6 +68,23 @@ export default function Pricing() {
 
     // Already logged in with a paid plan
     if (session && userPlan && userPlan !== "free") {
+      // Pro monthly user clicking lifetime → go directly to checkout
+      if (planKey === "pro" && billingPeriod === "lifetime" && userPlan === "pro") {
+        try {
+          const response = await fetch("/api/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: planKey, billingPeriod: "lifetime" }),
+          });
+          const data = await response.json();
+          if (data.checkoutUrl) {
+            window.location.href = data.checkoutUrl;
+          }
+        } catch (error) {
+          console.error("Error creating checkout:", error);
+        }
+        return;
+      }
       if (userPlan === planKey || (planKey === "pro" && userPlan === "friend")) {
         window.location.href = "/dashboard";
         return;
@@ -87,12 +104,15 @@ export default function Pricing() {
 
     // Not logged in OR free plan: same CTAs
     if (!userPlan || userPlan === "free") {
-      if (planKey === "pro") return canTrial && billingPeriod !== "annual" ? `Start ${TRIAL_DURATION_DAYS}-day free trial` : "Claim your spot";
+      if (planKey === "pro") {
+        return canTrial ? `Start ${TRIAL_DURATION_DAYS}-day free trial` : (billingPeriod === "lifetime" ? "Get lifetime access" : "Claim your spot");
+      }
       return "Get started";
     }
 
-    // Current plan → "Dashboard"
+    // Current plan → "Dashboard" (but pro monthly user can upgrade to lifetime)
     if (userPlan === planKey || (planKey === "pro" && userPlan === "friend")) {
+      if (planKey === "pro" && billingPeriod === "lifetime") return "Get lifetime access";
       return "Dashboard";
     }
 
@@ -106,10 +126,6 @@ export default function Pricing() {
   // Only show "Current" badge for paid plans
   const effectivePlan = userPlan === "friend" ? "pro" : userPlan;
   const displayCurrentPlan = effectivePlan && effectivePlan !== "free" ? effectivePlan : undefined;
-
-  // Only Agency is disabled when it's the current plan
-  const disabledPlans: PlanType[] = [];
-  if (effectivePlan === "agency") disabledPlans.push("agency");
 
   return (
     <FadeInView direction="up" distance={32} amount={0.1}>
@@ -126,7 +142,6 @@ export default function Pricing() {
         <PricingCards
           onSelectPlan={handleSelectPlan}
           currentPlan={displayCurrentPlan}
-          disabledPlans={disabledPlans}
           animated={true}
           showProFeatures={true}
           proHighlighted={true}

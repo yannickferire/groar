@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     question: "Is GROAR free to use?",
-    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 3 exports per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month.",
+    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 3 exports per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month or $19 one-time for lifetime access.",
   },
   {
     question: "How long does it take to create a visual?",
@@ -32,11 +32,11 @@ const faqs = [
   },
   {
     question: "How is GROAR different from Canva or other design tools?",
-    answer: "Canva is a powerful general-purpose design tool, but you have to build everything from scratch. GROAR is purpose-built for X metrics visuals — it connects to your account, auto-imports your data, and gives you ready-to-export templates in seconds. It's 3x cheaper too ($5/mo vs $15/mo).",
+    answer: "Canva is a powerful general-purpose design tool, but you have to build everything from scratch. GROAR is purpose-built for X metrics visuals — it connects to your account, auto-imports your data, and gives you ready-to-export templates in seconds. It's 3x cheaper too ($5/mo or $19 lifetime vs $15/mo).",
   },
   {
     question: "Can I connect multiple X accounts?",
-    answer: "Yes! The Pro plan lets you connect up to 2 accounts per platform, and the Agency plan supports up to 10. Perfect if you manage accounts for clients.",
+    answer: "Yes! The Pro plan lets you connect up to 3 accounts per platform. Perfect if you manage multiple accounts.",
   },
 ];
 
@@ -94,20 +94,9 @@ const jsonLd = {
       },
       {
         "@type": "Offer",
-        name: "Agency",
+        name: "Pro (Lifetime)",
         price: "19",
         priceCurrency: "USD",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: "19",
-          priceCurrency: "USD",
-          unitText: "MONTH",
-          referenceQuantity: {
-            "@type": "QuantitativeValue",
-            value: "1",
-            unitCode: "MON",
-          },
-        },
       },
     ],
   },

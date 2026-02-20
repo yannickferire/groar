@@ -12,6 +12,12 @@ Groar is a web application that transforms social media analytics into beautiful
 - Export as high-quality PNG images
 - Currently supports X (formerly Twitter)
 
+## Pricing
+
+- Free: Full editor access, 3 exports/week, 5 backgrounds (with watermark)
+- Pro Monthly: $5/month — unlimited exports, all backgrounds, no watermark, connect up to 3 accounts per platform
+- Pro Lifetime: $19 one-time — same as Pro Monthly, forever
+
 ## Target Users
 
 - Content creators

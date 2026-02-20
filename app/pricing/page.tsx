@@ -37,7 +37,7 @@ function PricingContent() {
   }, []);
 
   const canTrial = trialChecked && !hasUsedTrial;
-  const isProUser = currentPlan === "pro" || currentPlan === "agency" || currentPlan === "friend";
+  const isProUser = currentPlan === "pro" || currentPlan === "friend";
 
   const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") {
@@ -45,15 +45,18 @@ function PricingContent() {
       return;
     }
 
-    // Already on this plan → go to dashboard
+    // Already on this plan → go to dashboard (but allow lifetime upgrade)
     if (currentPlan === planKey) {
-      window.location.href = "/dashboard";
-      return;
+      if (planKey === "pro" && billingPeriod === "lifetime") {
+        // Pro monthly user wants lifetime → proceed to checkout below
+      } else {
+        window.location.href = "/dashboard";
+        return;
+      }
     }
 
-    // If user can trial and selects Pro monthly → start trial flow
-    // Annual billing skips trial and goes straight to checkout
-    if (canTrial && planKey === "pro" && billingPeriod !== "annual") {
+    // Trial flow for Pro (only for free/non-logged-in users)
+    if (canTrial && planKey === "pro" && !isProUser) {
       if (!session) {
         // Not logged in → sign up with trial callback
         try { localStorage.setItem("groar-pending-export", "true"); } catch {}
@@ -121,9 +124,14 @@ function PricingContent() {
             proTierInfo={proTierInfo}
             canTrial={canTrial}
             ctaLabel={(planKey, billingPeriod) => {
-              if (currentPlan === planKey) return planKey === "pro" ? "Dashboard" : "Current plan";
+              if (currentPlan === planKey) {
+                if (planKey === "pro" && billingPeriod === "lifetime") return "Get lifetime access";
+                return planKey === "pro" ? "Dashboard" : "Current plan";
+              }
               if (planKey === "free") return "Try for free";
-              if (planKey === "pro") return canTrial && billingPeriod !== "annual" ? `Start ${TRIAL_DURATION_DAYS}-day free trial` : "Claim your spot";
+              if (planKey === "pro") {
+                return canTrial ? `Start ${TRIAL_DURATION_DAYS}-day free trial` : (billingPeriod === "lifetime" ? "Get lifetime access" : "Claim your spot");
+              }
               return "Get started";
             }}
           />

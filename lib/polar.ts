@@ -47,13 +47,11 @@ export type { BillingPeriod };
 
 const POLAR_PRODUCT_IDS: Record<string, string> = {
   "pro:monthly": "43027235-0bb3-4ace-86a1-f154a3c6a866",
-  "pro:annual": "51c67e06-c8e0-462f-b9c4-64b736a55162",
-  "agency:monthly": "29945ded-b994-4dea-8d76-ce3cd1c98a6f",
-  "agency:annual": "e878aaaa-1858-4dc9-9e0f-431f27b98e9b"
+  "pro:lifetime": "5df4d49e-1c9c-4328-a554-dc18ddf1d71d",
 };
 
-export function getPolarProductId(plan: "pro" | "agency", billingPeriod: BillingPeriod = "monthly"): string | null {
-  const envKey = `POLAR_PRODUCT_ID_${plan.toUpperCase()}_${billingPeriod === "annual" ? "ANNUAL" : "MONTHLY"}`;
+export function getPolarProductId(plan: "pro", billingPeriod: BillingPeriod = "monthly"): string | null {
+  const envKey = `POLAR_PRODUCT_ID_${plan.toUpperCase()}_${billingPeriod.toUpperCase()}`;
   const fallbackKey = `${plan}:${billingPeriod}`;
   return process.env[envKey] || POLAR_PRODUCT_IDS[fallbackKey] || null;
 }

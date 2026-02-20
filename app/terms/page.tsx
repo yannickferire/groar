@@ -38,9 +38,9 @@ export default function TermsPage() {
               </p>
               <p className="leading-relaxed">
                 Groar offers a free tier with limited features and paid plans
-                (Pro and Agency) with additional capabilities such as premium
+                (Pro) with additional capabilities such as premium
                 templates, custom branding, and more backgrounds. Paid
-                subscriptions are billed monthly or annually through our payment
+                subscriptions are billed monthly or as a one-time lifetime payment through our payment
                 provider, Polar.
               </p>
             </section>

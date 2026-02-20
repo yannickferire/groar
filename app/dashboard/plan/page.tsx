@@ -23,7 +23,7 @@ type PlanData = {
   status?: string;
   currentPeriodEnd?: string;
   currentPeriodStart?: string;
-  billingPeriod?: "monthly" | "annual";
+  billingPeriod?: "monthly" | "lifetime";
   isTrialing?: boolean;
   trialEnd?: string;
   hasUsedTrial?: boolean;
@@ -56,6 +56,7 @@ export default function PlanPage() {
   }, [fetchPlan]);
 
   const isPaidPlan = planData && planData.plan !== "free" && planData.plan !== "friend";
+  const isLifetime = planData?.billingPeriod === "lifetime";
 
   const handleUpgrade = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") return;
@@ -150,7 +151,7 @@ export default function PlanPage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {!loading && isPaidPlan && !planData?.isTrialing && (
+            {!loading && isPaidPlan && !planData?.isTrialing && !isLifetime && (
               <Button
                 variant="outline"
                 onClick={handleManageSubscription}
@@ -164,7 +165,7 @@ export default function PlanPage() {
                 Manage subscription
               </Button>
             )}
-            {!loading && planData && !planData.isTrialing && planData.plan !== "agency" && planData.plan !== "friend" && (
+            {!loading && planData && !planData.isTrialing && planData.plan !== "friend" && !isLifetime && (
               <Button asChild variant="default">
                 <Link href="/pricing">
                   Upgrade
@@ -192,15 +193,15 @@ export default function PlanPage() {
           </div>
         )}
 
-        {!loading && isPaidPlan && !planData?.isTrialing && planData?.currentPeriodEnd && (
+        {!loading && isPaidPlan && !planData?.isTrialing && (
           <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
             {planData.billingPeriod && (
               <div className="flex items-center gap-1.5">
                 <HugeiconsIcon icon={RepeatIcon} size={14} strokeWidth={2} />
-                <span>{planData.billingPeriod === "annual" ? "Annual" : "Monthly"} billing</span>
+                <span>{planData.billingPeriod === "lifetime" ? "Lifetime access" : "Monthly billing"}</span>
               </div>
             )}
-            {planData.currentPeriodStart && (
+            {planData.billingPeriod !== "lifetime" && planData.currentPeriodEnd && planData.currentPeriodStart && (
               <div className="flex items-center gap-1.5">
                 <HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={2} />
                 <span>
@@ -208,7 +209,7 @@ export default function PlanPage() {
                 </span>
               </div>
             )}
-            {!planData.currentPeriodStart && (
+            {planData.billingPeriod !== "lifetime" && planData.currentPeriodEnd && !planData.currentPeriodStart && (
               <div className="flex items-center gap-1.5">
                 <HugeiconsIcon icon={Calendar03Icon} size={14} strokeWidth={2} />
                 <span>
@@ -236,17 +237,38 @@ export default function PlanPage() {
           <h3 className="text-lg font-heading font-semibold mb-4">All plans</h3>
           <PricingCards
             onSelectPlan={handleUpgrade}
-            currentPlan={planData.isTrialing ? undefined : (planData.plan === "friend" ? "pro" : planData.plan)}
-            disabledPlans={planData.isTrialing ? [] : [planData.plan]}
+            currentPlan={(() => {
+              if (planData.isTrialing) return undefined;
+              if (planData.plan === "friend") return "pro";
+              // Pro monthly user viewing lifetime toggle → don't mark pro as current
+              if (planData.plan === "pro" && !isLifetime) return undefined;
+              return planData.plan;
+            })()}
+            disabledPlans={(() => {
+              if (planData.isTrialing) return [];
+              if (isLifetime) return ["free", "pro"] as PlanType[];
+              return [];
+            })()}
             loadingPlan={upgrading}
             showProFeatures={true}
             proHighlighted={true}
+            showBillingToggle={!isLifetime}
             proTierInfo={proTierInfo}
-            ctaLabel={(planKey) => {
+            ctaLabel={(planKey, billingPeriod) => {
               if (planData.isTrialing && planKey === "pro") return "Claim your spot";
+              // Lifetime user: show "Current plan" on pro
+              if (isLifetime && planKey === "pro") return "Current plan";
+              // Pro monthly user
+              if (planData.plan === "pro" && !isLifetime && !planData.isTrialing) {
+                if (planKey === "pro" && billingPeriod === "monthly") return "Current plan";
+                if (planKey === "pro" && billingPeriod === "lifetime") return "Get lifetime access";
+              }
               if (planData.plan === planKey && !planData.isTrialing) return "Current plan";
               const planIndex = PLAN_ORDER.indexOf(planKey);
-              if (planIndex > currentPlanIndex) return `Upgrade to ${PLANS[planKey].name}`;
+              if (planIndex > currentPlanIndex) {
+                if (planKey === "pro" && billingPeriod === "lifetime") return "Get lifetime access";
+                return `Upgrade to ${PLANS[planKey].name}`;
+              }
               if (planIndex < currentPlanIndex && isPaidPlan && !planData.isTrialing) return "Switch plan";
               return `Choose ${PLANS[planKey].name}`;
             }}

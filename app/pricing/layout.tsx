@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Simple, transparent pricing for Groar. Choose Free, Pro, or Agency plans to turn your social metrics into shareable visuals.",
+  description: "Simple, transparent pricing for Groar. Choose Free or Pro plans to turn your social metrics into shareable visuals.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -34,10 +34,10 @@ const pricingJsonLd = {
       },
       {
         "@type": "Offer",
-        name: "Pro",
+        name: "Pro (Monthly)",
         price: "5",
         priceCurrency: "USD",
-        description: "Unlimited exports, unlimited backgrounds, no watermark, connect 2 accounts per platform",
+        description: "Unlimited exports, unlimited backgrounds, no watermark, connect 3 accounts per platform",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
           price: "5",
@@ -48,17 +48,10 @@ const pricingJsonLd = {
       },
       {
         "@type": "Offer",
-        name: "Agency",
+        name: "Pro (Lifetime)",
         price: "19",
         priceCurrency: "USD",
-        description: "Everything in Pro, connect 10 accounts per platform, brand presets per client, priority support",
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: "19",
-          priceCurrency: "USD",
-          unitText: "MONTH",
-          referenceQuantity: { "@type": "QuantitativeValue", value: "1", unitCode: "MON" },
-        },
+        description: "Everything in Pro, one-time payment, lifetime access",
       },
     ],
   },

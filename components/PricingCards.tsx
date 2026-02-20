@@ -3,7 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon, DashboardSquare02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, getAnnualPrice, ProTierInfo, TRIAL_DURATION_DAYS } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, LIFETIME_PRICE, LIFETIME_FULL_PRICE, ProTierInfo } from "@/lib/plans";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -49,7 +49,8 @@ function ProCard({
   canTrial?: boolean;
 }) {
   const proPrice = proTierInfo?.price ?? plan.price;
-  const showTrialPricing = canTrial && billingPeriod === "monthly";
+  const isLifetime = billingPeriod === "lifetime";
+  const showTrialPricing = canTrial;
   return (
     <div className={proHighlighted ? "md:-my-6 md:-mx-4 relative z-10" : ""}>
       <div className="relative rounded-3xl p-6 md:p-8 flex flex-col bg-foreground text-background overflow-hidden">
@@ -87,29 +88,22 @@ function ProCard({
                 </span>
               )}
             </div>
-            <div className="flex items-baseline gap-0.5">
-              {billingPeriod === "annual" ? (
-                <>
-                  <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
-                  <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{getAnnualPrice(proPrice)}</span>
-                  <span className="text-background/60 text-sm ml-0.5">/year</span>
-                  <span className="text-sm text-background/40 line-through ml-1">${proPrice * 12}</span>
-                  <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
-                  <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{proPrice}</span>
-                  <span className="text-background/60 text-sm ml-0.5">/month</span>
-                  <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
-                </>
+            <div className="flex items-baseline gap-0.5 flex-wrap">
+              <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
+              <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{isLifetime ? LIFETIME_PRICE : proPrice}</span>
+              {isLifetime && (
+                <span className="text-2xl leading-none text-muted-foreground line-through ml-1.5">${LIFETIME_FULL_PRICE}</span>
               )}
+              <span className="text-background/60 text-sm ml-0.5">{isLifetime ? "one-time" : "/month"}</span>
+              <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
             </div>
-            {proTierInfo && proTierInfo.spotsLeft !== null && proTierInfo.nextPrice !== null && (
-              <p className="text-xs text-background/50 mt-1.5">
-                Launch price – <span className="text-primary font-medium">{proTierInfo.spotsLeft} spots left</span> – Next: {billingPeriod === "annual" ? `$${getAnnualPrice(proTierInfo.nextPrice)}/yr` : `$${proTierInfo.nextPrice}/mo`}
-              </p>
-            )}
+            <p className="text-xs text-background/50 mt-1.5 min-h-4">
+              {isLifetime ? (
+                "Launch price"
+              ) : proTierInfo && proTierInfo.spotsLeft !== null && proTierInfo.nextPrice !== null ? (
+                <>Launch price – <span className="text-primary font-medium">{proTierInfo.spotsLeft} spots left</span> – Next: ${proTierInfo.nextPrice}/mo</>
+              ) : "\u00A0"}
+            </p>
           </div>
 
           {/* Premium features icons */}
@@ -177,7 +171,6 @@ function PlanCard({
   ctaLabel,
   onSelect,
   disabled,
-  billingPeriod,
 }: {
   plan: (typeof PLANS)[keyof typeof PLANS];
   planKey: PlanType;
@@ -186,13 +179,10 @@ function PlanCard({
   ctaLabel: string;
   onSelect: () => void;
   disabled: boolean;
-  billingPeriod: BillingPeriod;
 }) {
   return (
     <div
-      className={`relative p-5 md:p-7 flex flex-col rounded-3xl md:mt-10 ${
-        planKey === "free" ? "md:rounded-r-none" : planKey === "agency" ? "md:rounded-l-none" : ""
-      } bg-card border-fade`}
+      className="relative p-5 md:p-7 flex flex-col rounded-3xl md:mt-10 bg-card border-fade"
     >
       {isCurrent && planKey !== "free" && (
         <div className="absolute top-4 right-4 bg-primary text-primary-foreground text-xs font-medium px-2.5 py-1 rounded-full">
@@ -210,30 +200,8 @@ function PlanCard({
           )}
         </div>
         <div className="flex items-baseline gap-0.5">
-          {plan.price > 0 && billingPeriod === "annual" ? (
-            <>
-              <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
-              <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{getAnnualPrice(plan.price)}</span>
-              <span className="text-muted-foreground text-sm ml-0.5">
-                /year
-              </span>
-              <span className="text-sm text-muted-foreground/40 line-through ml-1">${plan.price * 12}</span>
-              <span className="text-xs text-muted-foreground/40 ml-1">(+ applicable tax)</span>
-            </>
-          ) : (
-            <>
-              <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
-              <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{plan.price}</span>
-              {plan.price > 0 && (
-                <>
-                  <span className="text-muted-foreground text-sm ml-0.5">
-                    /month
-                  </span>
-                  <span className="text-xs text-muted-foreground/40 ml-1">(+ applicable tax)</span>
-                </>
-              )}
-            </>
-          )}
+          <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
+          <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{plan.price}</span>
         </div>
       </div>
 
@@ -308,21 +276,19 @@ function BillingToggle({ period, onChange }: { period: BillingPeriod; onChange: 
           </span>
         </button>
         <button
-          onClick={() => onChange("annual")}
+          onClick={() => onChange("lifetime")}
           className="relative z-10 px-4 py-1.5 rounded-full text-sm font-medium"
         >
-          {period === "annual" && (
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-medium text-primary bg-muted px-1.5 py-0.5 rounded-full leading-none z-20">–33%</span>
+          {period === "lifetime" && (
             <motion.div
               layoutId="billing-pill"
               className="absolute inset-0 rounded-full bg-foreground shadow-sm"
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             />
           )}
-          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-medium text-primary bg-muted px-1.5 py-0.5 rounded-full leading-none z-20">
-            –20%
-          </span>
-          <span className={`relative z-10 ${period === "annual" ? "text-background" : "text-muted-foreground hover:text-foreground"}`}>
-            Annual
+          <span className={`relative z-10 ${period === "lifetime" ? "text-background" : "text-muted-foreground hover:text-foreground"}`}>
+            Lifetime
           </span>
         </button>
       </div>
@@ -343,7 +309,7 @@ export default function PricingCards({
   proTierInfo,
   canTrial,
 }: PricingCardsProps) {
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("lifetime");
 
   const defaultCtaLabel = (planKey: PlanType) => {
     if (currentPlan === planKey) return "Current plan";
@@ -386,7 +352,6 @@ export default function PricingCards({
         ctaLabel={getLabel(planKey, billingPeriod)}
         onSelect={() => onSelectPlan(planKey, billingPeriod)}
         disabled={isDisabled}
-        billingPeriod={billingPeriod}
       />
     );
 
@@ -417,7 +382,6 @@ export default function PricingCards({
               ctaLabel={getLabel(planKey, billingPeriod)}
               onSelect={() => onSelectPlan(planKey, billingPeriod)}
               disabled={isDisabled}
-              billingPeriod={billingPeriod}
             />
           )}
         </StaggerItem>
@@ -439,7 +403,7 @@ export default function PricingCards({
             <BillingToggle period={billingPeriod} onChange={setBillingPeriod} />
           </StaggerItem>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-0 items-start max-w-3xl mx-auto">
           {cards}
         </div>
       </StaggerContainer>
@@ -449,7 +413,7 @@ export default function PricingCards({
   return (
     <div>
       {toggle}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-0 items-start max-w-3xl mx-auto">
         {cards}
       </div>
     </div>

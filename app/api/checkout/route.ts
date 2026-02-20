@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This plan is free" }, { status: 400 });
     }
 
-    const productId = getPolarProductId(planKey as "pro" | "agency", billingPeriod);
+    const productId = getPolarProductId(planKey as "pro", billingPeriod);
     if (!productId) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }

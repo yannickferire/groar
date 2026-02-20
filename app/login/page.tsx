@@ -98,7 +98,7 @@ function LoginContent() {
               {callbackUrlParam?.includes("trial=start")
                 ? "Start your free trial"
                 : planParam
-                  ? `Get started with ${planParam === "free" ? "Free" : planParam === "pro" ? "Pro" : "Agency"}`
+                  ? `Get started with ${planParam === "free" ? "Free" : "Pro"}`
                   : "Welcome back"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
