@@ -375,12 +375,15 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       const aspectRatio = settings.aspectRatio || "post";
       const { width: exportWidth, height: exportHeight } = ASPECT_RATIOS[aspectRatio];
 
-      // Safari silently fails to fetch resources in html-to-image's iframe
-      // Pre-process: inline background images + fonts as base64 on Safari only
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      // All iOS browsers (Chrome, Safari, Firefox) use WebKit under the hood.
+      // WebKit silently fails to fetch resources in html-to-image's SVG foreignObject.
+      // We pre-inline background images + fonts as base64 on WebKit.
+      const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+      const isDesktopSafari = !isIOS && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isWebKit = isIOS || isDesktopSafari;
 
       const restoreBackgrounds = await inlineBackgroundImages(previewRef.current);
-      const fontEmbedCSS = isSafari ? await buildFontEmbedCSS() : undefined;
+      const fontEmbedCSS = isWebKit ? await buildFontEmbedCSS() : undefined;
 
       const baseOptions: Record<string, unknown> = {
         canvasWidth: exportWidth,
@@ -399,15 +402,22 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         },
       };
 
-      // Only pass fontEmbedCSS on Safari — on Chrome/Firefox html-to-image
+      // Only pass fontEmbedCSS on WebKit — on Chrome/Firefox desktop html-to-image
       // handles fonts natively and our custom CSS breaks it
       if (fontEmbedCSS) {
         baseOptions.fontEmbedCSS = fontEmbedCSS;
       }
 
+      // iOS WebKit needs a warm-up render: the first call caches resources
+      // in the SVG foreignObject context, the second produces correct output.
+      if (isIOS) {
+        try {
+          await toJpeg(previewRef.current, { ...baseOptions, skipFonts: false });
+        } catch {}
+      }
+
       let dataUrl: string;
       try {
-        // First attempt: try with font embedding
         dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: false });
       } catch (fontError) {
         // Firefox often fails with font embedding - retry without fonts
