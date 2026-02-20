@@ -148,17 +148,24 @@ function LoginContent() {
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground text-center text-balance">
-          By signing in, you agree to our{" "}
-          <Link href="/terms" className="underline hover:text-foreground">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="underline hover:text-foreground">
-            Privacy Policy
-          </Link>
-          .
-        </p>
+        <div className="text-xs text-muted-foreground text-center space-y-2">
+          <p className="text-balance">
+            By signing in, you agree to our{" "}
+            <Link href="/terms" className="underline hover:text-foreground">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline hover:text-foreground">
+              Privacy Policy
+            </Link>
+            .
+          </p>
+          <p>
+            <Link href="/" className="underline hover:text-foreground">
+              Back to home
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
