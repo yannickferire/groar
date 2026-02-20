@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         plan: planKey,
         billingPeriod,
-        datafast_visitor_id: cookieStore.get("datafast_visitor_id")?.value,
-        datafast_session_id: cookieStore.get("datafast_session_id")?.value,
+        ...(cookieStore.get("datafast_visitor_id")?.value && { datafast_visitor_id: cookieStore.get("datafast_visitor_id")!.value }),
+        ...(cookieStore.get("datafast_session_id")?.value && { datafast_session_id: cookieStore.get("datafast_session_id")!.value }),
       },
     });
 
