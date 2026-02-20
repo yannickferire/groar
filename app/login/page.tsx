@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,30 @@ import posthog from "posthog-js";
 
 function LoginContent() {
   const [loading, setLoading] = useState<"google" | "twitter" | null>(null);
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = authClient.useSession();
   const planParam = searchParams.get("plan") as PlanType | null;
   const billingParam = searchParams.get("billing");
   const callbackUrlParam = searchParams.get("callbackUrl");
+
+  // If already logged in (e.g. user pressed back after OAuth), redirect
+  useEffect(() => {
+    if (session) {
+      router.replace("/dashboard");
+    }
+  }, [session, router]);
+
+  // Reset loading state when page becomes visible again (back button)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        setLoading(null);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
 
   // Determine callback URL based on params
   const getCallbackURL = () => {

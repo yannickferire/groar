@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { setUserPlan, cancelUserSubscription } from "@/lib/plans-server";
+import { setUserPlan, cancelUserSubscription, getUserSubscription } from "@/lib/plans-server";
 import { getPolarProductId, validateEvent, WebhookVerificationError } from "@/lib/polar";
 import { getPostHogClient } from "@/lib/posthog-server";
 
@@ -86,6 +86,11 @@ export async function POST(request: NextRequest) {
 
         if (sub.status === "active") {
           const billingPeriod = getBillingPeriodFromProductId(sub.productId);
+
+          // Check if this subscription is already active (deduplicate webhooks)
+          const existing = await getUserSubscription(sub.userId);
+          const isNewActivation = !existing || existing.externalId !== sub.id || existing.status !== "active";
+
           await setUserPlan(sub.userId, plan, {
             externalId: sub.id,
             externalCustomerId: sub.customerId,
@@ -99,19 +104,21 @@ export async function POST(request: NextRequest) {
           });
           console.log(`Set plan ${plan} (${billingPeriod}) for user ${sub.userId} (subscription: ${sub.id})`);
 
-          // Track subscription activation server-side
-          const posthog = getPostHogClient();
-          posthog.capture({
-            distinctId: sub.userId,
-            event: "subscription_activated",
-            properties: {
-              plan,
-              billing_period: billingPeriod,
-              subscription_id: sub.id,
-              customer_id: sub.customerId,
-            },
-          });
-          await posthog.shutdown();
+          // Only track in PostHog if this is a genuinely new activation
+          if (isNewActivation) {
+            const posthog = getPostHogClient();
+            posthog.capture({
+              distinctId: sub.userId,
+              event: "subscription_activated",
+              properties: {
+                plan,
+                billing_period: billingPeriod,
+                subscription_id: sub.id,
+                customer_id: sub.customerId,
+              },
+            });
+            await posthog.shutdown();
+          }
         }
         break;
       }
