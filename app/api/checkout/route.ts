@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
 import { createCheckoutSession, getPolarProductId, BillingPeriod } from "@/lib/polar";
@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
+    const cookieStore = await cookies();
     const result = await createCheckoutSession({
       productId,
       successUrl: `${siteUrl}/dashboard?checkout=success&plan=${planKey}`,
@@ -43,6 +44,8 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         plan: planKey,
         billingPeriod,
+        datafast_visitor_id: cookieStore.get("datafast_visitor_id")?.value,
+        datafast_session_id: cookieStore.get("datafast_session_id")?.value,
       },
     });
 
