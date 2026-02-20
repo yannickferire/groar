@@ -1,9 +1,9 @@
 /**
- * Normalize a handle to ensure it starts with @
+ * Normalize a handle to ensure it starts with @ (or is empty)
  */
 export const normalizeHandle = (handle: string): string => {
   const trimmed = handle.trim();
-  if (trimmed === "") return "@";
+  if (trimmed === "" || trimmed === "@") return "";
   return trimmed.startsWith("@") ? trimmed : `@${trimmed}`;
 };
 

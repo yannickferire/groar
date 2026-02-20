@@ -78,7 +78,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
             className="opacity-60"
             style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "1.4cqi" : "1.6cqi" }}
           >
-            {settings.handle}
+            {settings.handle || ""}
           </p>
           {settings.period && (
             <p

@@ -115,7 +115,7 @@ export type EditorSettings = {
 };
 
 const defaultSettings: EditorSettings = {
-  handle: "@yannick_ferire",
+  handle: "",
   period: { type: "week", number: 1 },
   metrics: [{ type: "followers", value: 56 }],
   background: { presetId: BACKGROUNDS[0]?.id || "solid-color", solidColor: "#f59e0b" },

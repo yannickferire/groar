@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, memo, useEffect } from "react";
+import { useState, useCallback, useMemo, memo, useEffect, useRef } from "react";
 import { EditorSettings, PeriodType, MetricType, Metric, METRIC_LABELS } from "../Editor";
 import { parseMetricInput, detectPrefix } from "@/lib/metrics";
 import { normalizeHandle } from "@/lib/validation";
@@ -215,6 +215,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   const [isDeletingLogo, setIsDeletingLogo] = useState(false);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [handleMode, setHandleMode] = useState<"custom" | string>("custom"); // "custom" or account username
+  const handleTouchedRef = useRef(settings.handle !== ""); // track if user has interacted with handle
   const fileInputRef = useCallback((node: HTMLInputElement | null) => {
     if (node) node.value = "";
   }, []);
@@ -520,9 +521,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                 <Input
                   id="handle"
                   type="text"
-                  placeholder="@username"
+                  placeholder="@yourhandle"
                   value={settings.handle}
-                  onChange={(e) => updateSetting("handle", e.target.value)}
+                  onFocus={() => { if (!handleTouchedRef.current && settings.handle === "") { updateSetting("handle", "@"); handleTouchedRef.current = true; } }}
+                  onChange={(e) => { updateSetting("handle", e.target.value); handleTouchedRef.current = true; }}
                   onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
                   className="flex-1 bg-white"
                 />
@@ -532,9 +534,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
             <Input
               id="handle"
               type="text"
-              placeholder="@username"
+              placeholder="@yourhandle"
               value={settings.handle}
-              onChange={(e) => updateSetting("handle", e.target.value)}
+              onFocus={() => { if (!handleTouchedRef.current && settings.handle === "") { updateSetting("handle", "@"); handleTouchedRef.current = true; } }}
+              onChange={(e) => { updateSetting("handle", e.target.value); handleTouchedRef.current = true; }}
               onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
               className="bg-white"
             />
