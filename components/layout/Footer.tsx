@@ -17,8 +17,11 @@ export default function Footer() {
               into shareable visuals
             </p>
           </div>
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6">
-            <div className="flex gap-4 text-sm text-muted-foreground">
+          <div className="flex items-start gap-6 md:gap-8">
+            <Link href="/vs/canva" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              🐯 GROAR vs Canva
+            </Link>
+            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
               <Link href="/privacy" className="hover:text-foreground transition-colors">
                 Privacy
               </Link>
