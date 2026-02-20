@@ -608,16 +608,16 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   // Landing page: wrapper with glow effects + optional upgrade modal
   return (
     <FadeIn delay={0.6} duration={0.7}>
-      <div className="relative w-full max-w-6xl mx-auto mt-6 overflow-hidden">
+      <div className="relative w-full max-w-6xl mx-auto mt-6">
         {/* Top horizontal glow */}
         <div
           className="absolute -top-24 left-1/2 w-[140%] h-48 rounded-[100%] blur-3xl pointer-events-none animate-[glowRise_0.8s_ease-out_0.95s_forwards]"
-          style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.5 } as React.CSSProperties}
+          style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.4 } as React.CSSProperties}
         />
         {/* Center vertical glow */}
         <div
           className="absolute top-0 left-1/2 w-full h-[140%] rounded-[100%] blur-3xl pointer-events-none animate-[glowRise_0.8s_ease-out_0.95s_forwards]"
-          style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.2 } as React.CSSProperties}
+          style={{ background: "radial-gradient(ellipse at center, var(--primary) 0%, transparent 60%)", opacity: 0, transform: "translateX(-50%) translateY(40px)", "--fade-opacity": 0.1 } as React.CSSProperties}
         />
         {editorContent}
         {!hideUpgradeModal && (
