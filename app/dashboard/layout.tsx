@@ -1,15 +1,29 @@
 "use client";
 
+import { useEffect } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import Link from "next/link";
+import posthog from "posthog-js";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    if (session?.user) {
+      posthog.identify(session.user.id, {
+        email: session.user.email,
+        name: session.user.name,
+      });
+    }
+  }, [session?.user]);
+
   return (
     <SidebarProvider>
       <DashboardSidebar />

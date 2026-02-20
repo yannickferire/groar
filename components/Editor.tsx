@@ -318,11 +318,12 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         posthog.capture("premium_feature_blocked", {
           features: usage.features,
           has_used_trial: hasUsedTrial,
+          source: isDashboard ? "dashboard" : "landing",
         });
         if (hasUsedTrial) {
           setUpgradeReason("premium-features");
           setShowUpgradeModal(true);
-          posthog.capture("upgrade_modal_viewed", { reason: "premium-features" });
+          posthog.capture("upgrade_modal_viewed", { reason: "premium-features", source: isDashboard ? "dashboard" : "landing" });
         } else {
           setTrialReason("premium-features");
           setShowTrialModal(true);
@@ -335,11 +336,12 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         posthog.capture("export_limit_reached", {
           week_export_count: getWeekExportCount(),
           has_used_trial: hasUsedTrial,
+          source: isDashboard ? "dashboard" : "landing",
         });
         if (hasUsedTrial) {
           setUpgradeReason("limit");
           setShowUpgradeModal(true);
-          posthog.capture("upgrade_modal_viewed", { reason: "limit" });
+          posthog.capture("upgrade_modal_viewed", { reason: "limit", source: isDashboard ? "dashboard" : "landing" });
         } else {
           setTrialReason("limit");
           setShowTrialModal(true);
@@ -475,6 +477,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         background_id: settings.background.presetId,
         is_premium: isPremium,
         handle: settings.handle,
+        source: isDashboard ? "dashboard" : "landing",
       });
 
       // Start cooldown after successful export
@@ -488,7 +491,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         if (hasUsedTrial) {
           setUpgradeReason("limit");
           setShowUpgradeModal(true);
-          posthog.capture("upgrade_modal_viewed", { reason: "post_export_limit" });
+          posthog.capture("upgrade_modal_viewed", { reason: "post_export_limit", source: isDashboard ? "dashboard" : "landing" });
         } else {
           setTrialReason(undefined); // post-export
           setShowTrialModal(true);

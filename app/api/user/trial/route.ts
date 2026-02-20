@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { startTrial, hasUsedTrial, getUserSubscription } from "@/lib/plans-server";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST() {
   const session = await auth.api.getSession({
@@ -27,6 +28,18 @@ export async function POST() {
 
     // Start the trial
     const { trialEnd } = await startTrial(session.user.id);
+
+    // Track trial start server-side
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: session.user.id,
+      event: "trial_started",
+      properties: {
+        trial_end: trialEnd,
+        email: session.user.email,
+      },
+    });
+    await posthog.shutdown();
 
     return NextResponse.json({ success: true, trialEnd });
   } catch (error) {

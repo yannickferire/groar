@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { PRO_FEATURES, PLANS, TRIAL_DURATION_DAYS, ProTierInfo } from "@/lib/plans";
+import posthog from "posthog-js";
 
 const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
 
@@ -42,12 +43,13 @@ export default function TrialSignupModal({
 
   useEffect(() => {
     if (open) {
+      posthog.capture("trial_signup_modal_viewed", { reason });
       fetch("/api/pricing")
         .then((res) => res.json())
         .then((data) => setProTierInfo(data.proTier))
         .catch(() => {});
     }
-  }, [open]);
+  }, [open, reason]);
 
   const proPrice = proTierInfo?.price ?? PLANS.pro.price;
   const callbackURL = "/dashboard?trial=start";
