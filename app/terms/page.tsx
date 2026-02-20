@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description: "Terms of Service for Groar - Rules and guidelines for using our service.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

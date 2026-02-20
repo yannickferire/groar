@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "🐯 GROAR vs Canva — Best Tool for X Metrics Visuals",
   description:
     "Compare GROAR and Canva for creating X (Twitter) metrics visuals. See why creators choose GROAR to turn their analytics into shareable images in seconds.",
+  alternates: { canonical: "/vs/canva" },
   openGraph: {
     title: "🐯 GROAR vs Canva — Best Tool for X Metrics Visuals",
     description:
@@ -75,6 +76,15 @@ const faqJsonLd = {
   })),
 };
 
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://groar.app" },
+    { "@type": "ListItem", position: 2, name: "GROAR vs Canva", item: "https://groar.app/vs/canva" },
+  ],
+};
+
 function FeatureCell({ value }: { value: boolean | string }) {
   if (typeof value === "string") {
     return <span className="text-sm font-medium">{value}</span>;
@@ -92,6 +102,10 @@ export default function VsCanvaPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <Header />
       <main className="flex-1 py-8 mt-4 md:mt-10">

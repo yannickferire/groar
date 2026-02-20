@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "Privacy Policy for Groar - Learn how we handle your data.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
