@@ -262,11 +262,30 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           }));
           setConnectedAccounts(accounts);
 
-          // Auto-select if current handle matches a connected account
+          // Auto-select connected account: match current handle, or default to first account
           const currentHandle = settings.handle.replace("@", "").toLowerCase();
           const match = accounts.find((a: ConnectedAccount) => a.username?.toLowerCase() === currentHandle);
-          if (match) {
-            setHandleMode(match.username!);
+          const selected = match || accounts[0];
+          if (selected?.username) {
+            setHandleMode(selected.username);
+            // Auto-populate handle and metrics if not already matching
+            if (!match) {
+              const newHandle = `@${selected.username}`;
+              if (selected.latest) {
+                const metricMap: Partial<Record<string, number>> = {
+                  followers: selected.latest.followersCount,
+                  followings: selected.latest.followingCount,
+                  posts: selected.latest.tweetCount,
+                };
+                const updatedMetrics = settings.metrics.map(m => {
+                  const autoValue = metricMap[m.type];
+                  return autoValue !== undefined ? { ...m, value: autoValue } : m;
+                });
+                onSettingsChange({ ...settings, handle: newHandle, metrics: updatedMetrics });
+              } else {
+                onSettingsChange({ ...settings, handle: newHandle });
+              }
+            }
           }
         }
       })
