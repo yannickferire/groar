@@ -13,12 +13,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import posthog from "posthog-js";
 
 export default function UserMenu({ isAdmin }: { isAdmin?: boolean }) {
   const { data: session } = authClient.useSession();
   const router = useRouter();
 
   const handleSignOut = async () => {
+    posthog.capture("sign_out", {
+      user_id: session?.user?.id,
+    });
+    posthog.reset();
     await authClient.signOut();
     router.push("/");
   };

@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import UpgradeModal, { FREE_WEEKLY_LIMIT } from "@/components/UpgradeModal";
 import TrialSignupModal from "@/components/TrialSignupModal";
 import { checkPremiumFeatures } from "@/lib/premium-check";
+import posthog from "posthog-js";
 
 // Convert data URL to File for upload
 function dataURLtoFile(dataUrl: string, filename: string): File {
@@ -314,9 +315,14 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       const usage = checkPremiumFeatures(settings, ALL_BACKGROUNDS);
       if (usage.isPremium) {
         setPremiumFeaturesList(usage.features);
+        posthog.capture("premium_feature_blocked", {
+          features: usage.features,
+          has_used_trial: hasUsedTrial,
+        });
         if (hasUsedTrial) {
           setUpgradeReason("premium-features");
           setShowUpgradeModal(true);
+          posthog.capture("upgrade_modal_viewed", { reason: "premium-features" });
         } else {
           setTrialReason("premium-features");
           setShowTrialModal(true);
@@ -326,9 +332,14 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
 
       // Check weekly limit
       if (getWeekExportCount() >= FREE_WEEKLY_LIMIT) {
+        posthog.capture("export_limit_reached", {
+          week_export_count: getWeekExportCount(),
+          has_used_trial: hasUsedTrial,
+        });
         if (hasUsedTrial) {
           setUpgradeReason("limit");
           setShowUpgradeModal(true);
+          posthog.capture("upgrade_modal_viewed", { reason: "limit" });
         } else {
           setTrialReason("limit");
           setShowTrialModal(true);
@@ -457,6 +468,15 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         );
       }
 
+      // Track successful export
+      posthog.capture("image_exported", {
+        template: settings.template,
+        aspect_ratio: settings.aspectRatio,
+        background_id: settings.background.presetId,
+        is_premium: isPremium,
+        handle: settings.handle,
+      });
+
       // Start cooldown after successful export
       setCooldown(5);
 
@@ -468,6 +488,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         if (hasUsedTrial) {
           setUpgradeReason("limit");
           setShowUpgradeModal(true);
+          posthog.capture("upgrade_modal_viewed", { reason: "post_export_limit" });
         } else {
           setTrialReason(undefined); // post-export
           setShowTrialModal(true);

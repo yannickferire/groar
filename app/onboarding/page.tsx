@@ -8,6 +8,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Loading03Icon } from "@hugeicons/core-free-icons";
 import { PLANS, PlanType, BillingPeriod } from "@/lib/plans";
 import PricingCards from "@/components/PricingCards";
+import posthog from "posthog-js";
 
 function OnboardingContent() {
   const router = useRouter();
@@ -25,6 +26,11 @@ function OnboardingContent() {
 
   const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     setSelecting(planKey);
+
+    posthog.capture("plan_selected", {
+      plan: planKey,
+      billing_period: billingPeriod || "monthly",
+    });
 
     try {
       if (planKey === "free") {

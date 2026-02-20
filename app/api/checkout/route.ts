@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
 import { createCheckoutSession, getPolarProductId, BillingPeriod } from "@/lib/polar";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({
@@ -48,6 +49,22 @@ export async function POST(request: NextRequest) {
     if ("error" in result) {
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
+
+    // Track checkout initiation server-side
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: session.user.id,
+      event: "checkout_initiated",
+      properties: {
+        plan: planKey,
+        billing_period: billingPeriod,
+        $set: {
+          email: session.user.email,
+          name: session.user.name,
+        },
+      },
+    });
+    await posthog.shutdown();
 
     return NextResponse.json({ checkoutUrl: result.url });
   } catch (error: unknown) {

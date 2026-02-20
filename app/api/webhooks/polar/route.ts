@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { setUserPlan, cancelUserSubscription } from "@/lib/plans-server";
 import { getPolarProductId, validateEvent, WebhookVerificationError } from "@/lib/polar";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // Map Polar product IDs to plan keys (check both monthly and annual)
 function getPlanFromProductId(productId: string): "pro" | "agency" | null {
@@ -97,6 +98,20 @@ export async function POST(request: NextRequest) {
             billingPeriod,
           });
           console.log(`Set plan ${plan} (${billingPeriod}) for user ${sub.userId} (subscription: ${sub.id})`);
+
+          // Track subscription activation server-side
+          const posthog = getPostHogClient();
+          posthog.capture({
+            distinctId: sub.userId,
+            event: "subscription_activated",
+            properties: {
+              plan,
+              billing_period: billingPeriod,
+              subscription_id: sub.id,
+              customer_id: sub.customerId,
+            },
+          });
+          await posthog.shutdown();
         }
         break;
       }
@@ -107,6 +122,18 @@ export async function POST(request: NextRequest) {
         if (sub.userId) {
           await cancelUserSubscription(sub.userId);
           console.log(`Marked subscription as canceled for user ${sub.userId}`);
+
+          // Track subscription cancellation server-side
+          const posthog = getPostHogClient();
+          posthog.capture({
+            distinctId: sub.userId,
+            event: "subscription_canceled",
+            properties: {
+              subscription_id: sub.id,
+              customer_id: sub.customerId,
+            },
+          });
+          await posthog.shutdown();
         }
         break;
       }

@@ -9,6 +9,7 @@ import { authClient } from "@/lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GoogleIcon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { PlanType, TRIAL_DURATION_DAYS } from "@/lib/plans";
+import posthog from "posthog-js";
 
 function LoginContent() {
   const [loading, setLoading] = useState<"google" | "twitter" | null>(null);
@@ -39,11 +40,21 @@ function LoginContent() {
 
   const handleGoogle = () => {
     setLoading("google");
+    posthog.capture("sign_in_started", {
+      provider: "google",
+      plan: planParam,
+      is_trial: callbackUrlParam?.includes("trial=start") ?? false,
+    });
     authClient.signIn.social({ provider: "google", callbackURL: getCallbackURL() });
   };
 
   const handleTwitter = () => {
     setLoading("twitter");
+    posthog.capture("sign_in_started", {
+      provider: "twitter",
+      plan: planParam,
+      is_trial: callbackUrlParam?.includes("trial=start") ?? false,
+    });
     authClient.signIn.social({ provider: "twitter", callbackURL: getCallbackURL() });
   };
 

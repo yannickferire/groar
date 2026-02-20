@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import Link from "next/link";
+import posthog from "posthog-js";
 
 type Account = {
   id: string;
@@ -75,6 +76,9 @@ function ConnectionsContent() {
 
   const handleDisconnect = async (accountId: string) => {
     setDisconnecting(accountId);
+    posthog.capture("social_account_disconnected", {
+      provider: accounts.find((a) => a.id === accountId)?.providerId,
+    });
     try {
       await fetch(`/api/connections/${accountId}`, { method: "DELETE" });
       await fetchData();
@@ -84,6 +88,10 @@ function ConnectionsContent() {
   };
 
   const handleConnect = (provider: "twitter") => {
+    posthog.capture("social_account_connected", {
+      provider,
+      is_reconnect: false,
+    });
     authClient.signIn.social({
       provider,
       callbackURL: "/dashboard/connections",
@@ -91,6 +99,10 @@ function ConnectionsContent() {
   };
 
   const handleReconnect = (provider: "twitter") => {
+    posthog.capture("social_account_connected", {
+      provider,
+      is_reconnect: true,
+    });
     // Re-triggering OAuth will refresh the tokens
     authClient.signIn.social({
       provider,
