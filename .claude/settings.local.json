@@ -31,7 +31,8 @@
       "WebFetch(domain:superx.so)",
       "WebFetch(domain:polar.sh)",
       "WebFetch(domain:www.standardwebhooks.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(python3:*)"
     ]
   }
 }

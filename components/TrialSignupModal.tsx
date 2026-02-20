@@ -44,6 +44,9 @@ export default function TrialSignupModal({
   useEffect(() => {
     if (open) {
       posthog.capture("trial_signup_modal_viewed", { reason });
+      // Set trial intent now so that if the user dismisses this modal and
+      // later signs up via "Get Started", the onboarding auto-starts the trial.
+      try { localStorage.setItem("groar-trial-intent", "true"); } catch {}
       fetch("/api/pricing")
         .then((res) => res.json())
         .then((data) => setProTierInfo(data.proTier))
