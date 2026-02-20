@@ -26,27 +26,27 @@ export default function Hero() {
         </p>
       </FadeIn>
       <FadeIn delay={0.45} duration={0.6}>
-        <div className="md:hidden">
+        <LovedBy />
+      </FadeIn>
+      <FadeIn delay={0.55} duration={0.6}>
+        <div className="mt-4">
           {session ? (
             <Button asChild variant="default" size="lg">
               <Link href="/dashboard">
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} aria-hidden="true" />
-                Dashboard
+                Go to Dashboard
               </Link>
             </Button>
           ) : (
             <Button asChild variant="default" size="lg">
               <Link href="/login">
                 <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                Get Started
+                Get started for free
               </Link>
             </Button>
           )}
         </div>
       </FadeIn>
-      {/* <FadeIn delay={0.45} duration={0.6}>
-        <LovedBy />
-      </FadeIn> */}
     </section>
   );
 }

@@ -46,7 +46,7 @@ export default function LovedBy() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center gap-3 flex-wrap">
+    <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3">
       <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-2">
         <HugeiconsIcon icon={FavouriteIcon} size={18} strokeWidth={2} />
         Loved by
@@ -83,7 +83,9 @@ export default function LovedBy() {
         </div>
         {lovedBy.totalUsers > lovedBy.avatars.length && (
           <span className="ml-3 px-2.5 py-1 rounded-full border border-border text-xs font-medium text-muted-foreground">
-            +{numberFormatter.format(lovedBy.totalUsers)} creators
+            {lovedBy.totalUsers >= 50
+              ? `+${numberFormatter.format(lovedBy.totalUsers - lovedBy.avatars.length)} creators, join them!`
+              : "and others, join them!"}
           </span>
         )}
       </div>
