@@ -130,7 +130,7 @@ export default function VsCanvaPage() {
               />
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-              🐯 GROAR gives you ready-to-use templates to turn your X (Twitter) metrics into shareable visuals — in under 10 seconds, zero design skills required.
+              GROAR gives you ready-to-use templates to turn your X (Twitter) metrics into shareable visuals — in under 10 seconds, zero design skills required.
               <br /><br />
               Canva is a powerful all-in-one design tool, but you have to build everything from scratch.
             </p>
@@ -140,7 +140,7 @@ export default function VsCanvaPage() {
           <section className="rounded-2xl border-fade p-6 md:p-8 mb-12 md:mb-16">
             <h2 className="text-lg font-semibold mb-3">TL;DR</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Want to grow on X by sharing your milestones? <strong className="text-foreground">🐯 GROAR has ready-to-use templates</strong> — connect your X account, pick a template, export. Under 10 seconds, no design skills needed.
+              Want to grow on X by sharing your milestones? <strong className="text-foreground">GROAR has ready-to-use templates</strong> — connect your X account, pick a template, export. Under 10 seconds, no design skills needed.
               <br className="hidden sm:block" /><br className="hidden sm:block" />
               Need a general design tool for presentations, videos, or marketing assets? <strong className="text-foreground">Canva is great</strong> for that.
             </p>
@@ -186,7 +186,7 @@ export default function VsCanvaPage() {
             <div>
               <h3 className="text-lg font-semibold mb-2">Your X data, connected</h3>
               <p className="text-muted-foreground leading-relaxed">
-                🐯 GROAR connects directly to your X account — your followers, following count, and posts flow in automatically. No manual typing, no screenshots, no copy-paste.
+                GROAR connects directly to your X account — your followers, following count, and posts flow in automatically. No manual typing, no screenshots, no copy-paste.
                 <br /><br />
                 With Canva, you&apos;d have to create everything from scratch and type every number yourself.
               </p>
@@ -195,7 +195,7 @@ export default function VsCanvaPage() {
             <div>
               <h3 className="text-lg font-semibold mb-2">Ready-to-use templates that grow your audience</h3>
               <p className="text-muted-foreground leading-relaxed">
-                🐯 GROAR templates are ready-to-use and specifically designed for X milestone posts — the kind that get likes, retweets, and replies. Pick one, and your visual is done. No resizing, no font tweaking, no color matching. Every layout is optimized for the feed and built to help you grow.
+                GROAR templates are ready-to-use and specifically designed for X milestone posts — the kind that get likes, retweets, and replies. Pick one, and your visual is done. No resizing, no font tweaking, no color matching. Every layout is optimized for the feed and built to help you grow.
                 <br /><br />
                 Canva templates are generic and designed for a hundred different use cases — you still have to customize everything yourself.
               </p>
@@ -204,7 +204,7 @@ export default function VsCanvaPage() {
             <div>
               <h3 className="text-lg font-semibold mb-2">Under 10 seconds, not 15 minutes</h3>
               <p className="text-muted-foreground leading-relaxed">
-                With 🐯 GROAR: pick a template, choose your background, export. Done in under 10 seconds. No design skills, no learning curve — if you can click a button, you can create a metric visual.
+                With GROAR: pick a template, choose your background, export. Done in under 10 seconds. No design skills, no learning curve — if you can click a button, you can create a metric visual.
                 <br /><br />
                 With Canva, you start from a blank canvas, pick a template, resize elements, tweak fonts, and manually enter your data. That&apos;s 15 minutes of design work every time you want to post.
               </p>
@@ -213,7 +213,7 @@ export default function VsCanvaPage() {
             <div>
               <h3 className="text-lg font-semibold mb-2">3x cheaper</h3>
               <p className="text-muted-foreground leading-relaxed">
-                🐯 GROAR Pro is $5/month and includes everything you need: unlimited exports, premium backgrounds, and no watermark.
+                GROAR Pro is $5/month and includes everything you need: unlimited exports, premium backgrounds, and no watermark.
                 <br /><br />
                 Canva Pro starts at $15/month — and you still have to do all the design work yourself.
               </p>
@@ -226,7 +226,7 @@ export default function VsCanvaPage() {
             <p className="text-muted-foreground leading-relaxed">
               Canva excels at general-purpose design. If you need to create presentations, edit videos, design logos, or build marketing assets from scratch, Canva is the right tool.
               <br /><br />
-              🐯 GROAR doesn&apos;t try to replace it — it complements it for the specific use case of turning your X analytics into shareable visuals that drive engagement. Many creators use both: Canva for their brand assets and 🐯 GROAR for their metric posts.
+              GROAR doesn&apos;t try to replace it — it complements it for the specific use case of turning your X analytics into shareable visuals that drive engagement. Many creators use both: Canva for their brand assets and GROAR for their metric posts.
             </p>
           </section>
 
