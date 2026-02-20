@@ -53,10 +53,6 @@ export const auth = betterAuth({
             return;
           }
 
-          // Check connection limit for social providers
-          const plan = await getUserPlan(account.userId);
-          const maxConnections = PLAN_LIMITS[plan].maxConnectionsPerProvider;
-
           // Count existing accounts for this provider
           const countResult = await pool.query(
             `SELECT COUNT(*) FROM account
@@ -64,6 +60,15 @@ export const auth = betterAuth({
             [account.userId, account.providerId]
           );
           const currentCount = parseInt(countResult.rows[0].count);
+
+          // Always allow the first account link (needed for signup/signin)
+          if (currentCount === 0) {
+            return;
+          }
+
+          // Check connection limit for additional connections (analytics)
+          const plan = await getUserPlan(account.userId);
+          const maxConnections = PLAN_LIMITS[plan].maxConnectionsPerProvider;
 
           if (currentCount >= maxConnections) {
             throw new Error(

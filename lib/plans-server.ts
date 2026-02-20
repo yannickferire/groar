@@ -99,7 +99,7 @@ export async function startTrial(userId: string): Promise<{ trialEnd: Date }> {
        "trialStart" = $2,
        "trialEnd" = $3,
        "updatedAt" = NOW()
-     WHERE subscription."trialStart" IS NULL AND subscription.status != 'active'`,
+     WHERE subscription."trialStart" IS NULL AND (subscription.plan = 'free' OR subscription.status != 'active')`,
     [userId, now, trialEnd]
   );
 

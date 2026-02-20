@@ -14,10 +14,12 @@ function OnboardingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selecting, setSelecting] = useState<PlanType | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   // If user came from the trial signup modal, skip onboarding and start trial
   useEffect(() => {
     if (typeof window !== "undefined" && localStorage.getItem("groar-trial-intent") === "true") {
+      setRedirecting(true);
       router.replace("/dashboard?trial=start");
     }
   }, [router]);
@@ -63,6 +65,15 @@ function OnboardingContent() {
       setSelecting(null);
     }
   };
+
+  // Don't flash the onboarding UI while redirecting to trial
+  if (redirecting) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <HugeiconsIcon icon={Loading03Icon} size={24} strokeWidth={2} className="animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen px-4 py-12">

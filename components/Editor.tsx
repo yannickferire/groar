@@ -378,7 +378,8 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       // All iOS browsers (Chrome, Safari, Firefox) use WebKit under the hood.
       // WebKit silently fails to fetch resources in html-to-image's SVG foreignObject.
       // We pre-inline background images + fonts as base64 on WebKit.
-      const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent);
+      const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) ||
+        (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
       const isDesktopSafari = !isIOS && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       const isWebKit = isIOS || isDesktopSafari;
 
