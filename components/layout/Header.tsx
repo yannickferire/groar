@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Logo from "./Logo";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
@@ -17,6 +18,7 @@ function smoothScrollTo(id: string, offset: number) {
 }
 
 export default function Header() {
+  const router = useRouter();
   const { data: session } = authClient.useSession();
 
   return (
@@ -46,11 +48,12 @@ export default function Header() {
                   </Link>
                 </Button>
               ) : (
-                <Button asChild variant="default" size="default">
-                  <Link href="/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart">
-                    <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                    Start for free
-                  </Link>
+                <Button variant="default" size="default" onClick={() => {
+                  localStorage.setItem("groar-trial-intent", "true");
+                  router.push("/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart");
+                }}>
+                  <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+                  Start for free
                 </Button>
               )}
             </div>
