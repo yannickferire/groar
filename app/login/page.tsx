@@ -103,7 +103,7 @@ function LoginContent() {
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               {callbackUrlParam?.includes("trial=start")
-                ? `Create your account to unlock ${TRIAL_DURATION_DAYS} days of Pro`
+                ? `${TRIAL_DURATION_DAYS} days of Pro, free — no credit card required`
                 : "Sign in to access your dashboard"}
             </p>
           </div>
