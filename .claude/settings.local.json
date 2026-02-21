@@ -32,7 +32,10 @@
       "WebFetch(domain:polar.sh)",
       "WebFetch(domain:www.standardwebhooks.com)",
       "WebFetch(domain:github.com)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(/usr/bin/curl -s \"https://eu.i.posthog.com/api/projects/129277/persons/?distinct_id=019c7d73-c09f-7fb4-b713-f9a89690cf2e\" -H \"Authorization: Bearer phx_pVhA3NiMmrIm9eHIB34Jh3Xgu1owMmJ3gLqCVhzoUjNTuIt\")",
+      "Bash(/usr/bin/curl -s \"https://eu.i.posthog.com/api/projects/129277/persons/019c7d73-c09f-7fb4-b713-f9a89690cf2e/\" -H \"Authorization: Bearer phx_pVhA3NiMmrIm9eHIB34Jh3Xgu1owMmJ3gLqCVhzoUjNTuIt\")",
+      "Bash(/usr/bin/curl -s \"https://eu.i.posthog.com/api/projects/129277/events/?distinct_id=019c7d73-c09f-7fb4-b713-f9a89690cf2e&orderBy=-timestamp&limit=50\" -H \"Authorization: Bearer phx_pVhA3NiMmrIm9eHIB34Jh3Xgu1owMmJ3gLqCVhzoUjNTuIt\")"
     ]
   }
 }

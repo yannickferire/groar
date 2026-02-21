@@ -199,7 +199,13 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
 
   const lockPremiumFeatures = isDashboard && !isPremium;
 
-  const [settings, setSettings] = useState<EditorSettings>(() => {
+  const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
+  const settingsLoadedRef = useRef(false);
+
+  // Load settings from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (settingsLoadedRef.current) return;
+    settingsLoadedRef.current = true;
     const loaded = loadSettings();
     if (!isPremium) loaded.branding = undefined;
     // Dashboard trial expired: reset any premium features to free defaults
@@ -210,8 +216,8 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       if (loaded.template && TEMPLATES[loaded.template]?.premium) loaded.template = defaultSettings.template;
       if (loaded.aspectRatio && ASPECT_RATIOS[loaded.aspectRatio]?.premium) loaded.aspectRatio = defaultSettings.aspectRatio;
     }
-    return loaded;
-  });
+    setSettings(loaded);
+  }, [isPremium, lockPremiumFeatures]);
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!importId);
   const [cooldown, setCooldown] = useState(0);
