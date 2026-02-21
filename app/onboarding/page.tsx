@@ -15,6 +15,7 @@ function OnboardingContent() {
   const searchParams = useSearchParams();
   const [selecting, setSelecting] = useState<PlanType | null>(null);
   const [redirecting, setRedirecting] = useState(false);
+  const [hasUsedTrial, setHasUsedTrial] = useState<boolean | null>(null);
 
   // If user came from the trial signup modal, skip onboarding and start trial
   useEffect(() => {
@@ -24,7 +25,19 @@ function OnboardingContent() {
     }
   }, [router]);
 
-  // Note: auto-checkout redirect is now handled by /checkout-redirect page
+  // Check if user has already used their free trial
+  useEffect(() => {
+    fetch("/api/user/plan")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.trialEnd) {
+          setHasUsedTrial(true);
+        } else {
+          setHasUsedTrial(false);
+        }
+      })
+      .catch(() => setHasUsedTrial(false));
+  }, []);
 
   const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     setSelecting(planKey);
@@ -43,8 +56,11 @@ function OnboardingContent() {
           body: JSON.stringify({ plan: planKey }),
         });
         router.push("/dashboard");
+      } else if (!hasUsedTrial) {
+        // Start free trial — no checkout needed
+        router.push("/dashboard?trial=start");
       } else {
-        // For paid plans, create checkout session and redirect to Polar
+        // Trial already used — go to checkout
         const response = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -79,7 +95,7 @@ function OnboardingContent() {
     <div className="flex flex-col min-h-screen px-4 py-12">
       <div className="w-full max-w-5xl mx-auto">
         <div className="flex justify-center mb-12">
-          <Link href="/">
+          <Link href="/dashboard">
             <Image
               src="/groar-logo.png"
               alt="Groar"
@@ -93,10 +109,12 @@ function OnboardingContent() {
 
         <div className="text-center mb-12">
           <h1 className="text-3xl md:text-4xl font-heading font-bold tracking-tight mb-3">
-            Choose your plan
+            {hasUsedTrial ? "Choose your plan" : "Start your free trial"}
           </h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Start for free and upgrade anytime when you need more.
+            {hasUsedTrial
+              ? "Pick a plan to unlock all Pro features."
+              : "Try Pro free for 3 days — no credit card required."}
           </p>
         </div>
 
@@ -105,7 +123,12 @@ function OnboardingContent() {
           loadingPlan={selecting}
           showProFeatures={true}
           proHighlighted={true}
-          ctaLabel={(planKey) => `Choose ${PLANS[planKey].name}`}
+          canTrial={!hasUsedTrial}
+          ctaLabel={(planKey) => {
+            if (planKey === "free") return "Start for free";
+            if (!hasUsedTrial) return "Start free trial";
+            return `Choose ${PLANS[planKey].name}`;
+          }}
         />
       </div>
     </div>

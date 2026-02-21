@@ -31,6 +31,7 @@ TODO.md
 
 # AI tools
 .claude
+.vscode/mcp.json
 
 # debug
 npm-debug.log*
