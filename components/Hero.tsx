@@ -29,7 +29,6 @@ export default function Hero() {
       <FadeIn delay={0.45} duration={0.6}>
         <LovedBy />
       </FadeIn>
-      {/* TODO: uncomment when Marc Lou confirms
       <FadeIn delay={0.5} duration={0.6}>
         <figure className="-mt-3 flex items-center justify-center gap-3">
           <Image
@@ -45,7 +44,6 @@ export default function Hero() {
           </blockquote>
         </figure>
       </FadeIn>
-      */}
       <FadeIn delay={0.55} duration={0.6}>
         <div className="mt-4">
           {session ? (
