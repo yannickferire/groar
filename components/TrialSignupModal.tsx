@@ -160,8 +160,12 @@ export default function TrialSignupModal({
                           <div>
                             <h3 className="text-xl font-heading font-bold text-foreground">Image downloaded!</h3>
                             <p className="text-sm text-muted-foreground">
-                              Export {exportCount} of {FREE_WEEKLY_LIMIT} this week
-                              {remaining === 1 && <span className="text-amber-600 font-medium"> — last one!</span>}
+                              {remaining === 0
+                                ? "That was your last free export this week"
+                                : remaining === 1
+                                  ? <>Only <span className="text-amber-600 font-medium">1 export left</span> this week</>
+                                  : `${remaining} free exports left this week`
+                              }
                             </p>
                           </div>
                         </>

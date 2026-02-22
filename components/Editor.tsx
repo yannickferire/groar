@@ -545,6 +545,24 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     return () => clearTimeout(timer);
   }, [isPremium, isLoading, autoExportParam]);
 
+  const handlePremiumBlock = useCallback((feature: string) => {
+    posthog.capture("premium_feature_blocked", {
+      features: [feature],
+      has_used_trial: hasUsedTrial,
+      source: isDashboard ? "dashboard" : "landing",
+    });
+    if (hasUsedTrial) {
+      setPremiumFeaturesList([feature]);
+      setUpgradeReason("premium-features");
+      setShowUpgradeModal(true);
+      posthog.capture("upgrade_modal_viewed", { reason: "premium-features", source: isDashboard ? "dashboard" : "landing" });
+    } else {
+      setPremiumFeaturesList([feature]);
+      setTrialReason("premium-features");
+      setShowTrialModal(true);
+    }
+  }, [hasUsedTrial, isDashboard]);
+
   const editorContent = (
     <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-18">
       <Sidebar
@@ -555,6 +573,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         cooldown={cooldown}
         isPremium={isPremium}
         lockPremiumFeatures={lockPremiumFeatures}
+        onPremiumBlock={handlePremiumBlock}
       />
       <div className="flex-1 flex flex-col gap-3">
         <AnimatePresence mode="wait">
@@ -583,6 +602,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
           backgrounds={ALL_BACKGROUNDS}
           isPremium={isPremium}
           lockPremiumFeatures={lockPremiumFeatures}
+          onPremiumBlock={handlePremiumBlock}
         />
       </div>
     </section>

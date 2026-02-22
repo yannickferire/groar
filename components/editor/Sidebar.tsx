@@ -25,7 +25,6 @@ import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Calendar03I
 import { TEMPLATE_LIST } from "@/lib/templates";
 import { compressImage } from "@/lib/image-compress";
 import { TemplateType } from "../Editor";
-import Link from "next/link";
 import Image from "next/image";
 import {
   DndContext,
@@ -53,6 +52,7 @@ type SidebarProps = {
   cooldown?: number;
   isPremium?: boolean;
   lockPremiumFeatures?: boolean;
+  onPremiumBlock?: (feature: string) => void;
 };
 
 const ALL_METRICS: MetricType[] = ["followers", "followings", "posts", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
@@ -210,7 +210,7 @@ type ConnectedAccount = {
   } | null;
 };
 
-export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false }: SidebarProps) {
+export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock }: SidebarProps) {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isDeletingLogo, setIsDeletingLogo] = useState(false);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
@@ -432,7 +432,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   key={template.id}
                   type="button"
                   onClick={() => {
-                    if (lockPremiumFeatures && template.premium) return;
+                    if (lockPremiumFeatures && template.premium) { onPremiumBlock?.("Premium template"); return; }
                     updateSetting("template", template.id as TemplateType);
                   }}
                   className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
@@ -856,6 +856,15 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         </span>
         {isExporting ? "Loading..." : cooldown > 0 ? `Wait ${cooldown}s` : "Get your image"}
       </Button>
+      {!isPremium && (
+        <a
+          href="#pricing"
+          onClick={(e) => { e.preventDefault(); document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }); }}
+          className="-mt-3 mb-1 text-xs text-muted-foreground/60 hover:text-primary transition-colors text-center"
+        >
+          Remove watermark & unlock all features
+        </a>
+      )}
     </aside>
   );
 }

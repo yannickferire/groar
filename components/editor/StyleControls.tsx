@@ -22,9 +22,10 @@ type StyleControlsProps = {
   backgrounds: BackgroundPreset[];
   isPremium?: boolean;
   lockPremiumFeatures?: boolean;
+  onPremiumBlock?: (feature: string) => void;
 };
 
-export default function StyleControls({ settings, onSettingsChange, backgrounds, isPremium = false, lockPremiumFeatures = false }: StyleControlsProps) {
+export default function StyleControls({ settings, onSettingsChange, backgrounds, isPremium = false, lockPremiumFeatures = false, onPremiumBlock }: StyleControlsProps) {
   const updateSetting = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value });
   };
@@ -86,7 +87,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
             <button
               key={preset.id}
               type="button"
-              onClick={() => { if (lockPremiumFeatures && preset.premium) return; selectPreset(preset.id); }}
+              onClick={() => { if (lockPremiumFeatures && preset.premium) { onPremiumBlock?.("Premium background"); return; } selectPreset(preset.id); }}
               className={`relative w-10 h-10 rounded-lg transition-all ${
                 lockPremiumFeatures && preset.premium
                   ? "opacity-50 cursor-not-allowed"
@@ -141,7 +142,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
             value={settings.font || "bricolage"}
             onValueChange={(value) => {
               const font = FONT_LIST.find(f => f.id === value);
-              if (lockPremiumFeatures && font?.premium) return;
+              if (lockPremiumFeatures && font?.premium) { onPremiumBlock?.("Premium font"); return; }
               selectFont(value as FontFamily);
             }}
           >
@@ -182,7 +183,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
               <button
                 key={ratio.id}
                 type="button"
-                onClick={() => { if (lockPremiumFeatures && ratio.premium) return; selectAspectRatio(ratio.id as AspectRatioType); }}
+                onClick={() => { if (lockPremiumFeatures && ratio.premium) { onPremiumBlock?.("Premium size"); return; } selectAspectRatio(ratio.id as AspectRatioType); }}
                 className={`relative h-10 px-3 text-xs rounded-lg transition-all capitalize border ${
                   lockPremiumFeatures && ratio.premium
                     ? "opacity-50 cursor-not-allowed border-border"
