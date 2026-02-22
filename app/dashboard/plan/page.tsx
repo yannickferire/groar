@@ -3,10 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRight01Icon, Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon, CrownIcon } from "@hugeicons/core-free-icons";
+import { Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo } from "@/lib/plans";
-import Link from "next/link";
 import PricingCards from "@/components/PricingCards";
 import TrialBanner from "@/components/dashboard/TrialBanner";
 import { toast } from "sonner";
@@ -27,6 +26,7 @@ type PlanData = {
   isTrialing?: boolean;
   trialEnd?: string;
   hasUsedTrial?: boolean;
+  hasExternalSubscription?: boolean;
 };
 
 export default function PlanPage() {
@@ -151,7 +151,7 @@ export default function PlanPage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {!loading && isPaidPlan && !planData?.isTrialing && !isLifetime && (
+            {!loading && isPaidPlan && !planData?.isTrialing && !isLifetime && planData?.hasExternalSubscription && (
               <Button
                 variant="outline"
                 onClick={handleManageSubscription}
@@ -163,14 +163,6 @@ export default function PlanPage() {
                   <HugeiconsIcon icon={CreditCardIcon} size={16} strokeWidth={2} />
                 )}
                 Manage subscription
-              </Button>
-            )}
-            {!loading && planData && !planData.isTrialing && planData.plan !== "friend" && !isLifetime && (
-              <Button asChild variant="default">
-                <Link href="/pricing">
-                  Upgrade
-                  <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={2} />
-                </Link>
               </Button>
             )}
           </div>

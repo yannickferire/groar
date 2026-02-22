@@ -17,8 +17,9 @@ export async function POST() {
     const subscription = await getUserSubscription(session.user.id);
 
     if (!subscription?.externalCustomerId) {
+      console.error("No externalCustomerId for user", session.user.id, "subscription:", subscription);
       return NextResponse.json(
-        { error: "No active subscription found" },
+        { error: "No Polar customer ID found. This subscription was not created through Polar (e.g. trial or manually set)." },
         { status: 404 }
       );
     }

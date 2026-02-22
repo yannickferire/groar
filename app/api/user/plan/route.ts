@@ -60,6 +60,7 @@ export async function GET() {
     isTrialing: !!isTrialing,
     trialEnd: subscription?.trialEnd || null,
     hasUsedTrial: subscription?.trialStart != null,
+    hasExternalSubscription: !!subscription?.externalCustomerId,
     isAdmin: session.user.id === ADMIN_USER_ID,
   });
 }

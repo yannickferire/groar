@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { setUserPlan, cancelUserSubscription, getUserSubscription } from "@/lib/plans-server";
 import { getPolarProductId, validateEvent, WebhookVerificationError } from "@/lib/polar";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { pool } from "@/lib/db";
+import { sendEmail, subscriptionConfirmedEmail } from "@/lib/email";
 
 // Map Polar product IDs to plan keys
 function getPlanFromProductId(productId: string): "pro" | null {
@@ -104,7 +106,7 @@ export async function POST(request: NextRequest) {
           });
           console.log(`Set plan ${plan} (${billingPeriod}) for user ${sub.userId} (subscription: ${sub.id})`);
 
-          // Only track in PostHog if this is a genuinely new activation
+          // Only track in PostHog + send email if this is a genuinely new activation
           if (isNewActivation) {
             const posthog = getPostHogClient();
             posthog.capture({
@@ -118,6 +120,21 @@ export async function POST(request: NextRequest) {
               },
             });
             await posthog.shutdown();
+
+            // Send subscription confirmed email
+            try {
+              const userResult = await pool.query(
+                `SELECT email, name FROM "user" WHERE id = $1`,
+                [sub.userId]
+              );
+              const user = userResult.rows[0];
+              if (user?.email) {
+                const email = subscriptionConfirmedEmail(user.name || "there", billingPeriod);
+                sendEmail({ to: user.email, ...email }).catch(console.error);
+              }
+            } catch (err) {
+              console.error("Failed to send subscription email:", err);
+            }
           }
         }
         break;

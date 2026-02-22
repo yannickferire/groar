@@ -99,7 +99,7 @@ export async function createPortalSession(customerId: string): Promise<{ url: st
   const { accessToken } = validateEnv();
 
   try {
-    const response = await fetch("https://api.polar.sh/v1/customer-portal/sessions/", {
+    const response = await fetch("https://api.polar.sh/v1/customer-sessions/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -111,9 +111,9 @@ export async function createPortalSession(customerId: string): Promise<{ url: st
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error("Polar portal API error:", error);
-      return { error: "Failed to create portal session" };
+      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      console.error("Polar portal API error:", response.status, error);
+      return { error: `Polar API error (${response.status}): ${error?.detail || error?.message || JSON.stringify(error)}` };
     }
 
     const data: PolarPortalResponse = await response.json();

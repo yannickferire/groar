@@ -1,5 +1,7 @@
 import { inngest } from "@/lib/inngest";
 import { fetchAccountAnalytics, getAllXAccounts } from "@/lib/analytics";
+import { pool } from "@/lib/db";
+import { sendEmail, trialEndingEmail, trialExpiredEmail } from "@/lib/email";
 
 // Daily analytics fetch - runs at 1am UTC for all accounts
 export const dailyAnalyticsFetch = inngest.createFunction(
@@ -87,5 +89,78 @@ export const dailyAnalyticsFetch = inngest.createFunction(
   }
 );
 
+// Trial ending reminder — runs daily at 8am UTC
+// Finds trials expiring in the next 24h and sends a reminder
+export const trialEndingReminder = inngest.createFunction(
+  {
+    id: "trial-ending-reminder",
+    name: "Trial Ending Reminder",
+    retries: 2,
+  },
+  { cron: "0 8 * * *" },
+  async ({ step, logger }) => {
+    const users = await step.run("find-ending-trials", async () => {
+      const result = await pool.query(
+        `SELECT u.email, u.name, s."trialEnd"
+         FROM subscription s
+         JOIN "user" u ON u.id = s."userId"
+         WHERE s.plan = 'pro'
+           AND s."trialEnd" IS NOT NULL
+           AND s."trialEnd" > NOW()
+           AND s."trialEnd" <= NOW() + interval '1 day'
+           AND s.status = 'active'`
+      );
+      return result.rows as { email: string; name: string; trialEnd: string }[];
+    });
+
+    logger.info(`Found ${users.length} trials ending in 24h`);
+
+    for (const user of users) {
+      await step.run(`send-trial-ending-${user.email}`, async () => {
+        const email = trialEndingEmail(user.name || "there");
+        await sendEmail({ to: user.email, ...email });
+      });
+    }
+
+    return { sent: users.length };
+  }
+);
+
+// Trial expired — runs daily at 9am UTC
+// Finds trials that expired in the last 24h and sends a follow-up
+export const trialExpiredNotification = inngest.createFunction(
+  {
+    id: "trial-expired-notification",
+    name: "Trial Expired Notification",
+    retries: 2,
+  },
+  { cron: "0 9 * * *" },
+  async ({ step, logger }) => {
+    const users = await step.run("find-expired-trials", async () => {
+      const result = await pool.query(
+        `SELECT u.email, u.name
+         FROM subscription s
+         JOIN "user" u ON u.id = s."userId"
+         WHERE s."trialEnd" IS NOT NULL
+           AND s."trialEnd" <= NOW()
+           AND s."trialEnd" > NOW() - interval '1 day'
+           AND s.plan = 'free'`
+      );
+      return result.rows as { email: string; name: string }[];
+    });
+
+    logger.info(`Found ${users.length} expired trials`);
+
+    for (const user of users) {
+      await step.run(`send-trial-expired-${user.email}`, async () => {
+        const email = trialExpiredEmail(user.name || "there");
+        await sendEmail({ to: user.email, ...email });
+      });
+    }
+
+    return { sent: users.length };
+  }
+);
+
 // Export all functions for the serve handler
-export const functions = [dailyAnalyticsFetch];
+export const functions = [dailyAnalyticsFetch, trialEndingReminder, trialExpiredNotification];

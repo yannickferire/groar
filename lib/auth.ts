@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { pool } from "@/lib/db";
 import { PLAN_LIMITS, PlanType, PLANS } from "@/lib/plans";
+import { sendEmail, welcomeEmail } from "@/lib/email";
 
 // Get user plan from database (inline to avoid circular imports)
 async function getUserPlan(userId: string): Promise<PlanType> {
@@ -45,6 +46,16 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          if (user.email) {
+            const email = welcomeEmail(user.name || "there");
+            sendEmail({ to: user.email, ...email }).catch(console.error);
+          }
+        },
+      },
+    },
     account: {
       create: {
         before: async (account) => {
