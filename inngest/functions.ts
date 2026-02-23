@@ -38,7 +38,8 @@ export const dailyAnalyticsFetch = inngest.createFunction(
               account.id,
               account.accountId,
               account.accessToken,
-              "auto"
+              "auto",
+              account.refreshToken
             );
             return {
               email: account.email,
