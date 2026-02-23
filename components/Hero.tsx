@@ -17,13 +17,13 @@ export default function Hero() {
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto">
       <FadeIn delay={0.25} duration={0.6}>
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">
-          Make your <XLogo className="w-7! h-7! sm:w-8! sm:h-8! md:w-12! md:h-12! rounded-lg! md:rounded-xl! align-middle -mt-1 -rotate-2 [&>svg]:w-3.5! [&>svg]:h-3.5! sm:[&>svg]:w-4! sm:[&>svg]:h-4! md:[&>svg]:w-6! md:[&>svg]:h-6!" /> social metrics <span className="highlighted">Roaaar</span>
+          Turn your <XLogo className="w-7! h-7! sm:w-8! sm:h-8! md:w-12! md:h-12! rounded-lg! md:rounded-xl! align-middle -mt-1 ml-px -rotate-2 [&>svg]:w-3.5! [&>svg]:h-3.5! sm:[&>svg]:w-4! sm:[&>svg]:h-4! md:[&>svg]:w-6! md:[&>svg]:h-6!" /> metrics into visuals that <span className="highlighted">Roaaar</span>
         </h1>
       </FadeIn>
       <FadeIn delay={0.35} duration={0.6}>
-        <p className="text-base md:text-xl max-w-2xl mx-auto text-muted-foreground">
-          Turn cold data analytics into high-signal visuals.<br className="hidden md:block" />
-          Share your wins and watch the engagement grow.
+        <p className="text-base md:text-xl max-w-2xl mx-auto text-muted-foreground text-balance">
+          Share your wins and watch the engagement grow.<br/>
+          No design skills needed. Takes less than 10 seconds.
         </p>
       </FadeIn>
       <FadeIn delay={0.45} duration={0.6}>
@@ -54,11 +54,15 @@ export default function Hero() {
               </Link>
             </Button>
           ) : (
-            <Button asChild variant="default" size="lg">
-              <Link href="/login">
-                <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                Get started for free
-              </Link>
+            <Button
+              variant="default"
+              size="lg"
+              onClick={() => {
+                document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+              Create your first visual
             </Button>
           )}
         </div>

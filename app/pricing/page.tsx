@@ -169,7 +169,7 @@ function PricingContent() {
           />
         </div>
 
-        <section className="w-full max-w-3xl mt-20">
+        <section className="w-full max-w-3xl mt-32 mb-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>
           <VsFaq faqs={faqs} />
         </section>
