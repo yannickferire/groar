@@ -138,18 +138,18 @@ export default function TrialSignupModal({
                             <HugeiconsIcon icon={CrownIcon} size={24} strokeWidth={2} className="text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-heading font-bold text-foreground">Your design uses Pro features</h3>
-                            <p className="text-sm text-muted-foreground">{premiumFeatures.join(" · ")}</p>
+                            <h3 className="text-xl font-heading font-bold text-foreground">Unlock your visual</h3>
+                            <p className="text-sm text-muted-foreground">Try {premiumFeatures.join(", ")} free for {TRIAL_DURATION_DAYS} days</p>
                           </div>
                         </>
                       ) : isAtLimit ? (
                         <>
-                          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                            <HugeiconsIcon icon={Clock01Icon} size={24} strokeWidth={2} className="text-amber-600" />
+                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <HugeiconsIcon icon={CrownIcon} size={24} strokeWidth={2} className="text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-heading font-bold text-foreground">Weekly limit reached</h3>
-                            <p className="text-sm text-muted-foreground">You&apos;ve used all {FREE_WEEKLY_LIMIT} free exports this week</p>
+                            <h3 className="text-xl font-heading font-bold text-foreground">Want unlimited exports?</h3>
+                            <p className="text-sm text-muted-foreground">Try Pro free for {TRIAL_DURATION_DAYS} days — no credit card needed</p>
                           </div>
                         </>
                       ) : (
@@ -163,7 +163,7 @@ export default function TrialSignupModal({
                               {remaining === 0
                                 ? "That was your last free export this week"
                                 : remaining === 1
-                                  ? <>Only <span className="text-amber-600 font-medium">1 export left</span> this week</>
+                                  ? <>Only <span className="text-amber-600 font-medium">1 export left</span> this week — go unlimited?</>
                                   : `${remaining} free exports left this week`
                               }
                             </p>
@@ -238,7 +238,7 @@ export default function TrialSignupModal({
                                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                               </svg>
                             )}
-                            Start your free trial with X
+                            Continue with X — {TRIAL_DURATION_DAYS} days free
                           </Button>
 
                           <Button
@@ -253,15 +253,8 @@ export default function TrialSignupModal({
                             ) : (
                               <HugeiconsIcon icon={GoogleIcon} size={20} strokeWidth={1.5} />
                             )}
-                            Start your free trial with Google
+                            Continue with Google — {TRIAL_DURATION_DAYS} days free
                           </Button>
-
-                          <button
-                            onClick={() => onOpenChange(false)}
-                            className="text-sm text-background/50 hover:text-background/70 transition-colors py-1.5"
-                          >
-                            Go back to the editor
-                          </button>
                         </div>
                       </div>
                     </div>

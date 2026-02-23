@@ -230,6 +230,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   const [weekExportCount, setWeekExportCount] = useState(0);
   const previewRef = useRef<HTMLDivElement>(null);
   const shareToXRef = useRef<((exportDataUrl: string, toastId?: string | number) => Promise<void>) | null>(null);
+  const exportToastIdRef = useRef<string | number | null>(null);
   const { showToast } = useToast();
 
   // Track weekly exports for free users
@@ -313,6 +314,12 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
 
   const handleExport = useCallback(async () => {
     if (!previewRef.current || cooldown > 0) return;
+
+    // Dismiss previous export toast if any
+    if (exportToastIdRef.current) {
+      toast.dismiss(exportToastIdRef.current);
+      exportToastIdRef.current = null;
+    }
 
     // Free user checks (premium features + weekly limit) — landing page only
     // Dashboard handles premium gating at the UI level (lockPremiumFeatures)
@@ -501,7 +508,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       setCooldown(5);
 
       if (isPremium || hideUpgradeModal) {
-        toast.custom((id) => (
+        const toastId = toast.custom((id) => (
           <div className="bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl p-5 shadow-lg w-90 flex flex-col gap-3 font-[DM_Mono,monospace]">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -510,7 +517,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
                 </div>
                 <span className="text-base font-semibold">Image downloaded!</span>
               </div>
-              <button onClick={() => toast.dismiss(id)} className="text-muted-foreground/60 hover:text-foreground transition-colors p-1 -m-1">
+              <button onClick={() => { toast.dismiss(id); exportToastIdRef.current = null; }} className="text-muted-foreground/60 hover:text-foreground transition-colors p-1 -m-1">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
@@ -527,6 +534,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
             <p className="text-[11px] text-muted-foreground/70 text-center -mt-1">Image copied to clipboard — just paste it!</p>
           </div>
         ), { duration: Infinity });
+        exportToastIdRef.current = toastId;
       } else {
         // Increment export count and show upsell
         incrementExportCount();
@@ -599,7 +607,10 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     }
 
     window.open(intentUrl, "_blank", "noopener");
-    if (toastId) toast.dismiss(toastId);
+    if (toastId) {
+      toast.dismiss(toastId);
+      exportToastIdRef.current = null;
+    }
     posthog.capture("share_to_x", { source: isDashboard ? "dashboard" : "landing" });
   }, [settings.metrics, settings.template, settings.period, isDashboard]);
   shareToXRef.current = shareToX;
@@ -624,6 +635,16 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     }, 2000);
     return () => clearTimeout(timer);
   }, [isPremium, isLoading, autoExportParam]);
+
+  // Dismiss export toast on unmount (page change)
+  useEffect(() => {
+    return () => {
+      if (exportToastIdRef.current) {
+        toast.dismiss(exportToastIdRef.current);
+        exportToastIdRef.current = null;
+      }
+    };
+  }, []);
 
   const handlePremiumBlock = useCallback((feature: string) => {
     posthog.capture("premium_feature_blocked", {
