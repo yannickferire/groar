@@ -25,11 +25,16 @@ function OnboardingContent() {
     }
   }, [router]);
 
-  // Check if user has already used their free trial
+  // Check if user already has an active plan or has used their trial
   useEffect(() => {
     fetch("/api/user/plan")
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
+        if (data?.plan && data.plan !== "free") {
+          // Already Pro/paid — skip onboarding
+          router.replace("/dashboard");
+          return;
+        }
         if (data?.trialEnd) {
           setHasUsedTrial(true);
         } else {
@@ -37,7 +42,7 @@ function OnboardingContent() {
         }
       })
       .catch(() => setHasUsedTrial(false));
-  }, []);
+  }, [router]);
 
   const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     setSelecting(planKey);
