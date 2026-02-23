@@ -18,7 +18,7 @@ export default function ProofSection() {
             From raw data to stunning visuals
           </h2>
           <p className="text-muted-foreground">
-            Your X analytics are powerful. Make them look the awesome.
+            Your X analytics are powerful. Make them look awesome.
           </p>
         </div>
       </FadeInView>
