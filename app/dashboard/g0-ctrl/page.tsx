@@ -157,6 +157,35 @@ export default function AdminPage() {
     return c;
   }, [users]);
 
+  const stats = useMemo(() => {
+    const proTrialUsers = users.filter((u) => {
+      const cat = getUserCategory(u);
+      return cat === "pro" || cat === "trial";
+    });
+    const proTrialWithExport = proTrialUsers.filter((u) => parseInt(u.exportCount) > 0);
+    const exportRate = proTrialUsers.length > 0
+      ? Math.round((proTrialWithExport.length / proTrialUsers.length) * 100)
+      : 0;
+
+    const expiredTrials = users.filter((u) => getUserCategory(u) === "trial_expired");
+    const convertedTrials = users.filter((u) => {
+      const cat = getUserCategory(u);
+      return cat === "pro" && u.trialEnd;
+    });
+    const trialConversion = (expiredTrials.length + convertedTrials.length) > 0
+      ? Math.round((convertedTrials.length / (expiredTrials.length + convertedTrials.length)) * 100)
+      : 0;
+
+    const totalExports = users.reduce((sum, u) => sum + parseInt(u.exportCount), 0);
+
+    const activeUsers = proTrialUsers.length;
+    const avgExports = activeUsers > 0
+      ? Math.round((proTrialWithExport.reduce((sum, u) => sum + parseInt(u.exportCount), 0) / activeUsers) * 10) / 10
+      : 0;
+
+    return { exportRate, proTrialWithExport: proTrialWithExport.length, proTrialTotal: proTrialUsers.length, trialConversion, convertedTrials: convertedTrials.length, totalTrials: expiredTrials.length + convertedTrials.length, totalExports, avgExports, activeUsers };
+  }, [users]);
+
   const filtered = useMemo(() => {
     let list = users;
 
@@ -209,6 +238,30 @@ export default function AdminPage() {
         <p className="text-sm text-muted-foreground mt-1">
           {counts.all} users
         </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="rounded-xl border-fade p-4">
+          <p className="text-xs text-muted-foreground">Export rate (pro/trial)</p>
+          <p className="text-2xl font-heading font-bold mt-1">{stats.exportRate}%</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{stats.proTrialWithExport}/{stats.proTrialTotal} users</p>
+        </div>
+        <div className="rounded-xl border-fade p-4">
+          <p className="text-xs text-muted-foreground">Trial → Pro conversion</p>
+          <p className="text-2xl font-heading font-bold mt-1">{stats.trialConversion}%</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{stats.convertedTrials}/{stats.totalTrials} trials</p>
+        </div>
+        <div className="rounded-xl border-fade p-4">
+          <p className="text-xs text-muted-foreground">Total exports</p>
+          <p className="text-2xl font-heading font-bold mt-1">{numberFormatter.format(stats.totalExports)}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">all users</p>
+        </div>
+        <div className="rounded-xl border-fade p-4">
+          <p className="text-xs text-muted-foreground">Avg exports / active user</p>
+          <p className="text-2xl font-heading font-bold mt-1">{stats.avgExports}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{stats.activeUsers} active users</p>
+        </div>
       </div>
 
       {/* Search + Filters */}
