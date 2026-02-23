@@ -13,6 +13,7 @@ import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
 import { FONTS } from "@/lib/fonts";
 import { TEMPLATES } from "@/lib/templates";
 import { useToast } from "@/components/ui/toast";
+import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion";
 import { motion, AnimatePresence } from "framer-motion";
 import UpgradeModal, { FREE_WEEKLY_LIMIT } from "@/components/UpgradeModal";
@@ -228,6 +229,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   const [premiumFeaturesList, setPremiumFeaturesList] = useState<string[]>([]);
   const [weekExportCount, setWeekExportCount] = useState(0);
   const previewRef = useRef<HTMLDivElement>(null);
+  const shareToXRef = useRef<((exportDataUrl: string, toastId?: string | number) => Promise<void>) | null>(null);
   const { showToast } = useToast();
 
   // Track weekly exports for free users
@@ -499,7 +501,32 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       setCooldown(5);
 
       if (isPremium || hideUpgradeModal) {
-        showToast("Image downloaded successfully!");
+        toast.custom((id) => (
+          <div className="bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl p-5 shadow-lg w-90 flex flex-col gap-3 font-[DM_Mono,monospace]">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                  <svg className="w-4.5 h-4.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span className="text-base font-semibold">Image downloaded!</span>
+              </div>
+              <button onClick={() => toast.dismiss(id)} className="text-muted-foreground/60 hover:text-foreground transition-colors p-1 -m-1">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground -mt-1">When you share your visual, tag <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a>, I will repost you!</p>
+            <button
+              onClick={() => shareToXRef.current?.(dataUrl, id)}
+              className="w-full flex items-center justify-center gap-2 bg-foreground text-background rounded-xl px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              Share on X
+            </button>
+            <p className="text-[11px] text-muted-foreground/70 text-center -mt-1">Image copied to clipboard — just paste it!</p>
+          </div>
+        ), { duration: Infinity });
       } else {
         // Increment export count and show upsell
         incrementExportCount();
@@ -523,6 +550,59 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       setIsExporting(false);
     }
   }, [settings, isPremium, isDashboard, hideUpgradeModal, hasUsedTrial, showToast, cooldown, getWeekExportCount, incrementExportCount]);
+
+  const shareToX = useCallback(async (exportDataUrl: string, toastId?: string | number) => {
+    const mainMetric = settings.metrics[0];
+    const template = settings.template || "metrics";
+    let metricLine = "";
+
+    if (mainMetric) {
+      const metricLabel = METRIC_LABELS[mainMetric.type].toLowerCase();
+      const value = mainMetric.value ?? 0;
+
+      if (template === "milestone") {
+        metricLine = `Just hit ${value.toLocaleString()} ${metricLabel}! 🎉\n\n`;
+      } else if (template === "progress") {
+        metricLine = `${value.toLocaleString()} ${metricLabel} and counting 🚀\n\n`;
+      } else if (settings.period) {
+        const periodLabel = `${settings.period.number > 1 ? `${settings.period.number} ` : ""}${settings.period.type}${settings.period.number > 1 ? "s" : ""}`;
+        const prefix = mainMetric.prefix || "+";
+        metricLine = `${prefix}${value.toLocaleString()} ${metricLabel} this ${periodLabel} 📈\n\n`;
+      } else {
+        const prefix = mainMetric.prefix || "+";
+        metricLine = `${prefix}${value.toLocaleString()} ${metricLabel} 📈\n\n`;
+      }
+    }
+
+    const tweetText = `${metricLine}Made with 🐯 GROAR by @yannick_ferire`;
+    const intentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+
+    // Copy image to clipboard as PNG (clipboard API requires PNG)
+    try {
+      const pngBlob = await new Promise<Blob>((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          canvas.getContext("2d")!.drawImage(img, 0, 0);
+          canvas.toBlob((b) => b ? resolve(b) : reject(), "image/png");
+        };
+        img.onerror = reject;
+        img.src = exportDataUrl;
+      });
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": pngBlob }),
+      ]);
+    } catch {
+      // Clipboard not supported — image was already downloaded
+    }
+
+    window.open(intentUrl, "_blank", "noopener");
+    if (toastId) toast.dismiss(toastId);
+    posthog.capture("share_to_x", { source: isDashboard ? "dashboard" : "landing" });
+  }, [settings.metrics, settings.template, settings.period, isDashboard]);
+  shareToXRef.current = shareToX;
 
   useKeyboardShortcuts(
     useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])

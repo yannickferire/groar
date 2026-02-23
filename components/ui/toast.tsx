@@ -23,7 +23,7 @@ function ErrorIcon() {
 export function Toaster() {
   return (
     <SonnerToaster
-      position="bottom-center"
+      position="bottom-right"
       icons={{
         success: <SuccessIcon />,
         error: <ErrorIcon />,
