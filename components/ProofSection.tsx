@@ -11,11 +11,11 @@ const templates = [
 
 export default function ProofSection() {
   return (
-    <section className="w-full max-w-5xl mx-auto py-4">
+    <section className="w-full max-w-6xl mx-auto py-4">
       <FadeInView>
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
-            From raw data to stunning visuals
+            Turn raw data into scroll-stopping content
           </h2>
           <p className="text-muted-foreground">
             Your X analytics are powerful. Make them look awesome.

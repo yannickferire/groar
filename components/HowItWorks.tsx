@@ -28,7 +28,7 @@ export default function HowItWorks() {
       <FadeInView>
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
-            Create in 10 seconds
+            Share your growth in 10 seconds
           </h2>
           <p className="text-muted-foreground">
             No design skills needed. Just three simple steps.

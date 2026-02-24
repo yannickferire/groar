@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 import XLogo from "@/components/icons/XLogo";
 import { FadeIn } from "@/components/ui/motion";
 import LovedBy from "@/components/LovedBy";
@@ -10,20 +12,49 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { SparklesIcon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
 
+const xLogoClass = "w-7! h-7! sm:w-8! sm:h-8! md:w-12! md:h-12! rounded-lg! md:rounded-xl! align-middle -mt-1 ml-px -rotate-2 [&>svg]:w-3.5! [&>svg]:h-3.5! sm:[&>svg]:w-4! sm:[&>svg]:h-4! md:[&>svg]:w-6! md:[&>svg]:h-6!";
+
+const variants = {
+  new: {
+    title: <>Share your <XLogo className={xLogoClass} /> growth with <span className="highlighted">stunning visuals</span></>,
+    subtitle: <>Your analytics deserve better than a screenshot.<br/>Eye-catching visuals in 10 seconds.</>,
+  },
+  original: {
+    title: <>Turn your <XLogo className={xLogoClass} /> metrics into visuals that <span className="highlighted">Roaaar</span></>,
+    subtitle: <>Share your wins and watch the engagement grow.<br/>No design skills needed. Takes less than 10 seconds.</>,
+  },
+  hybrid: {
+    title: <>Turn your <XLogo className={xLogoClass} /> growth into visuals that <span className="highlighted">Roaaar</span></>,
+    subtitle: <>Your analytics deserve better than a screenshot.<br/>Get eye-catching visuals in 10 seconds.</>,
+  },
+};
+
 export default function Hero() {
   const { data: session } = authClient.useSession();
+  const [variant, setVariant] = useState<"new" | "original" | "hybrid">("hybrid");
+
+  useEffect(() => {
+    const unsubscribe = posthog.onFeatureFlags(() => {
+      const flag = posthog.getFeatureFlag("hero-copy-test");
+      if (flag === "new" || flag === "original" || flag === "hybrid") {
+        setVariant(flag);
+      }
+    });
+    return () => { unsubscribe?.(); };
+  }, []);
+
+  const copy = variants[variant];
 
   return (
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto">
       <FadeIn delay={0.25} duration={0.6}>
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">
-          Turn your <XLogo className="w-7! h-7! sm:w-8! sm:h-8! md:w-12! md:h-12! rounded-lg! md:rounded-xl! align-middle -mt-1 ml-px -rotate-2 [&>svg]:w-3.5! [&>svg]:h-3.5! sm:[&>svg]:w-4! sm:[&>svg]:h-4! md:[&>svg]:w-6! md:[&>svg]:h-6!" /> metrics into visuals that <span className="highlighted">Roaaar</span>
+          {copy.title}
         </h1>
       </FadeIn>
       <FadeIn delay={0.35} duration={0.6}>
         <p className="text-base md:text-xl max-w-2xl mx-auto text-muted-foreground text-balance">
-          Share your wins and watch the engagement grow.<br/>
-          No design skills needed. Takes less than 10 seconds.
+          {copy.subtitle}
         </p>
       </FadeIn>
       <FadeIn delay={0.45} duration={0.6}>
@@ -58,6 +89,7 @@ export default function Hero() {
               variant="default"
               size="lg"
               onClick={() => {
+                posthog.capture("hero_cta_clicked", { variant });
                 document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
               }}
             >

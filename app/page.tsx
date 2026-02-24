@@ -60,7 +60,7 @@ const jsonLd = {
   name: "Groar",
   url: "https://groar.app",
   description:
-    "Turn your social media metrics into beautiful, shareable visuals. Track your growth and showcase your wins.",
+    "Your X (Twitter) analytics deserve better than a screenshot. Create eye-catching visuals of your milestones, growth metrics and wins in 10 seconds. Built for creators who build in public.",
   applicationCategory: "DesignApplication",
   operatingSystem: "Web",
   offers: {
