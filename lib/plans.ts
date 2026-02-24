@@ -56,6 +56,8 @@ export const PLANS = {
 
 export type PlanType = keyof typeof PLANS;
 
+export const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
+
 // Helper to get limits (backward compatible)
 export const PLAN_LIMITS = Object.fromEntries(
   Object.entries(PLANS).map(([key, plan]) => [

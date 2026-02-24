@@ -14,9 +14,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { PLANS, ProTierInfo, fetchProTierInfo } from "@/lib/plans";
-
-const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
+import { PLANS, ProTierInfo, fetchProTierInfo, FREE_WEEKLY_LIMIT } from "@/lib/plans";
 
 type UpgradeModalProps = {
   open: boolean;
@@ -218,5 +216,3 @@ export default function UpgradeModal({
     </RadixDialog.Root>
   );
 }
-
-export { FREE_WEEKLY_LIMIT };

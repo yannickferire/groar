@@ -165,6 +165,34 @@ export async function getProTierInfo(): Promise<{
   return { price: last.price, spotsLeft: null, nextPrice: null };
 }
 
+// Count weekly exports for a user, accounting for trial expiration
+// For free users whose trial just expired, only count exports made after trial ended
+// so exports made during the trial don't consume the free weekly limit
+export async function getWeeklyExportCount(userId: string): Promise<number> {
+  const subscription = await getUserSubscription(userId);
+  const plan = await getUserPlanFromDB(userId);
+
+  let countSinceClause = `date_trunc('week', CURRENT_DATE)`;
+  const queryParams: (string | Date)[] = [userId];
+
+  if (plan === "free" && subscription?.trialEnd && new Date(subscription.trialEnd) <= new Date()) {
+    const trialEndDate = new Date(subscription.trialEnd);
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    if (trialEndDate > weekStart) {
+      countSinceClause = `$2::timestamptz`;
+      queryParams.push(trialEndDate);
+    }
+  }
+
+  const result = await pool.query(
+    `SELECT COUNT(*) FROM export WHERE "userId" = $1 AND "createdAt" >= ${countSinceClause}`,
+    queryParams
+  );
+  return parseInt(result.rows[0].count);
+}
+
 // Cancel user subscription (set status to canceled, keep plan until period end)
 export async function cancelUserSubscription(userId: string): Promise<void> {
   try {

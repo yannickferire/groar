@@ -1,8 +1,7 @@
 import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
-import { getUserPlanFromDB, getUserSubscription, setUserPlan } from "@/lib/plans-server";
-import { pool } from "@/lib/db";
+import { getUserPlanFromDB, getUserSubscription, setUserPlan, getWeeklyExportCount } from "@/lib/plans-server";
 
 const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
 
@@ -10,30 +9,12 @@ export async function GET() {
   const { session, response } = await requireAuth();
   if (response) return response;
 
-  const [plan, subscription] = await Promise.all([
+  const [plan, subscription, exportsThisWeek] = await Promise.all([
     getUserPlanFromDB(session.user.id),
     getUserSubscription(session.user.id),
+    getWeeklyExportCount(session.user.id),
   ]);
   const planDetails = PLANS[plan];
-
-  // For free users with expired trial, only count exports after trial ended
-  let countSinceClause = `date_trunc('week', CURRENT_DATE)`;
-  const countParams: (string | Date)[] = [session.user.id];
-  if (plan === "free" && subscription?.trialEnd && new Date(subscription.trialEnd) <= new Date()) {
-    const trialEndDate = new Date(subscription.trialEnd);
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    weekStart.setHours(0, 0, 0, 0);
-    if (trialEndDate > weekStart) {
-      countSinceClause = `$2::timestamptz`;
-      countParams.push(trialEndDate);
-    }
-  }
-  const weekExportsResult = await pool.query(
-    `SELECT COUNT(*) FROM export WHERE "userId" = $1 AND "createdAt" >= ${countSinceClause}`,
-    countParams
-  );
-  const exportsThisWeek = parseInt(weekExportsResult.rows[0].count);
 
   const isTrialing = subscription?.status === "trialing" && subscription?.trialEnd && new Date(subscription.trialEnd) > new Date();
 

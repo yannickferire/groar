@@ -16,10 +16,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { PLANS, TRIAL_DURATION_DAYS } from "@/lib/plans";
+import { TRIAL_DURATION_DAYS, FREE_WEEKLY_LIMIT } from "@/lib/plans";
 import posthog from "posthog-js";
-
-const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
 
 type TrialSignupModalProps = {
   open: boolean;

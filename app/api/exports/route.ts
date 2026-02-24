@@ -3,7 +3,7 @@ import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { PLAN_LIMITS } from "@/lib/plans";
-import { getUserPlanFromDB, getUserSubscription } from "@/lib/plans-server";
+import { getUserPlanFromDB, getWeeklyExportCount } from "@/lib/plans-server";
 
 // POST: Save a new export
 export async function POST(request: NextRequest) {
@@ -15,34 +15,8 @@ export async function POST(request: NextRequest) {
   const limit = PLAN_LIMITS[plan].maxExportsPerWeek;
 
   if (limit !== null) {
-    // For free users with an expired trial, only count exports made after trial ended
-    // so that exports made during the trial don't consume the free weekly limit
-    let countSince = `date_trunc('week', CURRENT_DATE)`;
-    const queryParams: (string | Date)[] = [session.user.id];
-
-    if (plan === "free") {
-      const subscription = await getUserSubscription(session.user.id);
-      if (subscription?.trialEnd && new Date(subscription.trialEnd) <= new Date()) {
-        const trialEndDate = new Date(subscription.trialEnd);
-        const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-        weekStart.setHours(0, 0, 0, 0);
-        // Use the later of: week start or trial end
-        if (trialEndDate > weekStart) {
-          countSince = `$2::timestamptz`;
-          queryParams.push(trialEndDate);
-        }
-      }
-    }
-
-    const weekCount = await pool.query(
-      `SELECT COUNT(*) FROM export
-       WHERE "userId" = $1
-       AND "createdAt" >= ${countSince}`,
-      queryParams
-    );
-
-    if (parseInt(weekCount.rows[0].count) >= limit) {
+    const count = await getWeeklyExportCount(session.user.id);
+    if (count >= limit) {
       return NextResponse.json(
         { error: "Weekly export limit reached", code: "LIMIT_REACHED" },
         { status: 429 }
