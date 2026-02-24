@@ -11,7 +11,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Crown02Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { Crown02Icon, Search01Icon, Gift01Icon } from "@hugeicons/core-free-icons";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 type XAnalytics = {
@@ -136,6 +137,32 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const [giftingPlan, setGiftingPlan] = useState(false);
+
+  const handleGiftFriend = async (userId: string) => {
+    setGiftingPlan(true);
+    try {
+      const res = await fetch("/api/admin/users/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, plan: "friend" }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      // Update local state
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, plan: "friend", status: "active" } : u
+        )
+      );
+      setSelectedUser((prev) =>
+        prev && prev.id === userId ? { ...prev, plan: "friend", status: "active" } : prev
+      );
+    } catch {
+      alert("Failed to update plan");
+    } finally {
+      setGiftingPlan(false);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/admin/users")
@@ -444,6 +471,18 @@ export default function AdminPage() {
                       <dd className="mt-0.5 text-xs">{formatDate(selectedUser.subscriptionUpdatedAt)}</dd>
                     </div>
                   </dl>
+                  {getUserCategory(selectedUser) !== "pro" && selectedUser.plan !== "friend" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      disabled={giftingPlan}
+                      onClick={() => handleGiftFriend(selectedUser.id)}
+                    >
+                      <HugeiconsIcon icon={Gift01Icon} size={14} strokeWidth={2} />
+                      {giftingPlan ? "Gifting..." : "Gift Friend plan"}
+                    </Button>
+                  )}
                 </section>
 
                 {/* Trial */}

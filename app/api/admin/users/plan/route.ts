@@ -1,0 +1,45 @@
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
+import { pool } from "@/lib/db";
+
+const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
+
+export async function POST(request: Request) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session || session.user.id !== ADMIN_USER_ID) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { userId, plan } = await request.json();
+
+  if (!userId || !plan) {
+    return NextResponse.json({ error: "Missing userId or plan" }, { status: 400 });
+  }
+
+  // Check if user has a subscription row
+  const existing = await pool.query(
+    `SELECT id FROM subscription WHERE "userId" = $1`,
+    [userId]
+  );
+
+  if (existing.rows.length > 0) {
+    // Update existing subscription
+    await pool.query(
+      `UPDATE subscription SET plan = $1, status = 'active', "updatedAt" = NOW() WHERE "userId" = $2`,
+      [plan, userId]
+    );
+  } else {
+    // Create new subscription
+    await pool.query(
+      `INSERT INTO subscription (id, "userId", plan, status, "createdAt", "updatedAt")
+       VALUES (gen_random_uuid(), $1, $2, 'active', NOW(), NOW())`,
+      [userId, plan]
+    );
+  }
+
+  return NextResponse.json({ success: true });
+}

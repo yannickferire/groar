@@ -109,7 +109,7 @@ export const trialEndingReminder = inngest.createFunction(
            AND s."trialEnd" IS NOT NULL
            AND s."trialEnd" > NOW()
            AND s."trialEnd" <= NOW() + interval '1 day'
-           AND s.status = 'active'
+           AND s.status = 'trialing'
            AND s."externalCustomerId" IS NULL`
       );
       return result.rows as { email: string; name: string; trialEnd: string }[];
@@ -146,7 +146,8 @@ export const trialExpiredNotification = inngest.createFunction(
          WHERE s."trialEnd" IS NOT NULL
            AND s."trialEnd" <= NOW()
            AND s."trialEnd" > NOW() - interval '1 day'
-           AND s.plan = 'free'
+           AND s.plan = 'pro'
+           AND s.status = 'trialing'
            AND s."externalCustomerId" IS NULL`
       );
       return result.rows as { email: string; name: string }[];
