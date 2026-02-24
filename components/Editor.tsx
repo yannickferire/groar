@@ -379,7 +379,16 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         if (!isWatermarkVisible) {
           injectedWatermark = document.createElement("footer");
           injectedWatermark.style.cssText = "position: absolute; bottom: 3%; right: 3%; z-index: 10;";
-          injectedWatermark.innerHTML = `<p style="color: ${settings.textColor}; text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 1.3rem; white-space: nowrap; opacity: 0.5; display: flex; align-items: center; gap: 0.2em;"><img src="/emoji-tiger.png" alt="" style="width: 1.2em; height: 1.2em; margin-right: 0.25rem; margin-top: 0.25rem;" />groar.app</p>`;
+          const p = document.createElement("p");
+          p.style.cssText = "text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 1.3rem; white-space: nowrap; opacity: 0.5; display: flex; align-items: center; gap: 0.2em;";
+          p.style.color = settings.textColor;
+          const img = document.createElement("img");
+          img.src = "/emoji-tiger.png";
+          img.alt = "";
+          img.style.cssText = "width: 1.2em; height: 1.2em; margin-right: 0.25rem; margin-top: 0.25rem;";
+          p.appendChild(img);
+          p.appendChild(document.createTextNode("groar.app"));
+          injectedWatermark.appendChild(p);
           previewRef.current.appendChild(injectedWatermark);
         }
       }
