@@ -10,10 +10,11 @@ import {
   Cancel01Icon,
   Clock01Icon,
   CrownIcon,
+  SquareUnlock02Icon,
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { PRO_FEATURES, PLANS, ProTierInfo } from "@/lib/plans";
+import { PLANS, ProTierInfo } from "@/lib/plans";
 
 const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
 
@@ -116,50 +117,31 @@ export default function UpgradeModal({
                       {isPremiumBlock ? (
                         <>
                           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <HugeiconsIcon
-                              icon={CrownIcon}
-                              size={24}
-                              strokeWidth={2}
-                              className="text-primary"
-                            />
+                            <HugeiconsIcon icon={CrownIcon} size={24} strokeWidth={2} className="text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-heading font-bold text-foreground">Your design uses Pro features</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {premiumFeatures.join(" · ")}
-                            </p>
+                            <h3 className="text-xl font-heading font-bold text-foreground leading-tight">This is a Pro feature</h3>
+                            <p className="text-sm text-muted-foreground leading-tight">Upgrade to unlock it</p>
                           </div>
                         </>
                       ) : isAtLimit ? (
                         <>
                           <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                            <HugeiconsIcon
-                              icon={Clock01Icon}
-                              size={24}
-                              strokeWidth={2}
-                              className="text-amber-600"
-                            />
+                            <HugeiconsIcon icon={Clock01Icon} size={24} strokeWidth={2} className="text-amber-600" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-heading font-bold text-foreground">Weekly limit reached</h3>
-                            <p className="text-sm text-muted-foreground">
-                              You&apos;ve used all {FREE_WEEKLY_LIMIT} free exports this week
-                            </p>
+                            <h3 className="text-xl font-heading font-bold text-foreground leading-tight">You&apos;ve used your {FREE_WEEKLY_LIMIT} free exports</h3>
+                            <p className="text-sm text-muted-foreground leading-tight">Upgrade to go unlimited</p>
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                            <HugeiconsIcon
-                              icon={Tick01Icon}
-                              size={24}
-                              strokeWidth={2.5}
-                              className="text-green-600"
-                            />
+                            <HugeiconsIcon icon={Tick01Icon} size={24} strokeWidth={2.5} className="text-green-600" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-heading font-bold text-foreground">Image downloaded!</h3>
-                            <p className="text-sm text-muted-foreground">
+                            <h3 className="text-xl font-heading font-bold text-foreground leading-tight">Image downloaded!</h3>
+                            <p className="text-sm text-muted-foreground leading-tight">
                               Export {exportCount} of {FREE_WEEKLY_LIMIT} this week
                               {remaining === 1 && <span className="text-amber-600 font-medium"> — last one!</span>}
                             </p>
@@ -190,34 +172,32 @@ export default function UpgradeModal({
                     <div className="relative z-10">
                       {/* Pro title */}
                       <div className="mb-5">
-                        <h4 className="text-xl font-heading font-bold">
+                        <h4 className="text-xl font-heading font-bold leading-tight">
                           <span className="inline-block">🐯</span> GROAR Pro
                         </h4>
-                        <p className="text-sm text-background/60">Unlimited exports + premium features</p>
+                        <p className="text-sm text-background/60 leading-tight">
+                          Starting at ${proPrice}/month
+                        </p>
                         {proTierInfo && proTierInfo.spotsLeft !== null && proTierInfo.nextPrice !== null && (
-                          <p className="text-xs text-background/50 mt-1.5">
-                            Launch price – <span className="text-primary font-medium">{proTierInfo.spotsLeft} spots left</span> – Next: ${proTierInfo.nextPrice}/mo
+                          <p className="text-xs text-background/40 mt-1">
+                            <span className="text-primary font-medium">{proTierInfo.spotsLeft} spots left</span> at this price
                           </p>
                         )}
                       </div>
 
-                      {/* Premium features list */}
-                      <div className="space-y-2 mb-6">
-                        {PRO_FEATURES.map((feature, index) => (
-                          <div key={index} className="flex items-center gap-3">
-                            <div className="w-7 h-7 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
-                              <HugeiconsIcon icon={feature.icon} size={14} strokeWidth={1.5} className="text-primary" />
-                            </div>
-                            <p className="text-sm font-medium leading-tight">{feature.title}</p>
-                          </div>
-                        ))}
+                      {/* Unlock line */}
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-7 h-7 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
+                          <HugeiconsIcon icon={SquareUnlock02Icon} size={14} strokeWidth={1.5} className="text-primary" />
+                        </div>
+                        <p className="text-sm font-medium leading-tight text-background/80">Unlimited exports + every Pro feature</p>
                       </div>
 
                       {/* Actions */}
                       <div className="flex flex-col gap-2">
                         <Button asChild variant="defaultReverse" size="lg" className="w-full">
                           <Link href="/pricing">
-                            Upgrade to Pro — ${proPrice}/month
+                            Upgrade to Pro
                           </Link>
                         </Button>
                         <button

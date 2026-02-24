@@ -11,11 +11,12 @@ import {
   Loading03Icon,
   GoogleIcon,
   SparklesIcon,
+  SquareUnlock02Icon,
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { PRO_FEATURES, PLANS, TRIAL_DURATION_DAYS, LIFETIME_PRICE, ProTierInfo } from "@/lib/plans";
+import { PLANS, TRIAL_DURATION_DAYS } from "@/lib/plans";
 import posthog from "posthog-js";
 
 const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
@@ -39,7 +40,6 @@ export default function TrialSignupModal({
   const isAtLimit = reason === "limit";
   const remaining = Math.max(0, FREE_WEEKLY_LIMIT - exportCount);
   const [loading, setLoading] = useState<"google" | "twitter" | null>(null);
-  const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -47,14 +47,8 @@ export default function TrialSignupModal({
       // Set trial intent now so that if the user dismisses this modal and
       // later signs up via "Get Started", the onboarding auto-starts the trial.
       try { localStorage.setItem("groar-trial-intent", "true"); } catch {}
-      fetch("/api/pricing")
-        .then((res) => res.json())
-        .then((data) => setProTierInfo(data.proTier))
-        .catch(() => {});
     }
   }, [open, reason]);
-
-  const proPrice = proTierInfo?.price ?? PLANS.pro.price;
   const callbackURL = "/dashboard?trial=start";
 
   const handleTwitter = () => {
@@ -138,18 +132,18 @@ export default function TrialSignupModal({
                             <HugeiconsIcon icon={CrownIcon} size={24} strokeWidth={2} className="text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-heading font-bold text-foreground">Unlock your visual</h3>
-                            <p className="text-sm text-muted-foreground">Try {premiumFeatures.join(", ")} free for {TRIAL_DURATION_DAYS} days</p>
+                            <h3 className="text-xl font-heading font-bold text-foreground leading-tight">You found a Pro feature!</h3>
+                            <p className="text-sm text-muted-foreground leading-tight">Your export will be ready right after sign up</p>
                           </div>
                         </>
                       ) : isAtLimit ? (
                         <>
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                            <HugeiconsIcon icon={CrownIcon} size={24} strokeWidth={2} className="text-primary" />
+                          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                            <HugeiconsIcon icon={Clock01Icon} size={24} strokeWidth={2} className="text-amber-600" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-heading font-bold text-foreground">Want unlimited exports?</h3>
-                            <p className="text-sm text-muted-foreground">Try Pro free for {TRIAL_DURATION_DAYS} days — no credit card needed</p>
+                            <h3 className="text-xl font-heading font-bold text-foreground">You&apos;ve used your {FREE_WEEKLY_LIMIT} free exports</h3>
+                            <p className="text-sm text-muted-foreground leading-tight">Go unlimited with Pro — try it for free</p>
                           </div>
                         </>
                       ) : (
@@ -194,27 +188,20 @@ export default function TrialSignupModal({
                       <div className="relative z-10">
                         {/* Trial title */}
                         <div className="mb-5">
-                          <h4 className="text-xl font-heading font-bold">
+                          <h4 className="text-xl font-heading font-bold leading-tight">
                             <span className="inline-block">🐯</span> GROAR Pro
                           </h4>
-                          <p className="text-sm text-background/60">
-                            $0 trial, then ${proPrice}/mo or ${LIFETIME_PRICE}$ one-time
-                          </p>
-                          <p className="text-xs text-background/40">
-                            No credit card required
+                          <p className="text-sm text-background/60 leading-tight">
+                            Free for {TRIAL_DURATION_DAYS} days, no credit card needed
                           </p>
                         </div>
 
-                        {/* Premium features list */}
-                        <div className="space-y-2 mb-6">
-                          {PRO_FEATURES.map((feature, index) => (
-                            <div key={index} className="flex items-center gap-3">
-                              <div className="w-7 h-7 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
-                                <HugeiconsIcon icon={feature.icon} size={14} strokeWidth={1.5} className="text-primary" />
-                              </div>
-                              <p className="text-sm font-medium leading-tight text-background/80">{feature.title}</p>
-                            </div>
-                          ))}
+                        {/* Unlock line */}
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-7 h-7 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
+                            <HugeiconsIcon icon={SquareUnlock02Icon} size={14} strokeWidth={1.5} className="text-primary" />
+                          </div>
+                          <p className="text-sm font-medium leading-tight text-background/80">Unlock every Pro feature</p>
                         </div>
 
                         {/* Auth buttons */}
@@ -238,7 +225,7 @@ export default function TrialSignupModal({
                                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                               </svg>
                             )}
-                            Continue with X — {TRIAL_DURATION_DAYS} days free
+                            Start free trial with X
                           </Button>
 
                           <Button
@@ -253,9 +240,10 @@ export default function TrialSignupModal({
                             ) : (
                               <HugeiconsIcon icon={GoogleIcon} size={20} strokeWidth={1.5} />
                             )}
-                            Continue with Google — {TRIAL_DURATION_DAYS} days free
+                            Start free trial with Google
                           </Button>
                         </div>
+
                       </div>
                     </div>
                   </div>
