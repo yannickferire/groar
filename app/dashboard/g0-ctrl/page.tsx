@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Crown02Icon, Search01Icon, Gift01Icon } from "@hugeicons/core-free-icons";
+import { Crown02Icon, Search01Icon, GiftIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
@@ -479,7 +479,7 @@ export default function AdminPage() {
                       disabled={giftingPlan}
                       onClick={() => handleGiftFriend(selectedUser.id)}
                     >
-                      <HugeiconsIcon icon={Gift01Icon} size={14} strokeWidth={2} />
+                      <HugeiconsIcon icon={GiftIcon} size={14} strokeWidth={2} />
                       {giftingPlan ? "Gifting..." : "Gift Friend plan"}
                     </Button>
                   )}

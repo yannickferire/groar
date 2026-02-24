@@ -16,8 +16,9 @@ export async function POST(request: Request) {
 
   const { userId, plan } = await request.json();
 
-  if (!userId || !plan) {
-    return NextResponse.json({ error: "Missing userId or plan" }, { status: 400 });
+  const ALLOWED_PLANS = ["friend", "free", "pro"];
+  if (!userId || !plan || !ALLOWED_PLANS.includes(plan)) {
+    return NextResponse.json({ error: "Missing userId or invalid plan" }, { status: 400 });
   }
 
   // Check if user has a subscription row
