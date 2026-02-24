@@ -24,10 +24,10 @@ export default function ProofSection() {
       </FadeInView>
 
       {/* Responsive layout: vertical on mobile, horizontal on desktop */}
-      <div className="flex flex-col md:flex-row items-center relative gap-8 md:gap-0">
+      <div className="flex flex-col md:flex-row items-center relative gap-8 md:gap-0 overflow-visible">
         {/* Graph */}
-        <FadeInView delay={0.1} direction="up" className="w-full md:w-2/5 md:shrink-0">
-          <div className="relative rounded-2xl overflow-hidden border-fade">
+        <FadeInView delay={0.1} direction="up" className="w-full md:w-2/5 md:shrink-0 overflow-visible">
+          <div className="relative rounded-2xl overflow-hidden">
             <Image
               src="/proof-backgrounds/graph.png"
               alt="Raw X analytics dashboard showing impressions, follows, posts and replies charts"
@@ -38,6 +38,15 @@ export default function ProofSection() {
             <div className="absolute top-2 left-2 bg-foreground/80 backdrop-blur-sm text-background text-xs font-medium px-3 py-1.5 rounded-full">
               Your X analytics
             </div>
+          </div>
+          <div className="relative rounded-2xl overflow-hidden ml-2 -mt-16 rotate-4 w-[105%]">
+            <Image
+              src="/proof-backgrounds/graph-2.png"
+              alt="X analytics metrics — impressions, engagement, likes, reposts and more"
+              width={960}
+              height={300}
+              className="w-full h-auto"
+            />
           </div>
         </FadeInView>
 
