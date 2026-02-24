@@ -28,6 +28,20 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      // Images, icons, logos — long cache (30 days), revalidate in background
+      {
+        source: "/:path*.(jpg|jpeg|png|svg|webp|ico)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=86400" },
+        ],
+      },
+      // Web manifest & llms.txt — moderate cache (1 day)
+      {
+        source: "/:path*.(webmanifest|txt)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=3600" },
+        ],
+      },
     ];
   },
   async rewrites() {
