@@ -396,6 +396,14 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       const isDesktopSafari = !isIOS && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       const isWebKit = isIOS || isDesktopSafari;
 
+      // Ensure the selected font is fully loaded before export (deferred fonts may not be ready yet)
+      const selectedFontId = settings.font || "bricolage";
+      const fontVar = FONTS[selectedFontId]?.variable || "--font-bricolage";
+      const computedFamily = getComputedStyle(document.documentElement).getPropertyValue(fontVar).trim();
+      if (computedFamily) {
+        await document.fonts.load(`16px ${computedFamily}`);
+      }
+
       const restoreBackgrounds = await inlineBackgroundImages(previewRef.current);
       const fontEmbedCSS = isWebKit ? await buildFontEmbedCSS() : undefined;
 
