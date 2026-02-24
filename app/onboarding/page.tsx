@@ -107,6 +107,7 @@ function OnboardingContent() {
               width={280}
               height={75}
               priority
+              sizes="192px"
               className="h-auto w-48"
             />
           </Link>

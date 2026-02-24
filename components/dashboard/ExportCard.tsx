@@ -45,6 +45,7 @@ export default function ExportCard({ id, imageUrl, handle, createdAt, isPremium 
             src={imageUrl}
             alt={handle ? `Export for ${handle}` : "Export"}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover"
           />
           {isPremium && (

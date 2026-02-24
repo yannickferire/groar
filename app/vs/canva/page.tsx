@@ -118,6 +118,7 @@ export default function VsCanvaPage() {
                 alt="Groar"
                 width={180}
                 height={48}
+                sizes="(max-width: 640px) 112px, (max-width: 768px) 144px, 176px"
                 className="h-auto w-28 sm:w-36 md:w-44"
               />
               <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-muted-foreground/40">vs</span>
@@ -126,6 +127,7 @@ export default function VsCanvaPage() {
                 alt="Canva"
                 width={80}
                 height={30}
+                sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
                 className="h-auto w-20 sm:w-24 md:w-28"
               />
             </h1>

@@ -88,6 +88,7 @@ function LoginContent() {
             width={280}
             height={75}
             priority
+            sizes="(max-width: 640px) 240px, 280px"
             className="h-auto w-60 sm:w-70"
           />
         </Link>

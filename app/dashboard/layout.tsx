@@ -36,6 +36,7 @@ export default function DashboardLayout({
               alt="Groar"
               width={120}
               height={32}
+              sizes="112px"
               className="h-auto w-28"
             />
           </Link>
