@@ -29,10 +29,11 @@ export default function ProofSection() {
         <FadeInView delay={0.1} direction="up" className="w-full md:w-2/5 md:shrink-0 overflow-visible">
           <div className="relative rounded-2xl overflow-hidden">
             <Image
-              src="/proof-backgrounds/graph.png"
+              src="/proof-backgrounds/graph.jpg"
               alt="Raw X analytics dashboard showing impressions, follows, posts and replies charts"
-              width={960}
-              height={540}
+              width={1200}
+              height={758}
+              sizes="(max-width: 768px) 100vw, 40vw"
               className="w-full h-auto"
             />
             <div className="absolute top-2 left-2 bg-foreground/80 backdrop-blur-sm text-background text-xs font-medium px-3 py-1.5 rounded-full">
@@ -41,10 +42,11 @@ export default function ProofSection() {
           </div>
           <div className="relative rounded-2xl overflow-hidden ml-2 -mt-16 rotate-4 w-[105%]">
             <Image
-              src="/proof-backgrounds/graph-2.png"
+              src="/proof-backgrounds/graph-2.jpg"
               alt="X analytics metrics — impressions, engagement, likes, reposts and more"
-              width={960}
-              height={300}
+              width={1200}
+              height={280}
+              sizes="(max-width: 768px) 100vw, 42vw"
               className="w-full h-auto"
             />
           </div>
@@ -84,8 +86,9 @@ export default function ProofSection() {
                 <Image
                   src={template.src}
                   alt={template.alt}
-                  width={600}
-                  height={338}
+                  width={1200}
+                  height={675}
+                  sizes="(max-width: 768px) 80vw, 30vw"
                   className="w-full h-auto"
                 />
               </div>
