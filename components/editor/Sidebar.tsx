@@ -55,7 +55,7 @@ type SidebarProps = {
   onPremiumBlock?: (feature: string) => void;
 };
 
-const ALL_METRICS: MetricType[] = ["followers", "followings", "posts", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
+const ALL_METRICS: MetricType[] = ["followers", "verifiedFollowers", "followings", "posts", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
 const MAX_METRICS = 5;
 
 type SortableMetricItemProps = {

@@ -3,11 +3,12 @@
 import { EditorSettings, METRIC_LABELS, MetricType } from "@/components/Editor";
 import { formatMetricValue } from "@/lib/metrics";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserLove01Icon, UserAdd01Icon, News01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon } from "@hugeicons/core-free-icons";
+import { UserLove01Icon, CheckmarkBadge02Icon, UserAdd01Icon, News01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 
 const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
   followers: UserLove01Icon,
+  verifiedFollowers: CheckmarkBadge02Icon,
   followings: UserAdd01Icon,
   posts: News01Icon,
   impressions: EyeIcon,
