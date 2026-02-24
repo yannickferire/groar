@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import XLogo from "@/components/icons/XLogo";
 import { FadeIn } from "@/components/ui/motion";
 import LovedBy from "@/components/LovedBy";
@@ -11,52 +10,21 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { SparklesIcon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
 
-const xLogoClass = "w-7! h-7! sm:w-8! sm:h-8! md:w-12! md:h-12! rounded-lg! md:rounded-xl! align-middle -mt-1 ml-px -rotate-2 [&>svg]:w-3.5! [&>svg]:h-3.5! sm:[&>svg]:w-4! sm:[&>svg]:h-4! md:[&>svg]:w-6! md:[&>svg]:h-6!";
-
-const variants = {
-  new: {
-    title: <>Share your <XLogo className={xLogoClass} /> growth with <span className="highlighted">stunning visuals</span></>,
-    subtitle: <>Your analytics deserve better than a screenshot.<br/>Eye-catching visuals in 10 seconds.</>,
-  },
-  original: {
-    title: <>Turn your <XLogo className={xLogoClass} /> metrics into visuals that <span className="highlighted">Roaaar</span></>,
-    subtitle: <>Share your wins and watch the engagement grow.<br/>No design skills needed. Takes less than 10 seconds.</>,
-  },
-  hybrid: {
-    title: <>Turn your <XLogo className={xLogoClass} /> growth into visuals that <span className="highlighted">Roaaar</span></>,
-    subtitle: <>Your analytics deserve better than a screenshot.<br/>Get eye-catching visuals in 10 seconds.</>,
-  },
-};
+const xLogoClass = "w-8! h-8! sm:w-9! sm:h-9! md:w-14! md:h-14! rounded-lg! md:rounded-xl! align-middle -mt-1 ml-1.5 mr-0.5 -rotate-2 [&>svg]:w-4! [&>svg]:h-4! sm:[&>svg]:w-4.5! sm:[&>svg]:h-4.5! md:[&>svg]:w-7! md:[&>svg]:h-7!";
 
 export default function Hero() {
   const { data: session } = authClient.useSession();
-  const [variant, setVariant] = useState<"new" | "original" | "hybrid">("hybrid");
-
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    import("posthog-js").then(({ default: posthog }) => {
-      unsubscribe = posthog.onFeatureFlags(() => {
-        const flag = posthog.getFeatureFlag("hero-copy-test");
-        if (flag === "new" || flag === "original" || flag === "hybrid") {
-          setVariant(flag);
-        }
-      });
-    }).catch(() => {});
-    return () => { unsubscribe?.(); };
-  }, []);
-
-  const copy = variants[variant];
 
   return (
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto">
       <FadeIn delay={0.25} duration={0.6}>
-        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight">
-          {copy.title}
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight leading-[1.3] md:leading-[1.15]">
+          Turn your <XLogo className={xLogoClass} /> growth into visuals that <span className="highlighted">Roaaar</span>
         </h1>
       </FadeIn>
       <FadeIn delay={0.35} duration={0.6}>
         <p className="text-base md:text-xl max-w-2xl mx-auto text-muted-foreground text-balance">
-          {copy.subtitle}
+          Your analytics deserve better than a screenshot.<br/>Get eye-catching visuals in 10 seconds.
         </p>
       </FadeIn>
       <FadeIn delay={0.45} duration={0.6}>
@@ -92,7 +60,7 @@ export default function Hero() {
               size="lg"
               onClick={() => {
                 import("posthog-js").then(({ default: posthog }) => {
-                  posthog.capture("hero_cta_clicked", { variant });
+                  posthog.capture("hero_cta_clicked");
                 }).catch(() => {});
                 document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
               }}

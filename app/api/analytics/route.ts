@@ -49,9 +49,9 @@ export async function GET(request: NextRequest) {
       manualFetchResult.rows.map((r: { accountId: string; count: string }) => [r.accountId, parseInt(r.count)])
     );
 
-    // Get analytics snapshots for the last N days
+    // Get analytics snapshots for the last N days (one per day per account, latest wins)
     const analyticsResult = await pool.query(
-      `SELECT
+      `SELECT DISTINCT ON ("accountId", date)
         "accountId",
         date,
         "followersCount",
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
        FROM x_analytics_snapshot
        WHERE "accountId" = ANY($1)
          AND date >= CURRENT_DATE - INTERVAL '1 day' * $2
-       ORDER BY "accountId", date DESC`,
+       ORDER BY "accountId", date DESC, "createdAt" DESC`,
       [accountIds, days]
     );
 
