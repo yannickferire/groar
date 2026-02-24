@@ -2,6 +2,14 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: [
+      "@hugeicons/react",
+      "@hugeicons/core-free-icons",
+      "framer-motion",
+      "motion",
+    ],
+  },
   images: {
     remotePatterns: [
       { hostname: "lh3.googleusercontent.com" },

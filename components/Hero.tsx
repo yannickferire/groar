@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import posthog from "posthog-js";
 import XLogo from "@/components/icons/XLogo";
 import { FadeIn } from "@/components/ui/motion";
 import LovedBy from "@/components/LovedBy";
@@ -34,11 +33,14 @@ export default function Hero() {
   const [variant, setVariant] = useState<"new" | "original" | "hybrid">("hybrid");
 
   useEffect(() => {
-    const unsubscribe = posthog.onFeatureFlags(() => {
-      const flag = posthog.getFeatureFlag("hero-copy-test");
-      if (flag === "new" || flag === "original" || flag === "hybrid") {
-        setVariant(flag);
-      }
+    let unsubscribe: (() => void) | undefined;
+    import("posthog-js").then(({ default: posthog }) => {
+      unsubscribe = posthog.onFeatureFlags(() => {
+        const flag = posthog.getFeatureFlag("hero-copy-test");
+        if (flag === "new" || flag === "original" || flag === "hybrid") {
+          setVariant(flag);
+        }
+      });
     });
     return () => { unsubscribe?.(); };
   }, []);
@@ -89,7 +91,9 @@ export default function Hero() {
               variant="default"
               size="lg"
               onClick={() => {
-                posthog.capture("hero_cta_clicked", { variant });
+                import("posthog-js").then(({ default: posthog }) => {
+                  posthog.capture("hero_cta_clicked", { variant });
+                });
                 document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
               }}
             >

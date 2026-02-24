@@ -18,22 +18,26 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
+// Editor-only fonts: preload: false to defer download until editor is loaded
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
+  preload: false,
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
   display: "swap",
+  preload: false,
 });
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-space-grotesk",
   display: "swap",
+  preload: false,
 });
 
 const averiaSerifLibre = Averia_Serif_Libre({
@@ -42,6 +46,7 @@ const averiaSerifLibre = Averia_Serif_Libre({
   style: "italic",
   variable: "--font-averia-serif-libre",
   display: "swap",
+  preload: false,
 });
 
 const dmSerifDisplay = DM_Serif_Display({
@@ -49,6 +54,7 @@ const dmSerifDisplay = DM_Serif_Display({
   weight: "400",
   variable: "--font-dm-serif-display",
   display: "swap",
+  preload: false,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
