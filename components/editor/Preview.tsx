@@ -76,14 +76,14 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         <header className="absolute top-[3%] left-0 right-0 px-[3%] flex justify-between items-center z-10">
           <p
             className="opacity-60"
-            style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "1.4cqi" : "1.6cqi" }}
+            style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : "2.4cqi" }}
           >
             {settings.handle || ""}
           </p>
           {settings.period && (
             <p
               className="opacity-60"
-              style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "1.4cqi" : "1.6cqi" }}
+              style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : "2.4cqi" }}
             >
               {settings.template === "milestone" || settings.template === "progress"
                 ? new Date().getFullYear()
@@ -175,12 +175,13 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         )}
 
         {!isPremium && (
-          <footer className={`absolute z-10 groar-watermark ${isBanner ? "bottom-[6%] right-[3%]" : "bottom-[3%]"}`}>
+          <footer className="absolute z-10 groar-watermark bottom-[3%] right-[3%]">
             <p
-              className="whitespace-nowrap"
-              style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "1.7cqi" : "2cqi" }}
+              className="whitespace-nowrap flex items-center"
+              style={{ textShadow, fontSize: isBanner ? "2.3cqi" : "2.7cqi", gap: "0.3cqi" }}
             >
-              <span className="opacity-60">made with</span> 🐯 <span className="opacity-60">groar</span>
+              <img src="/emoji-tiger.png" alt="" className="mr-1 mt-1" style={{ width: "1.2em", height: "1.2em", opacity: 0.7 }} />
+              <span style={{ color: settings.textColor, opacity: 0.5 }}>groar.app</span>
             </p>
           </footer>
         )}

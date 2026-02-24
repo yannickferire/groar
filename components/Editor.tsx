@@ -378,8 +378,8 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         // If watermark is missing or hidden, inject one
         if (!isWatermarkVisible) {
           injectedWatermark = document.createElement("footer");
-          injectedWatermark.style.cssText = "position: absolute; bottom: 3%; left: 0; right: 0; z-index: 10; display: flex; justify-content: center;";
-          injectedWatermark.innerHTML = `<p style="color: ${settings.textColor}; text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 0.875rem; white-space: nowrap;"><span style="opacity: 0.6;">made with</span> 🐯 <span style="opacity: 0.6;">groar</span></p>`;
+          injectedWatermark.style.cssText = "position: absolute; bottom: 3%; right: 3%; z-index: 10;";
+          injectedWatermark.innerHTML = `<p style="color: ${settings.textColor}; text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 1.3rem; white-space: nowrap; opacity: 0.5; display: flex; align-items: center; gap: 0.2em;"><img src="/emoji-tiger.png" alt="" style="width: 1.2em; height: 1.2em; margin-right: 0.25rem; margin-top: 0.25rem;" />groar.app</p>`;
           previewRef.current.appendChild(injectedWatermark);
         }
       }
