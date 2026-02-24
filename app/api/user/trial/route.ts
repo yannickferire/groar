@@ -1,17 +1,11 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/api-auth";
 import { NextResponse } from "next/server";
 import { startTrial, hasUsedTrial, getUserSubscription } from "@/lib/plans-server";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   try {
     // Check if user already has a paid subscription

@@ -1,16 +1,14 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/api-auth";
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 
 const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
-  if (!session || session.user.id !== ADMIN_USER_ID) {
+  if (session.user.id !== ADMIN_USER_ID) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

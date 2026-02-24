@@ -1,5 +1,4 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
 import { getUserPlanFromDB, getUserSubscription, setUserPlan } from "@/lib/plans-server";
@@ -8,13 +7,8 @@ import { pool } from "@/lib/db";
 const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
 
 export async function GET() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   const [plan, subscription] = await Promise.all([
     getUserPlanFromDB(session.user.id),
@@ -66,13 +60,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   try {
     const body = await request.json();

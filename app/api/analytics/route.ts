@@ -1,18 +1,12 @@
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
-import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserPlanFromDB } from "@/lib/plans-server";
 
 // Get stored X analytics for the current user
 export async function GET(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   const plan = await getUserPlanFromDB(session.user.id);
   if (plan === "free") {

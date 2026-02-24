@@ -1,5 +1,4 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
@@ -8,13 +7,8 @@ import { getUserPlanFromDB, getUserSubscription } from "@/lib/plans-server";
 
 // POST: Save a new export
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   // Check weekly export limit based on user's plan
   const plan = await getUserPlanFromDB(session.user.id);
@@ -117,13 +111,8 @@ export async function POST(request: NextRequest) {
 
 // GET: List user's exports
 export async function GET() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   try {
     const result = await pool.query(

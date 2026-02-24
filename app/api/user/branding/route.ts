@@ -1,5 +1,4 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
@@ -10,13 +9,8 @@ const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"]
 
 // POST: Upload branding logo (premium only)
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   // Only premium users can upload a branding logo
   const plan = await getUserPlanFromDB(session.user.id);
@@ -105,13 +99,8 @@ export async function POST(request: NextRequest) {
 
 // GET: Get current branding logo
 export async function GET() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   try {
     const result = await pool.query(
@@ -130,13 +119,8 @@ export async function GET() {
 
 // DELETE: Remove branding logo
 export async function DELETE() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   try {
     const result = await pool.query(

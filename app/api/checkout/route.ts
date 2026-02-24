@@ -1,18 +1,13 @@
-import { auth } from "@/lib/auth";
-import { cookies, headers } from "next/headers";
+import { requireAuth } from "@/lib/api-auth";
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
 import { createCheckoutSession, getPolarProductId, BillingPeriod } from "@/lib/polar";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(request: NextRequest) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { session, response } = await requireAuth();
+  if (response) return response;
 
   try {
     const body = await request.json();
