@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo, fetchProTierInfo } from "@/lib/plans";
 import PricingCards from "@/components/PricingCards";
 import TrialBanner from "@/components/dashboard/TrialBanner";
 import { toast } from "sonner";
@@ -38,14 +38,12 @@ export default function PlanPage() {
 
   const fetchPlan = useCallback(async () => {
     try {
-      const [planRes, pricingRes] = await Promise.all([
-        fetch("/api/user/plan"),
-        fetch("/api/pricing"),
+      const [data, tierInfo] = await Promise.all([
+        fetch("/api/user/plan").then((res) => res.json()),
+        fetchProTierInfo(),
       ]);
-      const data = await planRes.json();
       setPlanData(data);
-      const pricingData = await pricingRes.json();
-      setProTierInfo(pricingData.proTier);
+      setProTierInfo(tierInfo);
     } finally {
       setLoading(false);
     }

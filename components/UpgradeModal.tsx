@@ -14,7 +14,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { PLANS, ProTierInfo } from "@/lib/plans";
+import { PLANS, ProTierInfo, fetchProTierInfo } from "@/lib/plans";
 
 const FREE_WEEKLY_LIMIT = PLANS.free.maxExportsPerWeek;
 
@@ -40,9 +40,8 @@ export default function UpgradeModal({
 
   useEffect(() => {
     if (open) {
-      fetch("/api/pricing")
-        .then((res) => res.json())
-        .then((data) => setProTierInfo(data.proTier))
+      fetchProTierInfo()
+        .then(setProTierInfo)
         .catch(() => {});
     }
   }, [open]);

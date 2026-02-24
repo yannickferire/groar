@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlanType, BillingPeriod, PLAN_ORDER, ProTierInfo, TRIAL_DURATION_DAYS } from "@/lib/plans";
+import { PlanType, BillingPeriod, PLAN_ORDER, ProTierInfo, TRIAL_DURATION_DAYS, fetchProTierInfo } from "@/lib/plans";
 import { FadeInView } from "@/components/ui/motion";
 import PricingCards from "@/components/PricingCards";
 import { authClient } from "@/lib/auth-client";
@@ -14,9 +14,8 @@ export default function Pricing() {
   const [trialChecked, setTrialChecked] = useState(false);
 
   useEffect(() => {
-    fetch("/api/pricing")
-      .then((res) => res.json())
-      .then((data) => setProTierInfo(data.proTier))
+    fetchProTierInfo()
+      .then(setProTierInfo)
       .catch(() => {});
   }, []);
 

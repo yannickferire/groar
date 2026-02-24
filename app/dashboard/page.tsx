@@ -9,7 +9,7 @@ import Link from "next/link";
 import ExportsEmptyState from "@/components/dashboard/ExportsEmptyState";
 import TrialBanner from "@/components/dashboard/TrialBanner";
 import ExportCard, { ExportCardSkeleton } from "@/components/dashboard/ExportCard";
-import { PlanType, PLANS, ProTierInfo } from "@/lib/plans";
+import { PlanType, PLANS, ProTierInfo, fetchProTierInfo } from "@/lib/plans";
 import XLogo from "@/components/icons/XLogo";
 import GoogleLogo from "@/components/icons/GoogleLogo";
 import { authClient } from "@/lib/auth-client";
@@ -60,19 +60,18 @@ function DashboardContent() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [exportsRes, connectionsRes, planRes, analyticsRes, pricingRes] = await Promise.all([
+      const [exportsRes, connectionsRes, planRes, analyticsRes, tierInfo] = await Promise.all([
         fetch("/api/exports"),
         fetch("/api/connections"),
         fetch("/api/user/plan"),
         fetch("/api/analytics?days=30"),
-        fetch("/api/pricing"),
+        fetchProTierInfo(),
       ]);
       const exportsData = await exportsRes.json();
       const connectionsData = await connectionsRes.json();
       const planData = await planRes.json();
       const analyticsData = await analyticsRes.json();
-      const pricingData = await pricingRes.json();
-      setProTierInfo(pricingData.proTier || null);
+      setProTierInfo(tierInfo);
       setExports(exportsData.exports || []);
       setConnectedAccounts(connectionsData.accounts || []);
       setPlan(planData.plan || "free");

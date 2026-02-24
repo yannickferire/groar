@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { PlanType, BillingPeriod, ProTierInfo, TRIAL_DURATION_DAYS } from "@/lib/plans";
+import { PlanType, BillingPeriod, ProTierInfo, TRIAL_DURATION_DAYS, fetchProTierInfo } from "@/lib/plans";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { FadeInView } from "@/components/ui/motion";
@@ -49,9 +49,8 @@ function PricingContent() {
   const [currentPlan, setCurrentPlan] = useState<PlanType | null>(null);
 
   useEffect(() => {
-    fetch("/api/pricing")
-      .then((res) => res.json())
-      .then((data) => setProTierInfo(data.proTier))
+    fetchProTierInfo()
+      .then(setProTierInfo)
       .catch(() => {});
 
     // Check trial status and current plan

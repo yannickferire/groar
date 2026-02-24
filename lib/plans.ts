@@ -107,3 +107,20 @@ export type ProTierInfo = {
   spotsLeft: number | null;
   nextPrice: number | null;
 };
+
+// Cached fetch for pro tier info (5-minute TTL)
+let cachedProTier: ProTierInfo | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+export async function fetchProTierInfo(): Promise<ProTierInfo> {
+  const now = Date.now();
+  if (cachedProTier && now - cacheTimestamp < CACHE_TTL) {
+    return cachedProTier;
+  }
+  const res = await fetch("/api/pricing");
+  const data = await res.json();
+  cachedProTier = data.proTier;
+  cacheTimestamp = now;
+  return cachedProTier!;
+}

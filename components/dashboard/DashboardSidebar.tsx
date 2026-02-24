@@ -21,7 +21,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { PlanType, PLANS, ProTierInfo } from "@/lib/plans";
+import { PlanType, PLANS, ProTierInfo, fetchProTierInfo } from "@/lib/plans";
 
 type NavItem = {
   label: string;
@@ -54,9 +54,8 @@ export default function DashboardSidebar() {
         setIsAdmin(!!data.isAdmin);
       })
       .catch(() => setUserPlan("free"));
-    fetch("/api/pricing")
-      .then((res) => res.json())
-      .then((data) => setProTierInfo(data.proTier))
+    fetchProTierInfo()
+      .then(setProTierInfo)
       .catch(() => {});
   }, []);
 
