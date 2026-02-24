@@ -203,21 +203,23 @@ export async function refreshAccessToken(
   refreshToken: string
 ): Promise<TokenRefreshResult> {
   const clientId = process.env.TWITTER_CLIENT_ID;
+  const clientSecret = process.env.TWITTER_CLIENT_SECRET;
 
-  if (!clientId) {
-    return { error: "Missing Twitter client ID" };
+  if (!clientId || !clientSecret) {
+    return { error: "Missing Twitter client ID or secret" };
   }
 
   try {
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
     const response = await fetch("https://api.twitter.com/2/oauth2/token", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${basicAuth}`,
       },
       body: new URLSearchParams({
         grant_type: "refresh_token",
         refresh_token: refreshToken,
-        client_id: clientId,
       }),
     });
 
