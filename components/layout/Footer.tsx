@@ -64,6 +64,11 @@ export default function Footer() {
             </div>
           </div>
         </div>
+        <div className="pb-8 flex justify-start gap-4">
+          <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer">
+            <img src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" />
+          </a>
+        </div>
       </footer>
     </FadeInView>
   );
