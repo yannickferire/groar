@@ -435,7 +435,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: false });
       } catch (fontError) {
         // Firefox often fails with font embedding - retry without fonts
-        console.warn("Font embedding failed, retrying without fonts:", fontError);
+        // Firefox often fails with font embedding — retry without
         dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: true });
       }
 
@@ -472,8 +472,8 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
               return;
             }
           }
-        } catch (saveError) {
-          console.error("Failed to save export:", saveError);
+        } catch {
+          // Save to DB failed — export still succeeds locally
         }
       }
 
@@ -548,7 +548,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         }
       }
     } catch (error) {
-      console.error("Export failed:", error);
+      // Export failed — user sees toast error below
       // Clean up injected watermark on error
       if (injectedWatermark) {
         injectedWatermark.remove();

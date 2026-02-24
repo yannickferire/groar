@@ -231,16 +231,16 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   useEffect(() => {
     if (isPremium) {
       fetch("/api/user/branding")
-        .then((res) => res.json())
+        .then((res) => res.ok ? res.json() : null)
         .then((data) => {
-          if (data.logoUrl && data.logoUrl !== settings.branding?.logoUrl) {
+          if (data?.logoUrl && data.logoUrl !== settings.branding?.logoUrl) {
             onSettingsChange({
               ...settings,
               branding: { ...settings.branding, logoUrl: data.logoUrl, position: settings.branding?.position || "center" },
             });
           }
         })
-        .catch(console.error);
+        .catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
@@ -249,8 +249,9 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   useEffect(() => {
     if (!isPremium) return;
     fetch("/api/analytics?days=1")
-      .then((res) => res.json())
+      .then((res) => res.ok ? res.json() : null)
       .then((data) => {
+        if (!data) return;
         if (data.accounts && data.accounts.length > 0) {
           const accounts: ConnectedAccount[] = data.accounts.map((a: { accountId: string; username: string | null; latest: { followersCount: number; followingCount: number; tweetCount: number } | null }) => ({
             accountId: a.accountId,
@@ -290,7 +291,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           }
         }
       })
-      .catch(console.error);
+      .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
 
@@ -321,8 +322,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           branding: { ...settings.branding, logoUrl: data.logoUrl, position: settings.branding?.position || "center" },
         });
       }
-    } catch (error) {
-      console.error("Logo upload error:", error);
+    } catch {
+      // Upload failed — spinner stops, user can retry
     } finally {
       setIsUploadingLogo(false);
     }
@@ -336,8 +337,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         ...settings,
         branding: { ...settings.branding, logoUrl: undefined, position: settings.branding?.position || "center" },
       });
-    } catch (error) {
-      console.error("Logo delete error:", error);
+    } catch {
+      // Delete failed — spinner stops, user can retry
     } finally {
       setIsDeletingLogo(false);
     }

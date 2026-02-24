@@ -133,7 +133,7 @@ export default function Home() {
       <main className="flex-1 flex flex-col gap-10 md:gap-24 mt-6 md:mt-16">
         <Hero />
         <GlobalStats />
-        <Suspense>
+        <Suspense fallback={null}>
           <Editor />
         </Suspense>
         <ProofSection />

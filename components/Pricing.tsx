@@ -80,8 +80,8 @@ export default function Pricing() {
           if (data.checkoutUrl) {
             window.location.href = data.checkoutUrl;
           }
-        } catch (error) {
-          console.error("Error creating checkout:", error);
+        } catch {
+          // Checkout creation failed — user stays on page
         }
         return;
       }

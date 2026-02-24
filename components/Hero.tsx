@@ -41,7 +41,7 @@ export default function Hero() {
           setVariant(flag);
         }
       });
-    });
+    }).catch(() => {});
     return () => { unsubscribe?.(); };
   }, []);
 
@@ -93,7 +93,7 @@ export default function Hero() {
               onClick={() => {
                 import("posthog-js").then(({ default: posthog }) => {
                   posthog.capture("hero_cta_clicked", { variant });
-                });
+                }).catch(() => {});
                 document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
