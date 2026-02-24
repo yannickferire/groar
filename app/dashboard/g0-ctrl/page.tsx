@@ -13,6 +13,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Crown02Icon, Search01Icon, GiftIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import Image from "next/image";
 
 type XAnalytics = {
@@ -260,11 +261,16 @@ export default function AdminPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading font-bold">Admin</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {counts.all} users
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-heading font-bold">Admin</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {counts.all} users
+          </p>
+        </div>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/dashboard/g0-ctrl/stats">Export Stats</Link>
+        </Button>
       </div>
 
       {/* Stats */}
