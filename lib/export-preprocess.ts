@@ -27,35 +27,35 @@ export async function inlineBackgroundImages(
   container: HTMLElement
 ): Promise<() => void> {
   const restorers: (() => void)[] = [];
-
-  // Find all elements with background-image
   const allElements = [container, ...Array.from(container.querySelectorAll("*"))] as HTMLElement[];
 
+  // READ phase: collect all background URLs in one pass (single layout)
+  const toInline: { el: HTMLElement; url: string }[] = [];
   for (const el of allElements) {
-    const style = getComputedStyle(el);
-    const bgImage = style.backgroundImage;
-
+    const bgImage = getComputedStyle(el).backgroundImage;
     if (!bgImage || bgImage === "none") continue;
-
-    // Extract URL from url("...")
     const match = bgImage.match(/url\(["']?([^"')]+)["']?\)/);
-    if (!match) continue;
+    if (!match || match[1].startsWith("data:")) continue;
+    toInline.push({ el, url: match[1] });
+  }
 
-    const url = match[1];
+  // FETCH phase: convert all URLs to base64 in parallel
+  const fetched = await Promise.all(
+    toInline.map(async ({ el, url }) => {
+      try {
+        return { el, base64: await urlToBase64(url) };
+      } catch {
+        return null;
+      }
+    })
+  );
 
-    // Skip already-inlined data URLs
-    if (url.startsWith("data:")) continue;
-
-    try {
-      const base64 = await urlToBase64(url);
-      const original = el.style.backgroundImage;
-      el.style.backgroundImage = `url(${base64})`;
-      restorers.push(() => {
-        el.style.backgroundImage = original;
-      });
-    } catch {
-      // Skip if we can't fetch — the export will just miss this background
-    }
+  // WRITE phase: apply all inlined URLs in one pass (single layout)
+  for (const result of fetched) {
+    if (!result) continue;
+    const original = result.el.style.backgroundImage;
+    result.el.style.backgroundImage = `url(${result.base64})`;
+    restorers.push(() => { result.el.style.backgroundImage = original; });
   }
 
   return () => restorers.forEach((r) => r());
