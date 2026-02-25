@@ -62,11 +62,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Groar — Share your X (Twitter) growth with stunning visuals",
+    default: "Groar — Turn your X growth into visuals that Roaaar",
     template: "%s | Groar",
   },
   description:
-    "Your X analytics deserve better than a screenshot. Create eye-catching visuals of your milestones, growth metrics and wins in 10 seconds. Built for creators who build in public.",
+    "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
   keywords: [
     "x analytics visual",
     "twitter growth",
@@ -88,9 +88,9 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "Groar",
-    title: "Groar — Share your X (Twitter) growth with stunning visuals",
+    title: "Groar — Turn your X growth into visuals that Roaaar",
     description:
-      "Your X analytics deserve better than a screenshot. Create eye-catching visuals of your milestones, growth metrics and wins in 10 seconds.",
+      "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
     images: [
       {
         url: "/og-image.png",
@@ -102,9 +102,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Groar — Share your X (Twitter) growth with stunning visuals",
+    title: "Groar — Turn your X growth into visuals that Roaaar",
     description:
-      "Your X analytics deserve better than a screenshot. Create eye-catching visuals of your milestones, growth metrics and wins in 10 seconds.",
+      "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
     images: ["/og-image.png"],
     creator: "@yannick_ferire",
   },

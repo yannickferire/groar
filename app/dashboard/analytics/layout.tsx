@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import PremiumGate from "@/components/dashboard/PremiumGate";
+
+export const metadata: Metadata = {
+  title: "Analytics — Track your X growth",
+};
 
 export default function AnalyticsLayout({
   children,

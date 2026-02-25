@@ -8,6 +8,7 @@ import Editor from "@/components/Editor";
 import HowItWorks from "@/components/HowItWorks";
 import Pricing from "@/components/Pricing";
 import ProofSection from "@/components/ProofSection";
+import Testimonials from "@/components/Testimonials";
 import VsFaq from "@/components/VsFaq";
 
 const faqs = [
@@ -138,6 +139,7 @@ export default function Home() {
         </Suspense>
         <ProofSection />
         <HowItWorks />
+        {/* <Testimonials /> */}
         <Pricing />
         <section className="max-w-3xl mx-auto w-full mt-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>
