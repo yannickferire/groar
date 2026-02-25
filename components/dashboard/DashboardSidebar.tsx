@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import UserMenu from "./UserMenu";
@@ -34,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Analytics", href: "/dashboard/analytics", icon: Analytics01Icon, premium: true },
   { label: "Connections", href: "/dashboard/connections", icon: Link01Icon, premium: true },
   { label: "History", href: "/dashboard/history", icon: Clock01Icon, premium: true },
+  { label: "Leaderboard", href: "/dashboard/leaderboard", icon: RankingIcon },
 ];
 
 export default function DashboardSidebar() {

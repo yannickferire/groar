@@ -523,6 +523,19 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         source: isDashboard ? "dashboard" : "landing",
       });
 
+      // Track for leaderboard (dashboard users only)
+      if (isDashboard) {
+        fetch("/api/user/stats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "export",
+            template: settings.template,
+            backgroundId: settings.background.presetId,
+          }),
+        }).catch(() => {});
+      }
+
       // Start cooldown after successful export
       setCooldown(5);
 

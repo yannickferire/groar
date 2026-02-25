@@ -21,6 +21,13 @@ export default function DashboardLayout({
         email: session.user.email,
         name: session.user.name,
       });
+
+      // Track daily login for leaderboard
+      fetch("/api/user/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login" }),
+      }).catch(() => {});
     }
   }, [session?.user]);
 
