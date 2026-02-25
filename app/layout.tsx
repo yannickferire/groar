@@ -138,7 +138,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${bricolage.variable} ${dmMono.variable} ${inter.variable} ${playfair.variable} ${spaceGrotesk.variable} ${averiaSerifLibre.variable} ${dmSerifDisplay.variable} antialiased`}
+        className={`${bricolage.variable} ${dmMono.variable} ${inter.variable} ${playfair.variable} ${spaceGrotesk.variable} ${averiaSerifLibre.variable} ${dmSerifDisplay.variable} antialiased max-w-[100vw] overflow-x-hidden`}
       >
         {children}
         <Toaster />
