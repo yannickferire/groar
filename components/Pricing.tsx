@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlanType, BillingPeriod, PLAN_ORDER, ProTierInfo, TRIAL_DURATION_DAYS, fetchProTierInfo } from "@/lib/plans";
+import { PlanType, BillingPeriod, PLAN_ORDER, ProTierInfo, LifetimeTierInfo, TRIAL_DURATION_DAYS, fetchProTierInfo, fetchLifetimeTierInfo } from "@/lib/plans";
 import { FadeInView } from "@/components/ui/motion";
 import PricingCards from "@/components/PricingCards";
 import { authClient } from "@/lib/auth-client";
@@ -10,13 +10,13 @@ export default function Pricing() {
   const { data: session } = authClient.useSession();
   const [userPlan, setUserPlan] = useState<PlanType | null>(null);
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+  const [lifetimeTierInfo, setLifetimeTierInfo] = useState<LifetimeTierInfo | null>(null);
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [trialChecked, setTrialChecked] = useState(false);
 
   useEffect(() => {
-    fetchProTierInfo()
-      .then(setProTierInfo)
-      .catch(() => {});
+    fetchProTierInfo().then(setProTierInfo).catch(() => {});
+    fetchLifetimeTierInfo().then(setLifetimeTierInfo).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -145,6 +145,7 @@ export default function Pricing() {
           showProFeatures={true}
           proHighlighted={true}
           proTierInfo={proTierInfo}
+          lifetimeTierInfo={lifetimeTierInfo}
           canTrial={canTrial}
           ctaLabel={getCtaLabel}
         />

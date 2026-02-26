@@ -14,7 +14,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { PLANS, ProTierInfo, fetchProTierInfo, FREE_WEEKLY_LIMIT } from "@/lib/plans";
+import { PLANS, ProTierInfo, LifetimeTierInfo, fetchProTierInfo, fetchLifetimeTierInfo, LIFETIME_PRICING_TIERS, FREE_WEEKLY_LIMIT } from "@/lib/plans";
 
 type UpgradeModalProps = {
   open: boolean;
@@ -35,16 +35,17 @@ export default function UpgradeModal({
   const isAtLimit = remaining === 0;
   const isPremiumBlock = reason === "premium-features";
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+  const [lifetimeTierInfo, setLifetimeTierInfo] = useState<LifetimeTierInfo | null>(null);
 
   useEffect(() => {
     if (open) {
-      fetchProTierInfo()
-        .then(setProTierInfo)
-        .catch(() => {});
+      fetchProTierInfo().then(setProTierInfo).catch(() => {});
+      fetchLifetimeTierInfo().then(setLifetimeTierInfo).catch(() => {});
     }
   }, [open]);
 
   const proPrice = proTierInfo?.price ?? PLANS.pro.price;
+  const lifetimePrice = lifetimeTierInfo?.price ?? LIFETIME_PRICING_TIERS[0].price;
 
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
@@ -173,11 +174,11 @@ export default function UpgradeModal({
                           <span className="inline-block">🐯</span> GROAR Pro
                         </h4>
                         <p className="text-sm text-background/60 leading-tight">
-                          Starting at ${proPrice}/month
+                          ${proPrice}/mo or ${lifetimePrice} one-time
                         </p>
-                        {proTierInfo && proTierInfo.spotsLeft !== null && proTierInfo.nextPrice !== null && (
+                        {lifetimeTierInfo && lifetimeTierInfo.spotsLeft !== null && (
                           <p className="text-xs text-background/40 mt-1">
-                            <span className="text-primary font-medium">{proTierInfo.spotsLeft} spots left</span> at this price
+                            <span className="text-primary font-medium">{lifetimeTierInfo.spotsLeft} lifetime spots left</span> at ${lifetimePrice}
                           </p>
                         )}
                       </div>

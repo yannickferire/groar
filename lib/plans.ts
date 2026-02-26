@@ -90,39 +90,67 @@ export const TRIAL_DURATION_DAYS = 3;
 
 // Billing
 export type BillingPeriod = "monthly" | "lifetime";
-export const LIFETIME_PRICE = 19;
-export const LIFETIME_FULL_PRICE = 29;
 
-// Early adopter pricing tiers for Pro plan
-// Spots are cumulative — tier info is computed server-side from subscriber count
-export const PRO_PRICING_TIERS = [
-  { price: 5, spots: 8 },
-  { price: 6, spots: 12 },
-  { price: 7, spots: 18 },
-  { price: 8, spots: 22 },
-  { price: 9, spots: null }, // final price, unlimited
+// Early adopter pricing — both plans share the same spot pool (driven by lifetime sold count).
+// When a lifetime tier fills up, both prices increase together.
+export const LIFETIME_PRICING_TIERS = [
+  { price: 9, spots: 15 },
+  { price: 12, spots: 20 },
+  { price: 15, spots: 35 },
+  { price: 19, spots: 50 },
+  { price: 24, spots: 80 },
+  { price: 29, spots: null }, // final price, unlimited
 ] as const;
 
-// Pro tier info type returned by /api/pricing
+// Monthly prices aligned 1:1 with lifetime tiers (+$1 per tier jump)
+export const PRO_PRICING_TIERS = [
+  { price: 5, spots: 15 },
+  { price: 6, spots: 20 },
+  { price: 7, spots: 35 },
+  { price: 8, spots: 50 },
+  { price: 9, spots: 80 },
+  { price: 9, spots: null }, // final price, same as previous
+] as const;
+
+export const LIFETIME_FINAL_PRICE = 29;
+
+// Tier info types returned by /api/pricing
 export type ProTierInfo = {
   price: number;
   spotsLeft: number | null;
   nextPrice: number | null;
 };
 
-// Cached fetch for pro tier info (5-minute TTL)
-let cachedProTier: ProTierInfo | null = null;
+export type LifetimeTierInfo = {
+  price: number;
+  spotsLeft: number | null;
+  nextPrice: number | null;
+  totalSold: number;
+};
+
+// Cached fetch for pricing tier info (5-minute TTL)
+let cachedPricing: { proTier: ProTierInfo; lifetimeTier: LifetimeTierInfo } | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export async function fetchProTierInfo(): Promise<ProTierInfo> {
+async function fetchPricing(): Promise<{ proTier: ProTierInfo; lifetimeTier: LifetimeTierInfo }> {
   const now = Date.now();
-  if (cachedProTier && now - cacheTimestamp < CACHE_TTL) {
-    return cachedProTier;
+  if (cachedPricing && now - cacheTimestamp < CACHE_TTL) {
+    return cachedPricing;
   }
   const res = await fetch("/api/pricing");
   const data = await res.json();
-  cachedProTier = data.proTier;
+  cachedPricing = { proTier: data.proTier, lifetimeTier: data.lifetimeTier };
   cacheTimestamp = now;
-  return cachedProTier!;
+  return cachedPricing;
+}
+
+export async function fetchProTierInfo(): Promise<ProTierInfo> {
+  const data = await fetchPricing();
+  return data.proTier;
+}
+
+export async function fetchLifetimeTierInfo(): Promise<LifetimeTierInfo> {
+  const data = await fetchPricing();
+  return data.lifetimeTier;
 }

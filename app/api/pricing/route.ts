@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getProTierInfo } from "@/lib/plans-server";
+import { getPricingTierInfo } from "@/lib/plans-server";
 
 export async function GET() {
-  const proTier = await getProTierInfo();
+  const { proTier, lifetimeTier } = await getPricingTierInfo();
 
   return NextResponse.json(
-    { proTier },
+    { proTier, lifetimeTier },
     {
       headers: {
         "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",

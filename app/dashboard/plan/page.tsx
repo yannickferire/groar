@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo, fetchProTierInfo } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo, LifetimeTierInfo, fetchProTierInfo, fetchLifetimeTierInfo } from "@/lib/plans";
 import PricingCards from "@/components/PricingCards";
 import TrialBanner from "@/components/dashboard/TrialBanner";
 import { toast } from "sonner";
@@ -35,15 +35,18 @@ export default function PlanPage() {
   const [upgrading, setUpgrading] = useState<PlanType | null>(null);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+  const [lifetimeTierInfo, setLifetimeTierInfo] = useState<LifetimeTierInfo | null>(null);
 
   const fetchPlan = useCallback(async () => {
     try {
-      const [data, tierInfo] = await Promise.all([
+      const [data, tierInfo, ltTierInfo] = await Promise.all([
         fetch("/api/user/plan").then((res) => res.json()),
         fetchProTierInfo(),
+        fetchLifetimeTierInfo(),
       ]);
       setPlanData(data);
       setProTierInfo(tierInfo);
+      setLifetimeTierInfo(ltTierInfo);
     } finally {
       setLoading(false);
     }
@@ -119,6 +122,7 @@ export default function PlanPage() {
           trialEnd={planData.trialEnd || null}
           plan={planData.plan}
           proTierInfo={proTierInfo}
+          lifetimeTierInfo={lifetimeTierInfo}
           hasUsedTrial={!!planData.hasUsedTrial}
         />
       )}
@@ -244,6 +248,7 @@ export default function PlanPage() {
             proHighlighted={true}
             showBillingToggle={!isLifetime}
             proTierInfo={proTierInfo}
+            lifetimeTierInfo={lifetimeTierInfo}
             ctaLabel={(planKey, billingPeriod) => {
               if (planData.isTrialing && planKey === "pro") return "Claim your spot";
               // Lifetime user: show "Current plan" on pro

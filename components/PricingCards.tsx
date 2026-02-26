@@ -3,7 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon, DashboardSquare02Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, LIFETIME_PRICE, LIFETIME_FULL_PRICE, ProTierInfo } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, LIFETIME_FINAL_PRICE, LIFETIME_PRICING_TIERS, ProTierInfo, LifetimeTierInfo } from "@/lib/plans";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -19,8 +19,89 @@ type PricingCardsProps = {
   showBillingToggle?: boolean;
   disabledPlans?: PlanType[];
   proTierInfo?: ProTierInfo | null;
+  lifetimeTierInfo?: LifetimeTierInfo | null;
   canTrial?: boolean;
 };
+
+function EarlyAdopterProgressBlock({ lifetimeTierInfo, proTierInfo, billingPeriod }: { lifetimeTierInfo: LifetimeTierInfo; proTierInfo?: ProTierInfo | null; billingPeriod: BillingPeriod }) {
+  const info = lifetimeTierInfo;
+  if (info.spotsLeft === null) return null;
+
+  // Total spots across all non-final tiers
+  const totalSpots = LIFETIME_PRICING_TIERS.reduce((sum, t) => sum + (t.spots ?? 0), 0);
+  const overallProgress = Math.min(info.totalSold / totalSpots, 1);
+
+  // Compute tier boundaries for the segmented bar
+  let accumulated = 0;
+  const tiers = LIFETIME_PRICING_TIERS.filter(t => t.spots !== null).map(t => {
+    const start = accumulated / totalSpots;
+    accumulated += t.spots!;
+    const end = accumulated / totalSpots;
+    return { price: t.price, spots: t.spots!, start, end };
+  });
+
+  const isLifetime = billingPeriod === "lifetime";
+  const nextPrice = isLifetime
+    ? `$${info.nextPrice ?? LIFETIME_FINAL_PRICE}`
+    : `$${proTierInfo?.nextPrice}/mo`;
+
+  // Bar height for rounded-end offset calculation (h-4 = 1rem = 16px)
+  const barH = "1rem";
+
+  return (
+    <div className="rounded-2xl border-fade p-5 md:p-6 mt-4 mb-16 max-w-2xl mx-auto" style={{ backgroundColor: "var(--muted)" }}>
+      {/* Header */}
+      <div className="mb-4 text-center">
+        <p className="text-xl font-heading font-bold tracking-tight">
+          <span className="text-2xl">🔥</span> Only <span className="highlighted text-2xl">{info.spotsLeft} spots</span> left at <span className="text-2xl">${info.price}{!isLifetime && "/lifetime"}</span>
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Catch yours — price increases to <span className="font-semibold text-foreground">{nextPrice}</span> {info.spotsLeft <= 10 ? "next" : "when these are gone"}
+        </p>
+      </div>
+
+      {/* Progress bar with tier segments */}
+      <div className="relative h-4 rounded-full" style={{ backgroundColor: "var(--card)" }}>
+        <motion.div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{ background: "linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 100%)" }}
+          initial={{ width: 0 }}
+          whileInView={{ width: `calc(${overallProgress} * (100% - ${barH}) + ${barH})` }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        />
+        {/* Tier boundary markers — 1px, extend above/below */}
+        {tiers.slice(0, -1).map((tier) => (
+          <div
+            key={tier.price}
+            className="absolute w-px bg-foreground/50"
+            style={{ left: `calc(${tier.end} * (100% - ${barH}) + ${barH} / 2)`, top: "-3px", bottom: "-3px" }}
+          />
+        ))}
+      </div>
+
+      {/* Tier price labels */}
+      <div className="relative mt-2.5 h-5">
+        {tiers.map((tier) => {
+          const isCurrent = info.price === tier.price;
+          const isPast = tier.price < info.price;
+          return (
+            <span
+              key={tier.price}
+              className={`absolute text-xs ${isCurrent ? "font-bold text-primary" : isPast ? "text-muted-foreground/40 line-through" : "text-muted-foreground font-medium"}`}
+              style={{ left: `calc(${tier.start} * (100% - ${barH}))` }}
+            >
+              ${tier.price}
+            </span>
+          );
+        })}
+        <span className="absolute text-xs text-muted-foreground font-medium right-0">
+          ${LIFETIME_FINAL_PRICE}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function ProCard({
   plan,
@@ -33,6 +114,7 @@ function ProCard({
   disabled,
   billingPeriod,
   proTierInfo,
+  lifetimeTierInfo,
   canTrial,
 }: {
   plan: typeof PLANS.pro;
@@ -46,11 +128,13 @@ function ProCard({
   disabled: boolean;
   billingPeriod: BillingPeriod;
   proTierInfo?: ProTierInfo | null;
+  lifetimeTierInfo?: LifetimeTierInfo | null;
   canTrial?: boolean;
 }) {
   const proPrice = proTierInfo?.price ?? plan.price;
   const isLifetime = billingPeriod === "lifetime";
-  const showTrialPricing = canTrial;
+  const lifetimePrice = lifetimeTierInfo?.price ?? LIFETIME_PRICING_TIERS[0].price;
+  const showStrikethrough = isLifetime && lifetimePrice < LIFETIME_FINAL_PRICE;
   return (
     <div className={proHighlighted ? "md:-my-6 md:-mx-4 relative z-10" : ""}>
       <div className="relative rounded-3xl p-6 md:p-8 flex flex-col bg-foreground text-background overflow-hidden">
@@ -90,20 +174,13 @@ function ProCard({
             </div>
             <div className="flex items-baseline gap-0.5 flex-wrap">
               <span className="text-3xl md:text-[32px] font-heading font-extrabold leading-none">$</span>
-              <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{isLifetime ? LIFETIME_PRICE : proPrice}</span>
-              {isLifetime && (
-                <span className="text-2xl leading-none text-muted-foreground line-through ml-1.5">${LIFETIME_FULL_PRICE}</span>
+              <span className="text-4xl md:text-[42px] font-mono font-black leading-none">{isLifetime ? lifetimePrice : proPrice}</span>
+              {showStrikethrough && (
+                <span className="text-2xl leading-none text-muted-foreground line-through ml-1.5">${LIFETIME_FINAL_PRICE}</span>
               )}
               <span className="text-background/60 text-sm ml-0.5">{isLifetime ? "one-time" : "/month"}</span>
               <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
             </div>
-            <p className="text-xs text-background/50 mt-1.5 min-h-4">
-              {isLifetime ? (
-                "Launch price"
-              ) : proTierInfo && proTierInfo.spotsLeft !== null && proTierInfo.nextPrice !== null ? (
-                <>Launch price – <span className="text-primary font-medium">{proTierInfo.spotsLeft} spots left</span> – Next: ${proTierInfo.nextPrice}/mo</>
-              ) : "\u00A0"}
-            </p>
           </div>
 
           {/* Premium features icons */}
@@ -154,7 +231,7 @@ function ProCard({
               </>
             )}
           </Button>
-          {showTrialPricing && !isCurrent && (
+          {canTrial && !isCurrent && (
             <p className="text-xs text-background/50 text-center mt-2">No credit card required</p>
           )}
         </div>
@@ -256,7 +333,10 @@ function PlanCard({
   );
 }
 
-function BillingToggle({ period, onChange }: { period: BillingPeriod; onChange: (p: BillingPeriod) => void }) {
+function BillingToggle({ period, onChange, lifetimePrice }: { period: BillingPeriod; onChange: (p: BillingPeriod) => void; lifetimePrice: number }) {
+  const savingsPercent = LIFETIME_FINAL_PRICE > 0 ? Math.round((1 - lifetimePrice / LIFETIME_FINAL_PRICE) * 100) : 0;
+  const savingsLabel = savingsPercent > 0 ? `–${savingsPercent}%` : "Best deal";
+
   return (
     <div className="flex items-center justify-center mb-6 md:mb-10 -mt-1 md:-mt-2">
       <div className="flex items-center bg-muted rounded-full p-1">
@@ -279,7 +359,7 @@ function BillingToggle({ period, onChange }: { period: BillingPeriod; onChange: 
           onClick={() => onChange("lifetime")}
           className="relative z-10 px-4 py-1.5 rounded-full text-sm font-medium"
         >
-          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-medium text-primary bg-muted px-1.5 py-0.5 rounded-full leading-none z-20">–33%</span>
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-xs font-medium text-primary bg-muted px-1.5 py-0.5 rounded-full leading-none z-20">{savingsLabel}</span>
           {period === "lifetime" && (
             <motion.div
               layoutId="billing-pill"
@@ -307,9 +387,11 @@ export default function PricingCards({
   showBillingToggle = true,
   disabledPlans = [],
   proTierInfo,
+  lifetimeTierInfo,
   canTrial,
 }: PricingCardsProps) {
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("lifetime");
+  const lifetimePrice = lifetimeTierInfo?.price ?? LIFETIME_PRICING_TIERS[0].price;
 
   const defaultCtaLabel = (planKey: PlanType) => {
     if (currentPlan === planKey) return "Current plan";
@@ -339,6 +421,7 @@ export default function PricingCards({
         onSelect={() => onSelectPlan(planKey, billingPeriod)}
         disabled={isDisabled}
         proTierInfo={proTierInfo}
+        lifetimeTierInfo={lifetimeTierInfo}
         billingPeriod={billingPeriod}
         canTrial={canTrial}
       />
@@ -371,6 +454,7 @@ export default function PricingCards({
               disabled={isDisabled}
               billingPeriod={billingPeriod}
               proTierInfo={proTierInfo}
+              lifetimeTierInfo={lifetimeTierInfo}
               canTrial={canTrial}
             />
           ) : (
@@ -392,7 +476,13 @@ export default function PricingCards({
   });
 
   const toggle = showBillingToggle && (
-    <BillingToggle period={billingPeriod} onChange={setBillingPeriod} />
+    <BillingToggle period={billingPeriod} onChange={setBillingPeriod} lifetimePrice={lifetimePrice} />
+  );
+
+  // Fallback tierInfo so the block renders immediately (before API responds)
+  const lifetimeFallback: LifetimeTierInfo = { price: LIFETIME_PRICING_TIERS[0].price, spotsLeft: LIFETIME_PRICING_TIERS[0].spots, nextPrice: LIFETIME_PRICING_TIERS[1].price, totalSold: 0 };
+  const progressBlock = (
+    <EarlyAdopterProgressBlock lifetimeTierInfo={lifetimeTierInfo ?? lifetimeFallback} proTierInfo={proTierInfo} billingPeriod={billingPeriod} />
   );
 
   if (animated) {
@@ -400,9 +490,16 @@ export default function PricingCards({
       <StaggerContainer staggerDelay={0.1}>
         {showBillingToggle && (
           <StaggerItem direction="up" distance={16}>
-            <BillingToggle period={billingPeriod} onChange={setBillingPeriod} />
+            <BillingToggle period={billingPeriod} onChange={setBillingPeriod} lifetimePrice={lifetimePrice} />
           </StaggerItem>
         )}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          {progressBlock}
+        </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-0 items-start max-w-3xl mx-auto">
           {cards}
         </div>
@@ -413,6 +510,7 @@ export default function PricingCards({
   return (
     <div>
       {toggle}
+      {progressBlock}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-0 items-start max-w-3xl mx-auto">
         {cards}
       </div>

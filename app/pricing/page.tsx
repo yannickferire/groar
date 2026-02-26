@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { PlanType, BillingPeriod, ProTierInfo, TRIAL_DURATION_DAYS, fetchProTierInfo } from "@/lib/plans";
+import { PlanType, BillingPeriod, ProTierInfo, LifetimeTierInfo, TRIAL_DURATION_DAYS, fetchProTierInfo, fetchLifetimeTierInfo } from "@/lib/plans";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { FadeInView } from "@/components/ui/motion";
@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     question: "Is GROAR free to use?",
-    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 3 exports per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month or $19 one-time for lifetime access.",
+    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 3 exports per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month or a one-time payment for lifetime access.",
   },
   {
     question: "How long does it take to create a visual?",
@@ -32,7 +32,7 @@ const faqs = [
   },
   {
     question: "How is GROAR different from Canva or other design tools?",
-    answer: "Canva is a powerful general-purpose design tool, but you have to build everything from scratch. GROAR is purpose-built for X metrics visuals — it connects to your account, auto-imports your data, and gives you ready-to-export templates in seconds. It's 3x cheaper too ($5/mo or $19 lifetime vs $15/mo).",
+    answer: "Canva is a powerful general-purpose design tool, but you have to build everything from scratch. GROAR is purpose-built for X metrics visuals — it connects to your account, auto-imports your data, and gives you ready-to-export templates in seconds. It's way cheaper too (from $5/mo or a one-time lifetime payment vs $15/mo for Canva).",
   },
   {
     question: "Can I connect multiple X accounts?",
@@ -44,14 +44,14 @@ function PricingContent() {
   const { data: session } = authClient.useSession();
   const [upgrading, setUpgrading] = useState<PlanType | null>(null);
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+  const [lifetimeTierInfo, setLifetimeTierInfo] = useState<LifetimeTierInfo | null>(null);
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [trialChecked, setTrialChecked] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<PlanType | null>(null);
 
   useEffect(() => {
-    fetchProTierInfo()
-      .then(setProTierInfo)
-      .catch(() => {});
+    fetchProTierInfo().then(setProTierInfo).catch(() => {});
+    fetchLifetimeTierInfo().then(setLifetimeTierInfo).catch(() => {});
 
     // Check trial status and current plan
     fetch("/api/user/plan")
@@ -153,6 +153,7 @@ function PricingContent() {
             showProFeatures={true}
             proHighlighted={true}
             proTierInfo={proTierInfo}
+            lifetimeTierInfo={lifetimeTierInfo}
             canTrial={canTrial}
             ctaLabel={(planKey, billingPeriod) => {
               if (currentPlan === planKey) {

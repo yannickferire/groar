@@ -9,7 +9,7 @@ import Link from "next/link";
 import ExportsEmptyState from "@/components/dashboard/ExportsEmptyState";
 import TrialBanner from "@/components/dashboard/TrialBanner";
 import ExportCard, { ExportCardSkeleton } from "@/components/dashboard/ExportCard";
-import { PlanType, PLANS, ProTierInfo, fetchProTierInfo } from "@/lib/plans";
+import { PlanType, PLANS, ProTierInfo, LifetimeTierInfo, fetchProTierInfo, fetchLifetimeTierInfo } from "@/lib/plans";
 import XLogo from "@/components/icons/XLogo";
 import GoogleLogo from "@/components/icons/GoogleLogo";
 import { authClient } from "@/lib/auth-client";
@@ -50,6 +50,7 @@ function DashboardContent() {
   const [trialEnd, setTrialEnd] = useState<string | null>(null);
   const [hasUsedTrial, setHasUsedTrial] = useState(true);
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
+  const [lifetimeTierInfo, setLifetimeTierInfo] = useState<LifetimeTierInfo | null>(null);
 
   // Get first name from session
   const firstName = session?.user?.name?.split(" ")[0];
@@ -60,18 +61,20 @@ function DashboardContent() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [exportsRes, connectionsRes, planRes, analyticsRes, tierInfo] = await Promise.all([
+      const [exportsRes, connectionsRes, planRes, analyticsRes, tierInfo, ltTierInfo] = await Promise.all([
         fetch("/api/exports"),
         fetch("/api/connections"),
         fetch("/api/user/plan"),
         fetch("/api/analytics?days=30"),
         fetchProTierInfo(),
+        fetchLifetimeTierInfo(),
       ]);
       const exportsData = await exportsRes.json();
       const connectionsData = await connectionsRes.json();
       const planData = await planRes.json();
       const analyticsData = await analyticsRes.json();
       setProTierInfo(tierInfo);
+      setLifetimeTierInfo(ltTierInfo);
       setExports(exportsData.exports || []);
       setConnectedAccounts(connectionsData.accounts || []);
       setPlan(planData.plan || "free");
@@ -212,7 +215,7 @@ function DashboardContent() {
         </p>
       </div>
 
-      <TrialBanner isTrialing={isTrialing} trialEnd={trialEnd} plan={plan} proTierInfo={proTierInfo} hasUsedTrial={hasUsedTrial} />
+      <TrialBanner isTrialing={isTrialing} trialEnd={trialEnd} plan={plan} proTierInfo={proTierInfo} lifetimeTierInfo={lifetimeTierInfo} hasUsedTrial={hasUsedTrial} />
 
       {/* CTA – mobile only */}
       <div className="md:hidden">

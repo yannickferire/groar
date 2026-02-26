@@ -18,7 +18,7 @@ const faqs = [
   },
   {
     question: "Is GROAR free to use?",
-    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 3 exports per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month or $19 one-time for lifetime access.",
+    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 3 exports per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month or a one-time payment for lifetime access.",
   },
   {
     question: "How long does it take to create a visual?",
@@ -34,7 +34,7 @@ const faqs = [
   },
   {
     question: "How is GROAR different from Canva or other design tools?",
-    answer: "Canva is a powerful general-purpose design tool, but you have to build everything from scratch. GROAR is purpose-built for X metrics visuals — it connects to your account, auto-imports your data, and gives you ready-to-export templates in seconds. It's 3x cheaper too ($5/mo or $19 lifetime vs $15/mo).",
+    answer: "Canva is a powerful general-purpose design tool, but you have to build everything from scratch. GROAR is purpose-built for X metrics visuals — it connects to your account, auto-imports your data, and gives you ready-to-export templates in seconds. It's way cheaper too (from $5/mo or a one-time lifetime payment vs $15/mo for Canva).",
   },
   {
     question: "Can I connect multiple X accounts?",

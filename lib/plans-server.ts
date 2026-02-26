@@ -2,7 +2,7 @@
 // This file should only be imported in server components and API routes
 
 import { pool } from "./db";
-import { PLANS, PlanType, PRO_PRICING_TIERS, TRIAL_DURATION_DAYS } from "./plans";
+import { PLANS, PlanType, PRO_PRICING_TIERS, LIFETIME_PRICING_TIERS, TRIAL_DURATION_DAYS } from "./plans";
 
 // Get user plan from database (accounts for trial expiration)
 export async function getUserPlanFromDB(userId: string): Promise<PlanType> {
@@ -119,50 +119,56 @@ export async function hasUsedTrial(userId: string): Promise<boolean> {
   return result.rows[0]?.trialStart != null;
 }
 
-// Get the number of active Pro subscribers
-export async function getProSubscriberCount(): Promise<number> {
+// Get the number of active lifetime Pro subscribers (includes friend plan as early adopters)
+export async function getLifetimeSubscriberCount(): Promise<number> {
   try {
     const result = await pool.query(
-      `SELECT COUNT(*) FROM subscription WHERE plan = 'pro' AND status = 'active'`
+      `SELECT COUNT(*) FROM subscription WHERE status = 'active' AND (
+        (plan = 'pro' AND "billingPeriod" = 'lifetime')
+        OR plan = 'friend'
+      )`
     );
     return parseInt(result.rows[0].count);
   } catch (error) {
-    console.error("Error counting pro subscribers:", error);
+    console.error("Error counting lifetime subscribers:", error);
     return 0;
   }
 }
 
-// Compute current Pro tier info from subscriber count
-export async function getProTierInfo(): Promise<{
-  price: number;
-  spotsLeft: number | null;
-  nextPrice: number | null;
-} | null> {
-  const count = await getProSubscriberCount();
-
+// Helper: find current tier from a pricing tier array and a sold count
+function findTier<T extends readonly { price: number; spots: number | null }[]>(
+  tiers: T, count: number
+): { price: number; spotsLeft: number | null; nextPrice: number | null } {
   let accumulated = 0;
-  for (let i = 0; i < PRO_PRICING_TIERS.length; i++) {
-    const tier = PRO_PRICING_TIERS[i];
+  for (let i = 0; i < tiers.length; i++) {
+    const tier = tiers[i];
     if (tier.spots === null) {
-      // Final tier, unlimited spots
       return { price: tier.price, spotsLeft: null, nextPrice: null };
     }
-
     accumulated += tier.spots;
     if (count < accumulated) {
-      const spotsLeft = accumulated - count;
-      const nextTier = PRO_PRICING_TIERS[i + 1];
+      const nextTier = tiers[i + 1];
       return {
         price: tier.price,
-        spotsLeft,
+        spotsLeft: accumulated - count,
         nextPrice: nextTier ? nextTier.price : null,
       };
     }
   }
-
-  // Shouldn't reach here, but fallback to last tier
-  const last = PRO_PRICING_TIERS[PRO_PRICING_TIERS.length - 1];
+  const last = tiers[tiers.length - 1];
   return { price: last.price, spotsLeft: null, nextPrice: null };
+}
+
+// Get both tier infos in a single DB call
+export async function getPricingTierInfo(): Promise<{
+  proTier: { price: number; spotsLeft: number | null; nextPrice: number | null };
+  lifetimeTier: { price: number; spotsLeft: number | null; nextPrice: number | null; totalSold: number };
+}> {
+  const count = await getLifetimeSubscriberCount();
+  return {
+    proTier: findTier(PRO_PRICING_TIERS, count),
+    lifetimeTier: { ...findTier(LIFETIME_PRICING_TIERS, count), totalSold: count },
+  };
 }
 
 // Count weekly exports for a user, accounting for trial expiration

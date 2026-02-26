@@ -6,17 +6,19 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { CrownIcon, SparklesIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ProTierInfo, TRIAL_DURATION_DAYS, LIFETIME_PRICE } from "@/lib/plans";
+import { ProTierInfo, LifetimeTierInfo, TRIAL_DURATION_DAYS, LIFETIME_PRICING_TIERS } from "@/lib/plans";
 
 type TrialBannerProps = {
   isTrialing: boolean;
   trialEnd: string | null;
   plan?: string;
   proTierInfo?: ProTierInfo | null;
+  lifetimeTierInfo?: LifetimeTierInfo | null;
   hasUsedTrial?: boolean;
 };
 
-export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, hasUsedTrial }: TrialBannerProps) {
+export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, lifetimeTierInfo, hasUsedTrial }: TrialBannerProps) {
+  const lifetimePrice = lifetimeTierInfo?.price ?? LIFETIME_PRICING_TIERS[0].price;
   const router = useRouter();
   const [starting, setStarting] = useState(false);
 
@@ -45,8 +47,8 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, h
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {proTierInfo?.spotsLeft
-                ? <>Launch price: ${proTierInfo.price}/mo or ${LIFETIME_PRICE} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
-                : <>Then ${proTierInfo?.price ?? 5}/mo or ${LIFETIME_PRICE} one-time</>
+                ? <>Launch price: ${proTierInfo.price}/mo or ${lifetimePrice} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
+                : <>Then ${proTierInfo?.price ?? 5}/mo or ${lifetimePrice} one-time</>
               }
             </p>
           </div>
@@ -76,8 +78,8 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, h
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {proTierInfo?.spotsLeft
-                ? <>Launch price: ${proTierInfo.price}/mo or ${LIFETIME_PRICE} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
-                : <>From ${proTierInfo?.price ?? 5}/mo or ${LIFETIME_PRICE} one-time</>
+                ? <>Launch price: ${proTierInfo.price}/mo or ${lifetimePrice} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
+                : <>From ${proTierInfo?.price ?? 5}/mo or ${lifetimePrice} one-time</>
               }
             </p>
           </div>
@@ -105,8 +107,8 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, h
             </p>
             <p className="text-xs text-amber-700/70 mt-0.5">
               {proTierInfo?.spotsLeft
-                ? <>Launch price: ${proTierInfo.price}/mo or ${LIFETIME_PRICE} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
-                : <>From ${proTierInfo?.price ?? 5}/mo or ${LIFETIME_PRICE} one-time</>
+                ? <>Launch price: ${proTierInfo.price}/mo or ${lifetimePrice} one-time — {proTierInfo.spotsLeft} spots left{proTierInfo.nextPrice ? `, then $${proTierInfo.nextPrice}/mo` : ""}</>
+                : <>From ${proTierInfo?.price ?? 5}/mo or ${lifetimePrice} one-time</>
               }
             </p>
           </div>

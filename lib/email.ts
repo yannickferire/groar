@@ -52,7 +52,7 @@ export function trialEndingEmail(name: string) {
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
       <p>Your Pro trial <strong>expires tomorrow</strong>. After that, you'll be back to 3 exports/week with watermark.</p>
-      <p>Keep Pro for <strong>$5/month</strong> or grab <strong>lifetime access for $19</strong>.</p>
+      <p>Keep Pro for <strong>$5/month</strong> or grab <strong>lifetime access</strong> at the current launch price.</p>
       ${cta("Upgrade now", `${SITE_URL}/dashboard/plan`)}
       <p style="color:#6b7280;font-size:14px;">No pressure — the early-bird price won't last forever though.</p>
       <p>— Yannick</p>
@@ -67,8 +67,8 @@ export function trialExpiredEmail(name: string) {
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
       <p>Your trial is over — you're back on the free plan (3 exports/week, watermark, limited templates).</p>
-      <p>Unlock everything permanently for <strong>$19 one-time</strong>:</p>
-      ${cta("Get lifetime access — $19", `${SITE_URL}/dashboard/plan`)}
+      <p>Unlock everything permanently with <strong>lifetime access</strong> at the current launch price:</p>
+      ${cta("Get lifetime access", `${SITE_URL}/dashboard/plan`)}
       <p>— Yannick</p>
     `),
   };
