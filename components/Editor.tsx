@@ -532,8 +532,18 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
             action: "export",
             template: settings.template,
             backgroundId: settings.background.presetId,
+            localHour: new Date().getHours(),
           }),
-        }).catch(() => {});
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.pointsToday !== undefined) {
+              window.dispatchEvent(new CustomEvent("groar:points", {
+                detail: { earned: data.pointsEarned ?? 0, today: data.pointsToday },
+              }));
+            }
+          })
+          .catch(() => {});
       }
 
       // Start cooldown after successful export

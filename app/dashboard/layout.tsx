@@ -27,7 +27,16 @@ export default function DashboardLayout({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "login" }),
-      }).catch(() => {});
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.pointsToday !== undefined) {
+            window.dispatchEvent(new CustomEvent("groar:points", {
+              detail: { earned: data.pointsEarned ?? 0, today: data.pointsToday },
+            }));
+          }
+        })
+        .catch(() => {});
     }
   }, [session?.user]);
 

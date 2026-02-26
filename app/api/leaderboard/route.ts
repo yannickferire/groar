@@ -24,7 +24,8 @@ export async function GET() {
         s."longestStreak",
         s."uniqueTemplatesCount",
         s."uniqueBackgroundsCount",
-        s.score
+        s.score,
+        s."pointsToday"
       FROM "user" u
       INNER JOIN user_stats s ON s."userId" = u.id
       WHERE s.score > 0 AND u.id != $1
@@ -35,12 +36,16 @@ export async function GET() {
 
     // Current user's rank + stats (exclude admin from ranking)
     const rankResult = await pool.query(
-      `SELECT rank::INTEGER, score, "exportsCount", "currentStreak" FROM (
+      `SELECT rank::INTEGER, score, "exportsCount", "currentStreak", "pointsToday",
+              "loggedInToday", "exportsToday" FROM (
         SELECT
           u.id,
           s.score,
           s."exportsCount",
           s."currentStreak",
+          s."pointsToday",
+          (s."lastLoginDate" = CURRENT_DATE) AS "loggedInToday",
+          CASE WHEN s."lastExportDate" = CURRENT_DATE THEN s."exportsToday" ELSE 0 END AS "exportsToday",
           RANK() OVER (ORDER BY s.score DESC, s."updatedAt" ASC) as rank
         FROM "user" u
         INNER JOIN user_stats s ON s."userId" = u.id
@@ -54,20 +59,34 @@ export async function GET() {
     let adminStats = null;
     if (isAdmin) {
       const adminResult = await pool.query(
-        `SELECT s.score, s."exportsCount", s."currentStreak"
+        `SELECT s.score, s."exportsCount", s."currentStreak", s."pointsToday",
+                (s."lastLoginDate" = CURRENT_DATE) AS "loggedInToday",
+                CASE WHEN s."lastExportDate" = CURRENT_DATE THEN s."exportsToday" ELSE 0 END AS "exportsToday"
          FROM user_stats s WHERE s."userId" = $1`,
         [session.user.id]
       );
       adminStats = adminResult.rows[0];
     }
 
+    const userStats = isAdmin ? null : rankResult.rows[0];
+
+    // Fetch current user's badges
+    const badgesResult = await pool.query(
+      `SELECT "badgeId", "earnedAt" FROM user_badges WHERE "userId" = $1 ORDER BY "earnedAt" ASC`,
+      [session.user.id]
+    );
+
     return NextResponse.json({
       leaderboard: result.rows,
       currentUserId: session.user.id,
-      currentUserRank: isAdmin ? 0 : (rankResult.rows[0]?.rank ?? null),
-      currentUserScore: isAdmin ? (adminStats?.score ?? 0) : (rankResult.rows[0]?.score ?? 0),
-      currentUserExports: isAdmin ? (adminStats?.exportsCount ?? 0) : (rankResult.rows[0]?.exportsCount ?? 0),
-      currentUserStreak: isAdmin ? (adminStats?.currentStreak ?? 0) : (rankResult.rows[0]?.currentStreak ?? 0),
+      currentUserRank: isAdmin ? 0 : (userStats?.rank ?? null),
+      currentUserScore: isAdmin ? (adminStats?.score ?? 0) : (userStats?.score ?? 0),
+      currentUserExports: isAdmin ? (adminStats?.exportsCount ?? 0) : (userStats?.exportsCount ?? 0),
+      currentUserStreak: isAdmin ? (adminStats?.currentStreak ?? 0) : (userStats?.currentStreak ?? 0),
+      currentUserPointsToday: isAdmin ? (adminStats?.pointsToday ?? 0) : (userStats?.pointsToday ?? 0),
+      currentUserLoggedInToday: isAdmin ? (adminStats?.loggedInToday ?? false) : (userStats?.loggedInToday ?? false),
+      currentUserExportsToday: isAdmin ? (adminStats?.exportsToday ?? 0) : (userStats?.exportsToday ?? 0),
+      currentUserBadges: badgesResult.rows,
     });
   } catch (error) {
     console.error("Leaderboard error:", error);

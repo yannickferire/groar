@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
@@ -45,6 +45,10 @@ export default function DashboardSidebar() {
   const [trialEnd, setTrialEnd] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const [pointsToday, setPointsToday] = useState<number | null>(null);
+  const [animatingPoints, setAnimatingPoints] = useState<number | null>(null);
+  const animTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     fetch("/api/user/plan")
       .then((res) => res.json())
@@ -59,6 +63,24 @@ export default function DashboardSidebar() {
       .then(setProTierInfo)
       .catch(() => {});
   }, []);
+
+  const handlePointsEvent = useCallback((e: Event) => {
+    const { earned, today } = (e as CustomEvent).detail;
+    setPointsToday(today);
+    if (earned > 0) {
+      setAnimatingPoints(earned);
+      if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
+      animTimeoutRef.current = setTimeout(() => setAnimatingPoints(null), 1500);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("groar:points", handlePointsEvent);
+    return () => {
+      window.removeEventListener("groar:points", handlePointsEvent);
+      if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
+    };
+  }, [handlePointsEvent]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -144,6 +166,8 @@ export default function DashboardSidebar() {
                   );
                 }
 
+                const isLeaderboard = item.href === "/dashboard/leaderboard";
+
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
@@ -157,9 +181,27 @@ export default function DashboardSidebar() {
                           size={20}
                           strokeWidth={2}
                         />
-                        <span>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {isLeaderboard && pointsToday !== null && pointsToday > 0 && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+                        <span className="text-[11px] font-mono font-bold text-muted-foreground">
+                          +{pointsToday}
+                        </span>
+                        {animatingPoints !== null && (
+                          <span
+                            key={Date.now()}
+                            className="absolute -top-1 left-0 text-[11px] font-mono font-bold text-green-500 pointer-events-none"
+                            style={{
+                              animation: "points-float 1.5s ease-out forwards",
+                            }}
+                          >
+                            +{animatingPoints}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </SidebarMenuItem>
                 );
               })}

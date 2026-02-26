@@ -1,8 +1,19 @@
 import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
+import { checkAndAwardBadges } from "@/lib/check-badges";
 import { NextRequest, NextResponse } from "next/server";
 
 const MAX_CREDITED_EXPORTS_PER_DAY = 3;
+
+type StatsForBadges = {
+  exportsCount: number;
+  uniqueTemplatesCount: number;
+  uniqueBackgroundsCount: number;
+  longestStreak: number;
+  score: number;
+};
+
+type StatsResult = { pointsEarned: number; pointsToday: number; stats: StatsForBadges };
 
 function computeScore(stats: {
   totalLoginDays: number;
@@ -36,84 +47,96 @@ export async function POST(req: NextRequest) {
       [session.user.id]
     );
 
+    let result: StatsResult = {
+      pointsEarned: 0,
+      pointsToday: 0,
+      stats: { exportsCount: 0, uniqueTemplatesCount: 0, uniqueBackgroundsCount: 0, longestStreak: 0, score: 0 },
+    };
+
     if (action === "login") {
-      await handleLogin(session.user.id);
+      result = await handleLogin(session.user.id);
     } else if (action === "export") {
-      await handleExport(session.user.id, body.template, body.backgroundId);
+      result = await handleExport(session.user.id, body.template, body.backgroundId);
     } else {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true });
+    const newBadges = await checkAndAwardBadges(
+      session.user.id,
+      result.stats,
+      { action, exportHour: action === "export" ? body.localHour : undefined }
+    );
+
+    return NextResponse.json({
+      ok: true,
+      pointsEarned: result.pointsEarned,
+      pointsToday: result.pointsToday,
+      newBadges,
+    });
   } catch (error) {
     console.error("User stats error:", error);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, pointsEarned: 0, pointsToday: 0, newBadges: [] });
   }
 }
 
-function getLastActivity(lastLoginDate: string | null, lastExportDate: string | null): Date | null {
-  const dates: Date[] = [];
-  if (lastLoginDate) {
-    const d = new Date(lastLoginDate);
-    d.setUTCHours(0, 0, 0, 0);
-    dates.push(d);
-  }
-  if (lastExportDate) {
-    const d = new Date(lastExportDate);
-    d.setUTCHours(0, 0, 0, 0);
-    dates.push(d);
-  }
-  if (dates.length === 0) return null;
-  return new Date(Math.max(...dates.map(d => d.getTime())));
-}
+// All date comparisons are done in SQL using CURRENT_DATE to avoid
+// JavaScript Date timezone bugs with pg DATE columns.
 
-async function handleLogin(userId: string) {
+async function handleLogin(userId: string): Promise<StatsResult> {
   const result = await pool.query(
-    `SELECT "totalLoginDays", "currentStreak", "longestStreak", "lastLoginDate", "lastExportDate",
-            "creditedExportsCount", "uniqueTemplatesCount", "uniqueBackgroundsCount"
+    `SELECT "totalLoginDays", "currentStreak", "longestStreak",
+            "creditedExportsCount", "uniqueTemplatesCount", "uniqueBackgroundsCount",
+            "exportsCount", "score", "pointsToday",
+            ("lastLoginDate" = CURRENT_DATE) AS "loginToday",
+            (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE) AS "hadActivityToday",
+            (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE - 1) AS "hadActivityYesterday"
      FROM user_stats WHERE "userId" = $1`,
     [userId]
   );
 
   const stats = result.rows[0];
-  if (!stats) return;
+  if (!stats) {
+    return { pointsEarned: 0, pointsToday: 0, stats: { exportsCount: 0, uniqueTemplatesCount: 0, uniqueBackgroundsCount: 0, longestStreak: 0, score: 0 } };
+  }
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  // Already logged in today — return current pointsToday
+  if (stats.loginToday) {
+    return {
+      pointsEarned: 0,
+      pointsToday: stats.pointsToday,
+      stats: {
+        exportsCount: stats.exportsCount,
+        uniqueTemplatesCount: stats.uniqueTemplatesCount,
+        uniqueBackgroundsCount: stats.uniqueBackgroundsCount,
+        longestStreak: stats.longestStreak,
+        score: stats.score,
+      },
+    };
+  }
 
-  const lastLogin = stats.lastLoginDate ? new Date(stats.lastLoginDate) : null;
-  if (lastLogin) lastLogin.setUTCHours(0, 0, 0, 0);
-
-  // Already logged in today
-  if (lastLogin && lastLogin.getTime() === today.getTime()) return;
-
-  // Streak based on most recent activity (login OR export)
-  const lastActivity = getLastActivity(stats.lastLoginDate, stats.lastExportDate);
+  const isFirstActivityToday = !stats.hadActivityToday;
 
   let newStreak = 1;
-  if (lastActivity) {
-    if (lastActivity.getTime() === today.getTime()) {
-      // Already active today (via export) — keep streak, just add login day
-      newStreak = stats.currentStreak;
-    } else {
-      const yesterday = new Date(today);
-      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-      if (lastActivity.getTime() === yesterday.getTime()) {
-        newStreak = stats.currentStreak + 1;
-      }
-    }
+  if (stats.hadActivityToday) {
+    newStreak = stats.currentStreak;
+  } else if (stats.hadActivityYesterday) {
+    newStreak = stats.currentStreak + 1;
   }
 
   const newLongest = Math.max(stats.longestStreak, newStreak);
   const newLoginDays = stats.totalLoginDays + 1;
 
-  const score = computeScore({
+  const oldScore = stats.score;
+  const newScore = computeScore({
     totalLoginDays: newLoginDays,
     creditedExportsCount: stats.creditedExportsCount,
     uniqueTemplatesCount: stats.uniqueTemplatesCount,
     uniqueBackgroundsCount: stats.uniqueBackgroundsCount,
     longestStreak: newLongest,
   });
+
+  const pointsEarned = newScore - oldScore;
+  const newPointsToday = (isFirstActivityToday ? 0 : stats.pointsToday) + pointsEarned;
 
   await pool.query(
     `UPDATE user_stats SET
@@ -122,55 +145,60 @@ async function handleLogin(userId: string) {
       "longestStreak" = $4,
       "lastLoginDate" = CURRENT_DATE,
       "score" = $5,
+      "pointsToday" = $6,
       "updatedAt" = NOW()
     WHERE "userId" = $1`,
-    [userId, newLoginDays, newStreak, newLongest, score]
+    [userId, newLoginDays, newStreak, newLongest, newScore, newPointsToday]
   );
+
+  return {
+    pointsEarned,
+    pointsToday: newPointsToday,
+    stats: {
+      exportsCount: stats.exportsCount,
+      uniqueTemplatesCount: stats.uniqueTemplatesCount,
+      uniqueBackgroundsCount: stats.uniqueBackgroundsCount,
+      longestStreak: newLongest,
+      score: newScore,
+    },
+  };
 }
 
-async function handleExport(userId: string, template?: string, backgroundId?: string) {
+async function handleExport(userId: string, template?: string, backgroundId?: string): Promise<StatsResult> {
   const result = await pool.query(
     `SELECT "totalLoginDays", "exportsCount", "creditedExportsCount",
             "uniqueTemplatesCount", "uniqueBackgroundsCount",
             "usedTemplates", "usedBackgrounds", "currentStreak", "longestStreak",
-            "lastExportDate", "lastLoginDate", "exportsToday"
+            "exportsToday", "score", "pointsToday",
+            ("lastExportDate" = CURRENT_DATE) AS "exportToday",
+            (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE) AS "hadActivityToday",
+            (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE - 1) AS "hadActivityYesterday"
      FROM user_stats WHERE "userId" = $1`,
     [userId]
   );
 
   const stats = result.rows[0];
-  if (!stats) return;
+  if (!stats) {
+    return { pointsEarned: 0, pointsToday: 0, stats: { exportsCount: 0, uniqueTemplatesCount: 0, uniqueBackgroundsCount: 0, longestStreak: 0, score: 0 } };
+  }
 
   // Always increment total exports (for display)
   const newExports = stats.exportsCount + 1;
 
   // Daily cap: only credit max 3 exports per day for score
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  const lastExport = stats.lastExportDate ? new Date(stats.lastExportDate) : null;
-  if (lastExport) lastExport.setUTCHours(0, 0, 0, 0);
-
-  const isNewDay = !lastExport || lastExport.getTime() !== today.getTime();
-  const newExportsToday = isNewDay ? 1 : stats.exportsToday + 1;
+  const isNewExportDay = !stats.exportToday;
+  const newExportsToday = isNewExportDay ? 1 : stats.exportsToday + 1;
   const canCredit = newExportsToday <= MAX_CREDITED_EXPORTS_PER_DAY;
   const newCredited = canCredit ? stats.creditedExportsCount + 1 : stats.creditedExportsCount;
 
   // Streak based on most recent activity (login OR export)
-  const lastActivity = getLastActivity(stats.lastLoginDate, stats.lastExportDate);
+  const isFirstActivityToday = !stats.hadActivityToday;
 
   let newStreak = stats.currentStreak;
   let newLongest = stats.longestStreak;
 
-  if (!lastActivity || lastActivity.getTime() !== today.getTime()) {
-    // First activity today — update streak
-    newStreak = 1;
-    if (lastActivity) {
-      const yesterday = new Date(today);
-      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-      if (lastActivity.getTime() === yesterday.getTime()) {
-        newStreak = stats.currentStreak + 1;
-      }
-    }
+  if (isFirstActivityToday) {
+    newStreak = stats.hadActivityYesterday ? stats.currentStreak + 1 : 1;
     newLongest = Math.max(stats.longestStreak, newStreak);
   }
 
@@ -189,13 +217,17 @@ async function handleExport(userId: string, template?: string, backgroundId?: st
     newBgCount++;
   }
 
-  const score = computeScore({
+  const oldScore = stats.score;
+  const newScore = computeScore({
     totalLoginDays: stats.totalLoginDays,
     creditedExportsCount: newCredited,
     uniqueTemplatesCount: newTemplateCount,
     uniqueBackgroundsCount: newBgCount,
     longestStreak: newLongest,
   });
+
+  const pointsEarned = newScore - oldScore;
+  const newPointsToday = (isFirstActivityToday ? 0 : stats.pointsToday) + pointsEarned;
 
   await pool.query(
     `UPDATE user_stats SET
@@ -210,8 +242,21 @@ async function handleExport(userId: string, template?: string, backgroundId?: st
       "currentStreak" = $9,
       "longestStreak" = $10,
       "score" = $11,
+      "pointsToday" = $12,
       "updatedAt" = NOW()
     WHERE "userId" = $1`,
-    [userId, newExports, newCredited, newExportsToday, newTemplateCount, newBgCount, usedTemplates, usedBackgrounds, newStreak, newLongest, score]
+    [userId, newExports, newCredited, newExportsToday, newTemplateCount, newBgCount, usedTemplates, usedBackgrounds, newStreak, newLongest, newScore, newPointsToday]
   );
+
+  return {
+    pointsEarned,
+    pointsToday: newPointsToday,
+    stats: {
+      exportsCount: newExports,
+      uniqueTemplatesCount: newTemplateCount,
+      uniqueBackgroundsCount: newBgCount,
+      longestStreak: newLongest,
+      score: newScore,
+    },
+  };
 }

@@ -262,6 +262,20 @@ input.gooey:focus {
   z-index: 1;
 }
 
+@keyframes points-float {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+}
+
 @keyframes glowRise {
   from {
     opacity: 0;
