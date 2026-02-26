@@ -48,7 +48,7 @@ function Avatar({ image, name, size = 40 }: { image: string | null; name: string
     return (
       <Image
         src={getHiResAvatar(image)}
-        alt={name || ""}
+        alt={name || "User avatar"}
         width={size * 2}
         height={size * 2}
         className="rounded-full object-cover"

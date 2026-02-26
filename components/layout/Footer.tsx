@@ -20,7 +20,7 @@ export default function Footer() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 items-start w-full">
             <div className="flex flex-col gap-1.5">
               <h4 className="text-sm font-medium">Pages</h4>
-              <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+              <div className="flex flex-col gap-1 text-sm text-foreground/60">
                 <Link href="/" className="hover:text-foreground transition-colors">
                   Home
                 </Link>
@@ -34,7 +34,7 @@ export default function Footer() {
             </div>
             <div className="flex flex-col gap-1.5">
               <h4 className="text-sm font-medium">Compare</h4>
-              <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+              <div className="flex flex-col gap-1 text-sm text-foreground/60">
                 <Link href="/vs/canva" className="hover:text-foreground transition-colors">
                   vs Canva
                 </Link>
@@ -42,7 +42,7 @@ export default function Footer() {
             </div>
             <div className="flex flex-col gap-1.5">
               <h4 className="text-sm font-medium">Legal</h4>
-              <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+              <div className="flex flex-col gap-1 text-sm text-foreground/60">
                 <Link href="/privacy" className="hover:text-foreground transition-colors">
                   Privacy
                 </Link>
@@ -57,7 +57,7 @@ export default function Footer() {
                 href="https://x.com/yannick_ferire"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-foreground/60 hover:text-foreground transition-colors"
               >
                 @yannick_ferire
               </a>
@@ -65,6 +65,9 @@ export default function Footer() {
           </div>
         </div>
         <div className="pb-8 flex justify-start gap-4">
+          <a href="https://launch.cab/product/groar" target="_blank" rel="noopener noreferrer">
+            <img src="https://launch.cab/api/badges/img/218fb417-54b1-4dab-a291-fa86e793bb74.svg?t=218fb417-54b1-4dab-a291-fa86e793bb74.1772116152241.d4789835032b82a6.96cc9b948c18afbe&tagline=TOP+%23%7Brank%7D&logoPosition=left" alt="Featured on launch.cab" />
+          </a>
           <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer">
             <img src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" />
           </a>

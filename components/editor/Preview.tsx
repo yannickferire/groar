@@ -181,7 +181,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
               className="whitespace-nowrap flex items-center"
               style={{ textShadow, fontSize: isBanner ? "2.3cqi" : "2.7cqi", gap: "0.3cqi" }}
             >
-              <img src="/emoji-tiger.png" alt="" className="mr-1 mt-1" style={{ width: "1.2em", height: "1.2em", opacity: 0.7 }} />
+              <img src="/emoji-tiger.png" alt="Groar" className="mr-1 mt-1" style={{ width: "1.2em", height: "1.2em", opacity: 0.7 }} />
               <span style={{ color: settings.textColor, opacity: 0.5 }}>groar.app</span>
             </p>
           </footer>
