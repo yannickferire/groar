@@ -268,9 +268,14 @@ export default function AdminPage() {
             {counts.all} users
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/dashboard/g0-ctrl/stats">Export Stats</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/g0-ctrl/exports">Export Debug</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/g0-ctrl/stats">Export Stats</Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}

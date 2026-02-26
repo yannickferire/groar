@@ -508,24 +508,59 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         }
       }
 
-      // Landing page: track export for global counter + update counters in real-time
-      if (!isPremium) {
-        const followersValue = settings.metrics.find((m) => m.type === "followers")?.value ?? 0;
-        fetch("/api/stats/track", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            followers: followersValue,
-            backgroundId: settings.background.presetId,
-            template: settings.template,
-          }),
-        }).catch(() => {});
+      // Detect browser/OS for debug tracking
+      const ua = navigator.userAgent;
+      const detectBrowser = () => {
+        if (ua.includes("Brave")) return "Brave";
+        if (ua.includes("Edg/")) return "Edge";
+        if (ua.includes("OPR/") || ua.includes("Opera")) return "Opera";
+        if (ua.includes("Firefox")) return "Firefox";
+        if (ua.includes("CriOS")) return "Chrome iOS";
+        if (ua.includes("Chrome")) return "Chrome";
+        if (ua.includes("Safari")) return "Safari";
+        return "Other";
+      };
+      const detectOS = () => {
+        if (isIOS) return "iOS";
+        if (ua.includes("Android")) return "Android";
+        if (ua.includes("Mac OS")) return "macOS";
+        if (ua.includes("Windows")) return "Windows";
+        if (ua.includes("Linux")) return "Linux";
+        return "Other";
+      };
+
+      const followersValue = settings.metrics.find((m) => m.type === "followers")?.value ?? 0;
+
+      // Track all exports in export_usage (DB) with device debug info
+      fetch("/api/stats/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          followers: isDashboard ? 0 : followersValue,
+          backgroundId: settings.background.presetId,
+          template: settings.template,
+          handle: settings.handle,
+          font: selectedFontId,
+          fontResolved: !!computedFamily,
+          isWebkit: isWebKit,
+          isIos: isIOS,
+          browser: detectBrowser(),
+          os: detectOS(),
+          deviceType: navigator.maxTouchPoints > 0 ? "Mobile" : "Desktop",
+          screenWidth: window.screen.width,
+          screenHeight: window.screen.height,
+          source: isDashboard ? "dashboard" : "landing",
+        }),
+      }).catch(() => {});
+
+      // Landing page: update counters in real-time
+      if (!isDashboard) {
         window.dispatchEvent(
           new CustomEvent("groar:export", { detail: { followers: followersValue } })
         );
       }
 
-      // Track successful export
+      // Track successful export in PostHog
       posthog.capture("image_exported", {
         template: settings.template,
         aspect_ratio: settings.aspectRatio,
