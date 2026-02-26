@@ -228,7 +228,7 @@ export default function PlanPage() {
 
       {/* All Plans */}
       {!loading && planData && (
-        <div>
+        <div id="plans">
           <h3 className="text-lg font-heading font-semibold mb-4">All plans</h3>
           <PricingCards
             onSelectPlan={handleUpgrade}

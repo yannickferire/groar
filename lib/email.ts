@@ -45,30 +45,82 @@ export function welcomeEmail(name: string) {
   };
 }
 
-export function trialEndingEmail(name: string) {
+export function trialEndingEmail(name: string, pricing?: { monthlyPrice: number; lifetimePrice: number }) {
   const firstName = name.split(" ")[0] || name;
+  const monthly = pricing?.monthlyPrice ?? 5;
+  const lifetime = pricing?.lifetimePrice ?? 9;
   return {
     subject: "Your Groar Pro trial ends tomorrow",
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
       <p>Your Pro trial <strong>expires tomorrow</strong>. After that, you'll be back to 3 exports/week with watermark.</p>
-      <p>Keep Pro for <strong>$5/month</strong> or grab <strong>lifetime access</strong> at the current launch price.</p>
-      ${cta("Upgrade now", `${SITE_URL}/dashboard/plan`)}
-      <p style="color:#6b7280;font-size:14px;">No pressure — the early-bird price won't last forever though.</p>
+      <p>🔥 Right now, early adopter pricing is still available:</p>
+      <ul style="margin:12px 0;padding-left:20px;">
+        <li><strong>$${lifetime} one-time</strong> — lifetime access (final price will be $29)</li>
+        <li><strong>$${monthly}/month</strong> — cancel anytime</li>
+      </ul>
+      ${cta("Catch your spot", `${SITE_URL}/dashboard/plan#plans`)}
+      <p style="color:#6b7280;font-size:14px;">Price goes up as spots fill — this won't last.</p>
       <p>— Yannick</p>
     `),
   };
 }
 
-export function trialExpiredEmail(name: string) {
+export function trialExpiredEmail(name: string, pricing?: { lifetimePrice: number }) {
   const firstName = name.split(" ")[0] || name;
+  const lifetime = pricing?.lifetimePrice ?? 9;
   return {
     subject: "Your Groar Pro trial has ended",
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
       <p>Your trial is over — you're back on the free plan (3 exports/week, watermark, limited templates).</p>
-      <p>Unlock everything permanently with <strong>lifetime access</strong> at the current launch price:</p>
-      ${cta("Get lifetime access", `${SITE_URL}/dashboard/plan`)}
+      <p>🔥 Lifetime access is <strong>$${lifetime}</strong> right now (final price: $29). One payment, Pro forever.</p>
+      ${cta("Get lifetime access", `${SITE_URL}/dashboard/plan#plans`)}
+      <p style="color:#6b7280;font-size:14px;">Early adopter pricing — price goes up as spots fill.</p>
+      <p>— Yannick</p>
+    `),
+  };
+}
+
+export function trialFollowUpEmail(name: string, pricing?: { monthlyPrice: number; lifetimePrice: number }) {
+  const firstName = name.split(" ")[0] || name;
+  const monthly = pricing?.monthlyPrice ?? 5;
+  const lifetime = pricing?.lifetimePrice ?? 9;
+  return {
+    subject: "Still thinking about Groar Pro? 🐯",
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
+      <p>Just checking in — your trial ended a few days ago. If you enjoyed the unlimited exports and templates, Pro is still here for you.</p>
+      <p>🔥 Early adopter pricing is still live:</p>
+      <ul style="margin:12px 0;padding-left:20px;">
+        <li><strong>$${lifetime} one-time</strong> — lifetime access (final price: $29)</li>
+        <li><strong>$${monthly}/month</strong> — cancel anytime</li>
+      </ul>
+      <p>These prices go up as more people join, so the sooner you lock it in, the less you pay.</p>
+      ${cta("See plans", `${SITE_URL}/dashboard/plan#plans`)}
+      <p style="color:#6b7280;font-size:14px;">Not interested? No worries — the free plan is here to stay. Just reply if you have questions!</p>
+      <p>— Yannick</p>
+    `),
+  };
+}
+
+export function winBackEmail(name: string, pricing?: { monthlyPrice: number; lifetimePrice: number }) {
+  const firstName = name.split(" ")[0] || name;
+  const monthly = pricing?.monthlyPrice ?? 5;
+  const lifetime = pricing?.lifetimePrice ?? 9;
+  return {
+    subject: "Groar just got better — early adopter pricing inside 🔥",
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
+      <p>Quick update — we just shipped early adopter pricing for Groar Pro. The earlier you join, the less you pay. Forever.</p>
+      <p>🔥 Right now:</p>
+      <ul style="margin:12px 0;padding-left:20px;">
+        <li><strong>$${lifetime} one-time</strong> — lifetime access (final price will be $29)</li>
+        <li><strong>$${monthly}/month</strong> — cancel anytime</li>
+      </ul>
+      <p>Price increases as spots fill up — first come, first served.</p>
+      ${cta("Catch your spot", `${SITE_URL}/pricing`)}
+      <p style="color:#6b7280;font-size:14px;">As always, you can keep using the free plan — no pressure. Just reply if you have any questions.</p>
       <p>— Yannick</p>
     `),
   };
@@ -111,7 +163,7 @@ function layout(body: string) {
     </div>
     <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:24px;">
       🐯 GROAR – Turn your X metrics into high-signal visuals<br>
-      <a href="${SITE_URL}" style="color:#9ca3af;">https://groar.app</a>
+      <a href="${SITE_URL}" style="color:#9ca3af;">groar.app</a> · <a href="https://x.com/yannick_ferire" style="color:#9ca3af;">@yannick_ferire</a>
     </p>
   </div>
 </body>

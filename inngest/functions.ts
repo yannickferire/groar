@@ -1,7 +1,8 @@
 import { inngest } from "@/lib/inngest";
 import { fetchAccountAnalytics, getAllXAccounts } from "@/lib/analytics";
 import { pool } from "@/lib/db";
-import { sendEmail, trialEndingEmail, trialExpiredEmail } from "@/lib/email";
+import { sendEmail, trialEndingEmail, trialExpiredEmail, trialFollowUpEmail } from "@/lib/email";
+import { getPricingTierInfo } from "@/lib/plans-server";
 
 // Daily analytics fetch - runs at 1am UTC for all accounts
 export const dailyAnalyticsFetch = inngest.createFunction(
@@ -100,26 +101,32 @@ export const trialEndingReminder = inngest.createFunction(
   },
   { cron: "0 8 * * *" },
   async ({ step, logger }) => {
-    const users = await step.run("find-ending-trials", async () => {
-      const result = await pool.query(
-        `SELECT u.email, u.name, s."trialEnd"
-         FROM subscription s
-         JOIN "user" u ON u.id = s."userId"
-         WHERE s.plan = 'pro'
-           AND s."trialEnd" IS NOT NULL
-           AND s."trialEnd" > NOW()
-           AND s."trialEnd" <= NOW() + interval '1 day'
-           AND s.status = 'trialing'
-           AND s."externalCustomerId" IS NULL`
-      );
-      return result.rows as { email: string; name: string; trialEnd: string }[];
-    });
+    const [users, pricing] = await Promise.all([
+      step.run("find-ending-trials", async () => {
+        const result = await pool.query(
+          `SELECT u.email, u.name, s."trialEnd"
+           FROM subscription s
+           JOIN "user" u ON u.id = s."userId"
+           WHERE s.plan = 'pro'
+             AND s."trialEnd" IS NOT NULL
+             AND s."trialEnd" > NOW()
+             AND s."trialEnd" <= NOW() + interval '1 day'
+             AND s.status = 'trialing'
+             AND s."externalCustomerId" IS NULL`
+        );
+        return result.rows as { email: string; name: string; trialEnd: string }[];
+      }),
+      step.run("fetch-pricing", async () => {
+        const { proTier, lifetimeTier } = await getPricingTierInfo();
+        return { monthlyPrice: proTier.price, lifetimePrice: lifetimeTier.price };
+      }),
+    ]);
 
     logger.info(`Found ${users.length} trials ending in 24h`);
 
     for (const user of users) {
       await step.run(`send-trial-ending-${user.email}`, async () => {
-        const email = trialEndingEmail(user.name || "there");
+        const email = trialEndingEmail(user.name || "there", pricing);
         await sendEmail({ to: user.email, ...email });
       });
     }
@@ -138,26 +145,75 @@ export const trialExpiredNotification = inngest.createFunction(
   },
   { cron: "0 9 * * *" },
   async ({ step, logger }) => {
-    const users = await step.run("find-expired-trials", async () => {
-      const result = await pool.query(
-        `SELECT u.email, u.name
-         FROM subscription s
-         JOIN "user" u ON u.id = s."userId"
-         WHERE s."trialEnd" IS NOT NULL
-           AND s."trialEnd" <= NOW()
-           AND s."trialEnd" > NOW() - interval '1 day'
-           AND s.plan = 'pro'
-           AND s.status = 'trialing'
-           AND s."externalCustomerId" IS NULL`
-      );
-      return result.rows as { email: string; name: string }[];
-    });
+    const [users, pricing] = await Promise.all([
+      step.run("find-expired-trials", async () => {
+        const result = await pool.query(
+          `SELECT u.email, u.name
+           FROM subscription s
+           JOIN "user" u ON u.id = s."userId"
+           WHERE s."trialEnd" IS NOT NULL
+             AND s."trialEnd" <= NOW()
+             AND s."trialEnd" > NOW() - interval '1 day'
+             AND s.plan = 'pro'
+             AND s.status = 'trialing'
+             AND s."externalCustomerId" IS NULL`
+        );
+        return result.rows as { email: string; name: string }[];
+      }),
+      step.run("fetch-pricing-expired", async () => {
+        const { lifetimeTier } = await getPricingTierInfo();
+        return { lifetimePrice: lifetimeTier.price };
+      }),
+    ]);
 
     logger.info(`Found ${users.length} expired trials`);
 
     for (const user of users) {
       await step.run(`send-trial-expired-${user.email}`, async () => {
-        const email = trialExpiredEmail(user.name || "there");
+        const email = trialExpiredEmail(user.name || "there", pricing);
+        await sendEmail({ to: user.email, ...email });
+      });
+    }
+
+    return { sent: users.length };
+  }
+);
+
+// Trial follow-up — runs daily at 10am UTC
+// Finds trials that expired 5 days ago (J+5) and sends a gentle nudge
+export const trialFollowUp = inngest.createFunction(
+  {
+    id: "trial-follow-up",
+    name: "Trial Follow-Up (J+5)",
+    retries: 2,
+  },
+  { cron: "0 10 * * *" },
+  async ({ step, logger }) => {
+    const [users, pricing] = await Promise.all([
+      step.run("find-followup-trials", async () => {
+        const result = await pool.query(
+          `SELECT u.email, u.name
+           FROM subscription s
+           JOIN "user" u ON u.id = s."userId"
+           WHERE s."trialEnd" IS NOT NULL
+             AND s."trialEnd" <= NOW() - interval '4 days'
+             AND s."trialEnd" > NOW() - interval '5 days'
+             AND s.status = 'trialing'
+             AND s."externalCustomerId" IS NULL`
+        );
+        return result.rows as { email: string; name: string }[];
+      }),
+      step.run("fetch-pricing-followup", async () => {
+        const { proTier, lifetimeTier } = await getPricingTierInfo();
+        return { monthlyPrice: proTier.price, lifetimePrice: lifetimeTier.price };
+      }),
+    ]);
+
+    logger.info(`Found ${users.length} trials for J+5 follow-up`);
+
+    for (const user of users) {
+      await step.run(`send-trial-followup-${user.email}`, async () => {
+        const email = trialFollowUpEmail(user.name || "there", pricing);
         await sendEmail({ to: user.email, ...email });
       });
     }
@@ -167,4 +223,4 @@ export const trialExpiredNotification = inngest.createFunction(
 );
 
 // Export all functions for the serve handler
-export const functions = [dailyAnalyticsFetch, trialEndingReminder, trialExpiredNotification];
+export const functions = [dailyAnalyticsFetch, trialEndingReminder, trialExpiredNotification, trialFollowUp];

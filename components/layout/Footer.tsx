@@ -64,7 +64,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="pb-8 flex justify-start gap-4">
+        <div className="pb-8 flex items-center justify-start gap-4">
           <a href="https://launch.cab/product/groar" target="_blank" rel="noopener noreferrer">
             <img src="https://launch.cab/api/badges/img/218fb417-54b1-4dab-a291-fa86e793bb74.svg?t=218fb417-54b1-4dab-a291-fa86e793bb74.1772116152241.d4789835032b82a6.96cc9b948c18afbe&tagline=TOP+%23%7Brank%7D&logoPosition=left" alt="Featured on launch.cab" />
           </a>
