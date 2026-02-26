@@ -49,7 +49,7 @@ function EarlyAdopterProgressBlock({ lifetimeTierInfo, proTierInfo, billingPerio
   const barH = "1rem";
 
   return (
-    <div className="rounded-2xl border-fade p-5 md:p-6 mt-4 mb-16 max-w-2xl mx-auto" style={{ backgroundColor: "var(--muted)" }}>
+    <div className="rounded-2xl border-fade p-5 md:p-6 mt-4 mb-6 md:mb-16 max-w-2xl mx-auto" style={{ backgroundColor: "var(--muted)" }}>
       {/* Header */}
       <div className="mb-4 text-center">
         <p className="text-xl font-heading font-bold tracking-tight">
@@ -500,7 +500,7 @@ export default function PricingCards({
         >
           {progressBlock}
         </motion.div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-0 items-start max-w-3xl mx-auto">
+        <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 md:gap-0 items-stretch max-w-3xl mx-auto">
           {cards}
         </div>
       </StaggerContainer>
@@ -511,7 +511,7 @@ export default function PricingCards({
     <div>
       {toggle}
       {progressBlock}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-0 items-start max-w-3xl mx-auto">
+      <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 md:gap-0 items-stretch max-w-3xl mx-auto">
         {cards}
       </div>
     </div>
