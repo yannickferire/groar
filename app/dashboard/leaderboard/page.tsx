@@ -170,8 +170,8 @@ export default function LeaderboardPage() {
             </div>
           </div>
 
-          {/* Stats row */}
-          <div className="flex items-center gap-4 md:gap-6 mt-4 pt-4 border-t border-border/30">
+          {/* Stats row — hidden on mobile */}
+          <div className="hidden md:flex items-center gap-6 mt-4 pt-4 border-t border-border/30">
             {currentUserStreak > 0 && (
               <div className="text-center">
                 <p className="text-lg md:text-xl font-mono font-bold flex items-center justify-center gap-1">

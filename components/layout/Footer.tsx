@@ -17,7 +17,7 @@ export default function Footer() {
               into shareable visuals
             </p>
           </div>
-          <div className="flex items-start justify-between w-full">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 items-start w-full">
             <div className="flex flex-col gap-1.5">
               <h4 className="text-sm font-medium">Pages</h4>
               <div className="flex flex-col gap-1 text-sm text-muted-foreground">
