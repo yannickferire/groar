@@ -452,9 +452,10 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         baseOptions.fontEmbedCSS = fontEmbedCSS;
       }
 
-      // iOS WebKit needs a warm-up render: the first call caches resources
-      // in the SVG foreignObject context, the second produces correct output.
-      if (isIOS) {
+      // WebKit (iOS + desktop Safari) needs a warm-up render: the first call
+      // caches resources in the SVG foreignObject context, the second produces
+      // correct output. Without this, backgrounds and fonts silently fail.
+      if (isWebKit) {
         try {
           await toJpeg(previewRef.current, { ...baseOptions, skipFonts: false });
         } catch {}
