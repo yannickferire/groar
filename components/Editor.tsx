@@ -415,6 +415,17 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         await document.fonts.load(`16px ${computedFamily}`);
       }
 
+      // Replace CSS variable with resolved font family on the export target.
+      // html-to-image's SVG foreignObject context can't resolve CSS variables
+      // from the parent document, causing fallback to Times New Roman.
+      const exportTarget = previewRef.current;
+      const originalFontFamily = exportTarget.style.fontFamily;
+      if (computedFamily) {
+        exportTarget.style.fontFamily = `${computedFamily}, sans-serif`;
+      } else {
+        exportTarget.style.fontFamily = `${originalFontFamily}, sans-serif`;
+      }
+
       const restoreBackgrounds = await inlineBackgroundImages(previewRef.current);
       const fontEmbedCSS = isWebKit ? await buildFontEmbedCSS() : undefined;
 
@@ -458,7 +469,8 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: true });
       }
 
-      // Restore original background image URLs
+      // Restore original font family and background image URLs
+      exportTarget.style.fontFamily = originalFontFamily;
       restoreBackgrounds();
 
       // Remove injected watermark if we added one

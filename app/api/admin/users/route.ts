@@ -31,7 +31,7 @@ export async function GET() {
       s."billingPeriod",
       s."createdAt" as "subscriptionCreatedAt",
       s."updatedAt" as "subscriptionUpdatedAt",
-      (SELECT COUNT(*) FROM export WHERE "userId" = u.id) as "exportCount",
+      COALESCE(us."exportsCount", (SELECT COUNT(*) FROM export WHERE "userId" = u.id)) as "exportCount",
       (SELECT string_agg(DISTINCT a2."providerId", ', ') FROM account a2 WHERE a2."userId" = u.id) as "providers",
       -- Latest analytics snapshot
       (SELECT json_build_object(
@@ -47,6 +47,7 @@ export async function GET() {
       ) as "xAnalytics"
     FROM "user" u
     LEFT JOIN subscription s ON s."userId" = u.id
+    LEFT JOIN user_stats us ON us."userId" = u.id
     ORDER BY u."createdAt" DESC`
   );
 
