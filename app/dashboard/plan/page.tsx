@@ -57,6 +57,7 @@ export default function PlanPage() {
   }, [fetchPlan]);
 
   const isPaidPlan = planData && planData.plan !== "free" && planData.plan !== "friend";
+  const isFriend = planData?.plan === "friend";
   const isLifetime = planData?.billingPeriod === "lifetime";
 
   const handleUpgrade = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
@@ -240,19 +241,19 @@ export default function PlanPage() {
             })()}
             disabledPlans={(() => {
               if (planData.isTrialing) return [];
-              if (isLifetime) return ["free", "pro"] as PlanType[];
+              if (isLifetime || isFriend) return ["free", "pro"] as PlanType[];
               return [];
             })()}
             loadingPlan={upgrading}
             showProFeatures={true}
             proHighlighted={true}
-            showBillingToggle={!isLifetime}
+            showBillingToggle={!isLifetime && !isFriend}
             proTierInfo={proTierInfo}
             lifetimeTierInfo={lifetimeTierInfo}
             ctaLabel={(planKey, billingPeriod) => {
               if (planData.isTrialing && planKey === "pro") return "Claim your spot";
-              // Lifetime user: show "Current plan" on pro
-              if (isLifetime && planKey === "pro") return "Current plan";
+              // Friend or lifetime user: show "Current plan" on pro
+              if ((isLifetime || isFriend) && planKey === "pro") return "Current plan";
               // Pro monthly user
               if (planData.plan === "pro" && !isLifetime && !planData.isTrialing) {
                 if (planKey === "pro" && billingPeriod === "monthly") return "Current plan";
