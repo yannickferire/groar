@@ -216,6 +216,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [handleMode, setHandleMode] = useState<"custom" | string>("custom"); // "custom" or account username
   const handleTouchedRef = useRef(settings.handle !== ""); // track if user has interacted with handle
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
   const fileInputRef = useCallback((node: HTMLInputElement | null) => {
     if (node) node.value = "";
   }, []);
@@ -233,10 +235,11 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
       fetch("/api/user/branding")
         .then((res) => res.ok ? res.json() : null)
         .then((data) => {
-          if (data?.logoUrl && data.logoUrl !== settings.branding?.logoUrl) {
+          const current = settingsRef.current;
+          if (data?.logoUrl && data.logoUrl !== current.branding?.logoUrl) {
             onSettingsChange({
-              ...settings,
-              branding: { ...settings.branding, logoUrl: data.logoUrl, position: settings.branding?.position || "center" },
+              ...current,
+              branding: { ...current.branding, logoUrl: data.logoUrl, position: current.branding?.position || "center" },
             });
           }
         })
@@ -265,7 +268,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           setConnectedAccounts(accounts);
 
           // Auto-select connected account: match current handle, or default to first account
-          const currentHandle = settings.handle.replace("@", "").toLowerCase();
+          const current = settingsRef.current;
+          const currentHandle = current.handle.replace("@", "").toLowerCase();
           const match = accounts.find((a: ConnectedAccount) => a.username?.toLowerCase() === currentHandle);
           const selected = match || accounts[0];
           if (selected?.username) {
@@ -279,13 +283,13 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   followings: selected.latest.followingCount,
                   posts: selected.latest.tweetCount,
                 };
-                const updatedMetrics = settings.metrics.map(m => {
+                const updatedMetrics = current.metrics.map(m => {
                   const autoValue = metricMap[m.type];
                   return autoValue !== undefined ? { ...m, value: autoValue } : m;
                 });
-                onSettingsChange({ ...settings, handle: newHandle, metrics: updatedMetrics });
+                onSettingsChange({ ...current, handle: newHandle, metrics: updatedMetrics });
               } else {
-                onSettingsChange({ ...settings, handle: newHandle });
+                onSettingsChange({ ...current, handle: newHandle });
               }
             }
           }
