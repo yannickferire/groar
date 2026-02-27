@@ -626,15 +626,17 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         ), { duration: Infinity });
         exportToastIdRef.current = toastId;
       } else {
-        // Increment export count and show upsell
-        incrementExportCount();
-        if (hasUsedTrial) {
-          setUpgradeReason("limit");
-          setShowUpgradeModal(true);
-          posthog.capture("upgrade_modal_viewed", { reason: "post_export_limit", source: isDashboard ? "dashboard" : "landing" });
-        } else {
-          setTrialReason(undefined); // post-export
-          setShowTrialModal(true);
+        // Increment export count and show upsell after 2nd export
+        const newCount = incrementExportCount();
+        if (newCount >= 2) {
+          if (hasUsedTrial) {
+            setUpgradeReason("limit");
+            setShowUpgradeModal(true);
+            posthog.capture("upgrade_modal_viewed", { reason: "post_export_limit", source: isDashboard ? "dashboard" : "landing" });
+          } else {
+            setTrialReason(undefined); // post-export
+            setShowTrialModal(true);
+          }
         }
       }
     } catch (error) {

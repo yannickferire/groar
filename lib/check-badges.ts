@@ -1,6 +1,8 @@
 import { pool } from "@/lib/db";
 import { BadgeId } from "@/lib/badges";
 
+const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
+
 type UserStats = {
   exportsCount: number;
   uniqueTemplatesCount: number;
@@ -34,12 +36,32 @@ function computeEligibleBadges(stats: UserStats, ctx: CheckContext): BadgeId[] {
   return eligible;
 }
 
+async function isRankOne(userId: string): Promise<boolean> {
+  // Admin (rank #0) always qualifies
+  if (userId === ADMIN_USER_ID) return true;
+
+  const result = await pool.query(
+    `SELECT "userId" FROM user_stats
+     WHERE score > 0 AND "userId" != $1
+     ORDER BY score DESC, "updatedAt" ASC
+     LIMIT 1`,
+    [ADMIN_USER_ID]
+  );
+  return result.rows.length > 0 && result.rows[0].userId === userId;
+}
+
 export async function checkAndAwardBadges(
   userId: string,
   stats: UserStats,
   ctx: CheckContext
 ): Promise<BadgeId[]> {
   const eligible = computeEligibleBadges(stats, ctx);
+
+  // Check rank #1 for jungle-king badge
+  if (stats.score > 0 && await isRankOne(userId)) {
+    eligible.push("jungle-king");
+  }
+
   if (eligible.length === 0) return [];
 
   const existing = await pool.query(

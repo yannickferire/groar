@@ -8,7 +8,8 @@ export type BadgeId =
   | "rising-star"
   | "groar-elite"
   | "night-owl"
-  | "early-bird";
+  | "early-bird"
+  | "jungle-king";
 
 export type BadgeDefinition = {
   id: BadgeId;
@@ -28,6 +29,7 @@ export const BADGES: BadgeDefinition[] = [
   { id: "groar-elite", name: "GROAR Elite", description: "Reach 1,000 points", emoji: "💎" },
   { id: "night-owl", name: "Night Owl", description: "Export between midnight and 5am", emoji: "🦉" },
   { id: "early-bird", name: "Early Bird", description: "Export between 5am and 8am", emoji: "🐦" },
+  { id: "jungle-king", name: "King of the Jungle", description: "Claim rank #1 on the leaderboard", emoji: "🦁" },
 ];
 
 export const BADGE_MAP = Object.fromEntries(

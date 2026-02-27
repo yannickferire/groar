@@ -76,7 +76,7 @@ function XIcon() {
 
 const SCORE_RULES: { icon: IconSvgElement; label: string; pts: string }[] = [
   { icon: CalendarCheckIn01Icon, label: "Daily login", pts: "+20" },
-  { icon: Download04Icon, label: "Export (max 3/day)", pts: "+10" },
+  { icon: Download04Icon, label: "Export (max 5/day)", pts: "+10" },
   { icon: Layout01Icon, label: "New template", pts: "+50" },
   { icon: PaintBoardIcon, label: "New background", pts: "+20" },
 ];
@@ -221,7 +221,7 @@ export default function LeaderboardPage() {
         {SCORE_RULES.map((rule) => {
           const isDone =
             rule.label === "Daily login" ? loggedInToday :
-            rule.label === "Export (max 3/day)" ? exportsToday >= 3 :
+            rule.label === "Export (max 5/day)" ? exportsToday >= 5 :
             false;
           return (
             <span

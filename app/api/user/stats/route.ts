@@ -3,7 +3,7 @@ import { pool } from "@/lib/db";
 import { checkAndAwardBadges } from "@/lib/check-badges";
 import { NextRequest, NextResponse } from "next/server";
 
-const MAX_CREDITED_EXPORTS_PER_DAY = 3;
+const MAX_CREDITED_EXPORTS_PER_DAY = 5;
 
 type StatsForBadges = {
   exportsCount: number;
