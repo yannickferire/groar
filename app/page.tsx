@@ -139,7 +139,7 @@ export default function Home() {
         </Suspense>
         <ProofSection />
         <HowItWorks />
-        {/* <Testimonials /> */}
+        <Testimonials />
         <Pricing />
         <section className="max-w-3xl mx-auto w-full mt-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>

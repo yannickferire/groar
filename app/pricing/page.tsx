@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { FadeInView } from "@/components/ui/motion";
 import { authClient } from "@/lib/auth-client";
 import PricingCards from "@/components/PricingCards";
+import Testimonials from "@/components/Testimonials";
 import VsFaq from "@/components/VsFaq";
 
 const faqs = [
@@ -169,7 +170,11 @@ function PricingContent() {
           />
         </div>
 
-        <section className="w-full max-w-3xl mt-32 mb-4">
+        <div className="w-full mt-24">
+          <Testimonials />
+        </div>
+
+        <section className="w-full max-w-3xl mt-24 mb-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>
           <VsFaq faqs={faqs} />
         </section>
