@@ -121,7 +121,7 @@ const jsonLd = {
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen px-4 overflow-x-hidden">
+    <div className="flex flex-col min-h-screen px-4">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -131,7 +131,7 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <Header />
-      <main className="flex-1 flex flex-col gap-10 md:gap-24 mt-6 md:mt-16">
+      <main className="flex-1 flex flex-col gap-10 md:gap-24 mt-6 md:mt-16 overflow-x-hidden">
         <Hero />
         <GlobalStats />
         <Suspense fallback={null}>
