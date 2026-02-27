@@ -93,7 +93,7 @@ export type PeriodSettings = {
 
 // Premium feature types
 export type AspectRatioType = "post" | "square" | "banner";
-export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono";
+export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono" | "averia-serif-libre" | "dm-serif-display";
 export type TemplateType = "metrics" | "milestone" | "progress";
 
 export type BrandingSettings = {

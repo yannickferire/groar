@@ -21,7 +21,7 @@ type Notification = {
   title: string;
   body: string | null;
   metadata: {
-    metric?: "followers" | "posts";
+    metric?: "followers" | "posts" | "exports";
     value?: number;
     milestone?: number;
     handle?: string;

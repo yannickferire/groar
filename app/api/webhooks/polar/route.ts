@@ -38,6 +38,35 @@ function parseSubscriptionData(data: Record<string, unknown>) {
   };
 }
 
+// Extract order fields from webhook event.data (one-time purchases)
+function parseOrderData(data: Record<string, unknown>) {
+  const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
+  const customer = (data.customer ?? {}) as Record<string, unknown>;
+  // Product ID from order items
+  const items = (data.items ?? data.order_items ?? []) as Array<Record<string, unknown>>;
+  const productId = items.length > 0
+    ? ((items[0].product_id ?? items[0].productId ?? "") as string)
+    : ((data.product_id ?? data.productId ?? "") as string);
+  return {
+    id: data.id as string,
+    productId,
+    customerId: (data.customer_id ?? data.customerId ?? customer.id ?? "") as string,
+    customerEmail: (customer.email ?? data.customer_email ?? "") as string,
+    userId: metadata.userId,
+  };
+}
+
+// Resolve userId from metadata or fallback to email lookup
+async function resolveUserId(userId: string | undefined, email: string): Promise<string | null> {
+  if (userId) return userId;
+  if (!email) return null;
+  const result = await pool.query(
+    `SELECT id FROM "user" WHERE email = $1 LIMIT 1`,
+    [email]
+  );
+  return result.rows[0]?.id ?? null;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const headers: Record<string, string> = {};
@@ -67,6 +96,54 @@ export async function POST(request: NextRequest) {
       case "checkout.updated": {
         if ((event.data as { status?: string }).status === "succeeded") {
           console.log("Checkout succeeded:", event.data.id);
+        }
+        break;
+      }
+
+      case "order.created": {
+        const order = parseOrderData(event.data as Record<string, unknown>);
+        const plan = getPlanFromProductId(order.productId);
+        if (!plan) {
+          console.log("Order for non-plan product:", order.productId);
+          break;
+        }
+
+        const billingPeriod = getBillingPeriodFromProductId(order.productId);
+        const orderUserId = await resolveUserId(order.userId, order.customerEmail);
+
+        if (!orderUserId) {
+          console.error("Order: could not resolve user —", { userId: order.userId, email: order.customerEmail });
+          return NextResponse.json({ error: "Cannot resolve user" }, { status: 400 });
+        }
+
+        await setUserPlan(orderUserId, plan, {
+          externalId: order.id,
+          externalCustomerId: order.customerId,
+          billingPeriod,
+        });
+        console.log(`Order: set plan ${plan} (${billingPeriod}) for user ${orderUserId} (order: ${order.id})`);
+
+        // PostHog + confirmation email
+        const posthog = getPostHogClient();
+        posthog.capture({
+          distinctId: orderUserId,
+          event: "subscription_activated",
+          properties: { plan, billing_period: billingPeriod, order_id: order.id },
+        });
+        await posthog.shutdown();
+
+        try {
+          const userResult = await pool.query(
+            `SELECT email, name FROM "user" WHERE id = $1`,
+            [orderUserId]
+          );
+          const user = userResult.rows[0];
+          if (user?.email) {
+            const email = subscriptionConfirmedEmail(user.name || "there", billingPeriod);
+            sendEmail({ to: user.email, ...email }).catch(console.error);
+          }
+        } catch (err) {
+          console.error("Failed to send order confirmation email:", err);
         }
         break;
       }
