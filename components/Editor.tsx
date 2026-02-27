@@ -169,6 +169,9 @@ type EditorProps = {
 export default function Editor({ isPremium = false, isDashboard = false }: EditorProps) {
   const searchParams = useSearchParams();
   const importId = searchParams.get("import");
+  const milestoneTemplate = searchParams.get("template");
+  const milestoneMetric = searchParams.get("metric");
+  const milestoneValue = searchParams.get("value");
 
   // On landing page, detect if user has a premium plan to hide the upgrade modal
   // Also sync today's export count from DB when logged in
@@ -294,6 +297,52 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         setIsLoading(false);
       });
   }, [importId]);
+
+  // Pre-fill from milestone notification link (?template=milestone&metric=followers&value=1000)
+  useEffect(() => {
+    if (milestoneTemplate !== "milestone" || !milestoneValue) return;
+    const numericValue = parseInt(milestoneValue, 10);
+    if (isNaN(numericValue)) return;
+
+    // Apply first preset style, or randomize if no presets
+    const applyStyle = async () => {
+      let styleOverrides: Partial<EditorSettings> = {};
+      if (isPremium) {
+        try {
+          const res = await fetch("/api/user/presets");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.presets?.length > 0) {
+              styleOverrides = data.presets[0].settings;
+            }
+          }
+        } catch {}
+      }
+      // If no preset found, randomize
+      if (!Object.keys(styleOverrides).length) {
+        const available = isPremium ? ALL_BACKGROUNDS : ALL_BACKGROUNDS.filter((b) => !b.premium);
+        const randomBg = available[Math.floor(Math.random() * available.length)];
+        const randomColor = ["#faf7e9", "#ffffff", "#1a1a2e", "#0f0f0f"][Math.floor(Math.random() * 4)];
+        const fonts: FontFamily[] = isPremium ? ["bricolage", "inter", "space-grotesk", "dm-mono"] : ["dm-mono"];
+        styleOverrides = {
+          background: { presetId: randomBg.id },
+          textColor: randomColor,
+          font: fonts[Math.floor(Math.random() * fonts.length)],
+        };
+      }
+
+      setSettings((prev) => ({
+        ...prev,
+        ...styleOverrides,
+        template: "milestone" as TemplateType,
+        metrics: [{
+          type: (milestoneMetric || "followers") as MetricType,
+          value: numericValue,
+        }],
+      }));
+    };
+    applyStyle();
+  }, [milestoneTemplate, milestoneMetric, milestoneValue, isPremium]);
 
   // Save settings to localStorage when they change (debounced)
   useEffect(() => {

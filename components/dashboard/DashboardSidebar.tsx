@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon, Notification03Icon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import UserMenu from "./UserMenu";
@@ -34,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Analytics", href: "/dashboard/analytics", icon: Analytics01Icon, premium: true },
   { label: "Connections", href: "/dashboard/connections", icon: Link01Icon, premium: true },
   { label: "History", href: "/dashboard/history", icon: Clock01Icon, premium: true },
+  { label: "Notifications", href: "/dashboard/notifications", icon: Notification03Icon },
   { label: "Leaderboard", href: "/dashboard/leaderboard", icon: RankingIcon },
 ];
 
@@ -48,6 +49,7 @@ export default function DashboardSidebar() {
   const [pointsToday, setPointsToday] = useState<number | null>(null);
   const [animatingPoints, setAnimatingPoints] = useState<number | null>(null);
   const animTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     fetch("/api/user/plan")
@@ -64,6 +66,20 @@ export default function DashboardSidebar() {
       .catch(() => {});
   }, []);
 
+  // Poll unread notification count every 60s
+  useEffect(() => {
+    const fetchUnread = () =>
+      fetch("/api/notifications?unread=true")
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data) setUnreadNotifications(data.unreadCount ?? 0);
+        })
+        .catch(() => {});
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handlePointsEvent = useCallback((e: Event) => {
     const { earned, today } = (e as CustomEvent).detail;
     setPointsToday(today);
@@ -76,8 +92,14 @@ export default function DashboardSidebar() {
 
   useEffect(() => {
     window.addEventListener("groar:points", handlePointsEvent);
+    const onNotifRead = () => setUnreadNotifications((prev) => Math.max(0, prev - 1));
+    const onNotifsAllRead = () => setUnreadNotifications(0);
+    window.addEventListener("groar:notification-read", onNotifRead);
+    window.addEventListener("groar:notifications-all-read", onNotifsAllRead);
     return () => {
       window.removeEventListener("groar:points", handlePointsEvent);
+      window.removeEventListener("groar:notification-read", onNotifRead);
+      window.removeEventListener("groar:notifications-all-read", onNotifsAllRead);
       if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current);
     };
   }, [handlePointsEvent]);
@@ -167,6 +189,7 @@ export default function DashboardSidebar() {
                 }
 
                 const isLeaderboard = item.href === "/dashboard/leaderboard";
+                const isNotifications = item.href === "/dashboard/notifications";
 
                 return (
                   <SidebarMenuItem key={item.href}>
@@ -182,6 +205,11 @@ export default function DashboardSidebar() {
                           strokeWidth={2}
                         />
                         <span className="flex-1">{item.label}</span>
+                        {isNotifications && unreadNotifications > 0 && (
+                          <span className="flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-400/90 text-white text-[11px] font-bold">
+                            {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                     {isLeaderboard && pointsToday !== null && pointsToday > 0 && (

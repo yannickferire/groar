@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { PLAN_LIMITS } from "@/lib/plans";
 import { getUserPlanFromDB, getWeeklyExportCount } from "@/lib/plans-server";
+import { checkExportMilestones } from "@/lib/milestones";
 
 // POST: Save a new export
 export async function POST(request: NextRequest) {
@@ -58,12 +59,24 @@ export async function POST(request: NextRequest) {
 
     const imageUrl = urlData.publicUrl;
 
+    // Get current export count before insert
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int as count FROM export WHERE "userId" = $1`,
+      [session.user.id]
+    );
+    const previousCount = countResult.rows[0].count;
+
     // Save metadata to database
     const result = await pool.query(
       `INSERT INTO export ("userId", "imageUrl", "metrics", "createdAt")
        VALUES ($1, $2, $3, NOW())
        RETURNING id, "imageUrl", "metrics", "createdAt"`,
       [session.user.id, imageUrl, metrics]
+    );
+
+    // Check for export count milestones (fire-and-forget)
+    checkExportMilestones(session.user.id, previousCount, previousCount + 1).catch((e) =>
+      console.error("Export milestone check failed:", e)
     );
 
     return NextResponse.json({ export: result.rows[0] });

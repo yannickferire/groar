@@ -6,6 +6,7 @@ import {
   isMissingScope,
   refreshAccessToken,
 } from "@/lib/x-api";
+import { checkMilestones } from "@/lib/milestones";
 
 export type FetchType = "auto" | "manual";
 
@@ -142,7 +143,7 @@ export async function fetchAccountAnalytics(
 
   // Get previous snapshot to calculate followers delta
   const previousResult = await pool.query(
-    `SELECT "followersCount"
+    `SELECT "followersCount", "tweetCount"
      FROM x_analytics_snapshot
      WHERE "accountId" = $1 AND date <= $2
      ORDER BY date DESC, "createdAt" DESC LIMIT 1`,
@@ -179,6 +180,30 @@ export async function fetchAccountAnalytics(
       followersGained,
     ]
   );
+
+  // Check for milestone crossings and create notifications
+  if (previousSnapshot) {
+    // Resolve userId from accountDbId
+    const userResult2 = await pool.query(
+      `SELECT "userId" FROM account WHERE id = $1`,
+      [accountDbId]
+    );
+    const userId = userResult2.rows[0]?.userId;
+    if (userId) {
+      try {
+        await checkMilestones(
+          userId,
+          userResult.username || "",
+          previousSnapshot.followersCount,
+          userResult.public_metrics.followers_count,
+          previousSnapshot.tweetCount || 0,
+          userResult.public_metrics.tweet_count
+        );
+      } catch (e) {
+        console.error("Milestone check failed:", e);
+      }
+    }
+  }
 
   return {
     accountId: accountDbId,

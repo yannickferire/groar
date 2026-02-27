@@ -1,13 +1,35 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserCircleIcon, Mail01Icon } from "@hugeicons/core-free-icons";
+import { UserCircleIcon, Mail01Icon, Notification03Icon } from "@hugeicons/core-free-icons";
+import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
 
 function SettingsContent() {
   const { data: session } = authClient.useSession();
+  const [emailMilestones, setEmailMilestones] = useState(true);
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/user/preferences")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data) setEmailMilestones(data.emailMilestones);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingPrefs(false));
+  }, []);
+
+  const toggleEmailMilestones = useCallback(async (checked: boolean) => {
+    setEmailMilestones(checked);
+    await fetch("/api/user/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emailMilestones: checked }),
+    });
+  }, []);
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-10">
@@ -55,11 +77,26 @@ function SettingsContent() {
         </div>
       </div>
 
-      {/* Coming soon */}
-      <div className="rounded-2xl border border-dashed border-border p-6">
-        <p className="text-sm text-muted-foreground">
-          More settings coming soon: notification preferences, data export, and account deletion.
-        </p>
+      {/* Notification preferences */}
+      <div className="rounded-2xl border-fade p-6 space-y-6">
+        <div className="flex items-center gap-2">
+          <HugeiconsIcon icon={Notification03Icon} size={20} strokeWidth={2} />
+          <h2 className="text-lg font-heading font-semibold">Notifications</h2>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Milestone emails</p>
+            <p className="text-sm text-muted-foreground">
+              Get an email when you hit a follower milestone.
+            </p>
+          </div>
+          <Switch
+            checked={emailMilestones}
+            onCheckedChange={toggleEmailMilestones}
+            disabled={loadingPrefs}
+          />
+        </div>
       </div>
     </div>
   );
