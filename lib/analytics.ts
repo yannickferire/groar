@@ -56,7 +56,7 @@ export async function fetchAccountAnalytics(
   const today = new Date().toISOString().split("T")[0];
   let currentAccessToken = accessToken;
 
-  // Check if already fetched today with this fetchType
+  // Check if already fetched recently
   const existingSnapshot = await pool.query(
     `SELECT id, "createdAt", COALESCE("manualRefreshCount", 1) as "refreshCount" FROM x_analytics_snapshot
      WHERE "accountId" = $1 AND date = $2 AND "fetchType" = $3`,
@@ -64,6 +64,7 @@ export async function fetchAccountAnalytics(
   );
 
   const MAX_DAILY_MANUAL_REFRESHES = 3;
+  const AUTO_FETCH_COOLDOWN_HOURS = 5;
   if (fetchType === "manual" && existingSnapshot.rows.length > 0) {
     const refreshCount = parseInt(existingSnapshot.rows[0].refreshCount);
     if (refreshCount >= MAX_DAILY_MANUAL_REFRESHES) {
@@ -74,13 +75,23 @@ export async function fetchAccountAnalytics(
         message: "Daily refresh limit reached (3/3).",
       };
     }
-  } else if (fetchType !== "manual" && existingSnapshot.rows.length > 0) {
-    return {
-      accountId: accountDbId,
-      alreadyFetched: true,
-      fetchedAt: existingSnapshot.rows[0].createdAt,
-      message: "Already auto-fetched today.",
-    };
+  } else if (fetchType !== "manual") {
+    // For auto-fetch, check if last auto-fetch was less than cooldown period ago
+    const recentAuto = await pool.query(
+      `SELECT id, "createdAt" FROM x_analytics_snapshot
+       WHERE "accountId" = $1 AND "fetchType" = 'auto'
+       AND "createdAt" > NOW() - interval '${AUTO_FETCH_COOLDOWN_HOURS} hours'
+       ORDER BY "createdAt" DESC LIMIT 1`,
+      [accountDbId]
+    );
+    if (recentAuto.rows.length > 0) {
+      return {
+        accountId: accountDbId,
+        alreadyFetched: true,
+        fetchedAt: recentAuto.rows[0].createdAt,
+        message: "Auto-fetched recently, skipping.",
+      };
+    }
   }
 
   // Fetch user metrics from X API
