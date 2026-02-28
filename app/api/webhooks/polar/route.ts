@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    console.log("Polar webhook received:", event.type, JSON.stringify(event.data).slice(0, 500));
+
     switch (event.type) {
       case "checkout.created": {
         console.log("Checkout created:", event.data.id);
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest) {
 
       case "order.created": {
         const order = parseOrderData(event.data as Record<string, unknown>);
+        console.log("Order parsed:", JSON.stringify(order));
         const plan = getPlanFromProductId(order.productId);
         if (!plan) {
           console.log("Order for non-plan product:", order.productId);
