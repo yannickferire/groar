@@ -83,180 +83,207 @@ export async function POST(req: NextRequest) {
 // JavaScript Date timezone bugs with pg DATE columns.
 
 async function handleLogin(userId: string): Promise<StatsResult> {
-  const result = await pool.query(
-    `SELECT "totalLoginDays", "currentStreak", "longestStreak",
-            "creditedExportsCount", "uniqueTemplatesCount", "uniqueBackgroundsCount",
-            "exportsCount", "score", "pointsToday",
-            ("lastLoginDate" = CURRENT_DATE) AS "loginToday",
-            (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE) AS "hadActivityToday",
-            (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE - 1) AS "hadActivityYesterday"
-     FROM user_stats WHERE "userId" = $1`,
-    [userId]
-  );
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  const stats = result.rows[0];
-  if (!stats) {
-    return { pointsEarned: 0, pointsToday: 0, stats: { exportsCount: 0, uniqueTemplatesCount: 0, uniqueBackgroundsCount: 0, longestStreak: 0, score: 0 } };
-  }
+    const result = await client.query(
+      `SELECT "totalLoginDays", "currentStreak", "longestStreak",
+              "creditedExportsCount", "uniqueTemplatesCount", "uniqueBackgroundsCount",
+              "exportsCount", "score", "pointsToday",
+              ("lastLoginDate" = CURRENT_DATE) AS "loginToday",
+              (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE) AS "hadActivityToday",
+              (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE - 1) AS "hadActivityYesterday"
+       FROM user_stats WHERE "userId" = $1 FOR UPDATE`,
+      [userId]
+    );
 
-  // Already logged in today — return current pointsToday
-  if (stats.loginToday) {
+    const stats = result.rows[0];
+    if (!stats) {
+      await client.query("COMMIT");
+      return { pointsEarned: 0, pointsToday: 0, stats: { exportsCount: 0, uniqueTemplatesCount: 0, uniqueBackgroundsCount: 0, longestStreak: 0, score: 0 } };
+    }
+
+    // Already logged in today — return current pointsToday
+    if (stats.loginToday) {
+      await client.query("COMMIT");
+      return {
+        pointsEarned: 0,
+        pointsToday: stats.pointsToday,
+        stats: {
+          exportsCount: stats.exportsCount,
+          uniqueTemplatesCount: stats.uniqueTemplatesCount,
+          uniqueBackgroundsCount: stats.uniqueBackgroundsCount,
+          longestStreak: stats.longestStreak,
+          score: stats.score,
+        },
+      };
+    }
+
+    const isFirstActivityToday = !stats.hadActivityToday;
+
+    let newStreak = 1;
+    if (stats.hadActivityToday) {
+      newStreak = stats.currentStreak;
+    } else if (stats.hadActivityYesterday) {
+      newStreak = stats.currentStreak + 1;
+    }
+
+    const newLongest = Math.max(stats.longestStreak, newStreak);
+    const newLoginDays = stats.totalLoginDays + 1;
+
+    const oldScore = stats.score;
+    const newScore = computeScore({
+      totalLoginDays: newLoginDays,
+      creditedExportsCount: stats.creditedExportsCount,
+      uniqueTemplatesCount: stats.uniqueTemplatesCount,
+      uniqueBackgroundsCount: stats.uniqueBackgroundsCount,
+      longestStreak: newLongest,
+    });
+
+    const pointsEarned = newScore - oldScore;
+    const newPointsToday = (isFirstActivityToday ? 0 : stats.pointsToday) + pointsEarned;
+
+    await client.query(
+      `UPDATE user_stats SET
+        "totalLoginDays" = $2,
+        "currentStreak" = $3,
+        "longestStreak" = $4,
+        "lastLoginDate" = CURRENT_DATE,
+        "score" = $5,
+        "pointsToday" = $6,
+        "updatedAt" = NOW()
+      WHERE "userId" = $1`,
+      [userId, newLoginDays, newStreak, newLongest, newScore, newPointsToday]
+    );
+
+    await client.query("COMMIT");
+
     return {
-      pointsEarned: 0,
-      pointsToday: stats.pointsToday,
+      pointsEarned,
+      pointsToday: newPointsToday,
       stats: {
         exportsCount: stats.exportsCount,
         uniqueTemplatesCount: stats.uniqueTemplatesCount,
         uniqueBackgroundsCount: stats.uniqueBackgroundsCount,
-        longestStreak: stats.longestStreak,
-        score: stats.score,
+        longestStreak: newLongest,
+        score: newScore,
       },
     };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
   }
-
-  const isFirstActivityToday = !stats.hadActivityToday;
-
-  let newStreak = 1;
-  if (stats.hadActivityToday) {
-    newStreak = stats.currentStreak;
-  } else if (stats.hadActivityYesterday) {
-    newStreak = stats.currentStreak + 1;
-  }
-
-  const newLongest = Math.max(stats.longestStreak, newStreak);
-  const newLoginDays = stats.totalLoginDays + 1;
-
-  const oldScore = stats.score;
-  const newScore = computeScore({
-    totalLoginDays: newLoginDays,
-    creditedExportsCount: stats.creditedExportsCount,
-    uniqueTemplatesCount: stats.uniqueTemplatesCount,
-    uniqueBackgroundsCount: stats.uniqueBackgroundsCount,
-    longestStreak: newLongest,
-  });
-
-  const pointsEarned = newScore - oldScore;
-  const newPointsToday = (isFirstActivityToday ? 0 : stats.pointsToday) + pointsEarned;
-
-  await pool.query(
-    `UPDATE user_stats SET
-      "totalLoginDays" = $2,
-      "currentStreak" = $3,
-      "longestStreak" = $4,
-      "lastLoginDate" = CURRENT_DATE,
-      "score" = $5,
-      "pointsToday" = $6,
-      "updatedAt" = NOW()
-    WHERE "userId" = $1`,
-    [userId, newLoginDays, newStreak, newLongest, newScore, newPointsToday]
-  );
-
-  return {
-    pointsEarned,
-    pointsToday: newPointsToday,
-    stats: {
-      exportsCount: stats.exportsCount,
-      uniqueTemplatesCount: stats.uniqueTemplatesCount,
-      uniqueBackgroundsCount: stats.uniqueBackgroundsCount,
-      longestStreak: newLongest,
-      score: newScore,
-    },
-  };
 }
 
 async function handleExport(userId: string, template?: string, backgroundId?: string): Promise<StatsResult> {
-  const result = await pool.query(
-    `SELECT "totalLoginDays", "exportsCount", "creditedExportsCount",
-            "uniqueTemplatesCount", "uniqueBackgroundsCount",
-            "usedTemplates", "usedBackgrounds", "currentStreak", "longestStreak",
-            "exportsToday", "score", "pointsToday",
-            ("lastExportDate" = CURRENT_DATE) AS "exportToday",
-            (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE) AS "hadActivityToday",
-            (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE - 1) AS "hadActivityYesterday"
-     FROM user_stats WHERE "userId" = $1`,
-    [userId]
-  );
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-  const stats = result.rows[0];
-  if (!stats) {
-    return { pointsEarned: 0, pointsToday: 0, stats: { exportsCount: 0, uniqueTemplatesCount: 0, uniqueBackgroundsCount: 0, longestStreak: 0, score: 0 } };
-  }
+    const result = await client.query(
+      `SELECT "totalLoginDays", "exportsCount", "creditedExportsCount",
+              "uniqueTemplatesCount", "uniqueBackgroundsCount",
+              "usedTemplates", "usedBackgrounds", "currentStreak", "longestStreak",
+              "exportsToday", "score", "pointsToday",
+              ("lastExportDate" = CURRENT_DATE) AS "exportToday",
+              (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE) AS "hadActivityToday",
+              (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE - 1) AS "hadActivityYesterday"
+       FROM user_stats WHERE "userId" = $1 FOR UPDATE`,
+      [userId]
+    );
 
-  // Always increment total exports (for display)
-  const newExports = stats.exportsCount + 1;
+    const stats = result.rows[0];
+    if (!stats) {
+      await client.query("COMMIT");
+      return { pointsEarned: 0, pointsToday: 0, stats: { exportsCount: 0, uniqueTemplatesCount: 0, uniqueBackgroundsCount: 0, longestStreak: 0, score: 0 } };
+    }
 
-  // Daily cap: only credit max 3 exports per day for score
-  const isNewExportDay = !stats.exportToday;
-  const newExportsToday = isNewExportDay ? 1 : stats.exportsToday + 1;
-  const canCredit = newExportsToday <= MAX_CREDITED_EXPORTS_PER_DAY;
-  const newCredited = canCredit ? stats.creditedExportsCount + 1 : stats.creditedExportsCount;
+    // Always increment total exports (for display)
+    const newExports = stats.exportsCount + 1;
 
-  // Streak based on most recent activity (login OR export)
-  const isFirstActivityToday = !stats.hadActivityToday;
+    // Daily cap: only credit max 3 exports per day for score
+    const isNewExportDay = !stats.exportToday;
+    const newExportsToday = isNewExportDay ? 1 : stats.exportsToday + 1;
+    const canCredit = newExportsToday <= MAX_CREDITED_EXPORTS_PER_DAY;
+    const newCredited = canCredit ? stats.creditedExportsCount + 1 : stats.creditedExportsCount;
 
-  let newStreak = stats.currentStreak;
-  let newLongest = stats.longestStreak;
+    // Streak based on most recent activity (login OR export)
+    const isFirstActivityToday = !stats.hadActivityToday;
 
-  if (isFirstActivityToday) {
-    newStreak = stats.hadActivityYesterday ? stats.currentStreak + 1 : 1;
-    newLongest = Math.max(stats.longestStreak, newStreak);
-  }
+    let newStreak = stats.currentStreak;
+    let newLongest = stats.longestStreak;
 
-  let newTemplateCount = stats.uniqueTemplatesCount;
-  let newBgCount = stats.uniqueBackgroundsCount;
-  let usedTemplates: string[] = stats.usedTemplates || [];
-  let usedBackgrounds: string[] = stats.usedBackgrounds || [];
+    if (isFirstActivityToday) {
+      newStreak = stats.hadActivityYesterday ? stats.currentStreak + 1 : 1;
+      newLongest = Math.max(stats.longestStreak, newStreak);
+    }
 
-  if (template && !usedTemplates.includes(template)) {
-    usedTemplates = [...usedTemplates, template];
-    newTemplateCount++;
-  }
+    let newTemplateCount = stats.uniqueTemplatesCount;
+    let newBgCount = stats.uniqueBackgroundsCount;
+    let usedTemplates: string[] = stats.usedTemplates || [];
+    let usedBackgrounds: string[] = stats.usedBackgrounds || [];
 
-  if (backgroundId && !usedBackgrounds.includes(backgroundId)) {
-    usedBackgrounds = [...usedBackgrounds, backgroundId];
-    newBgCount++;
-  }
+    if (template && !usedTemplates.includes(template)) {
+      usedTemplates = [...usedTemplates, template];
+      newTemplateCount++;
+    }
 
-  const oldScore = stats.score;
-  const newScore = computeScore({
-    totalLoginDays: stats.totalLoginDays,
-    creditedExportsCount: newCredited,
-    uniqueTemplatesCount: newTemplateCount,
-    uniqueBackgroundsCount: newBgCount,
-    longestStreak: newLongest,
-  });
+    if (backgroundId && !usedBackgrounds.includes(backgroundId)) {
+      usedBackgrounds = [...usedBackgrounds, backgroundId];
+      newBgCount++;
+    }
 
-  const pointsEarned = newScore - oldScore;
-  const newPointsToday = (isFirstActivityToday ? 0 : stats.pointsToday) + pointsEarned;
-
-  await pool.query(
-    `UPDATE user_stats SET
-      "exportsCount" = $2,
-      "creditedExportsCount" = $3,
-      "exportsToday" = $4,
-      "lastExportDate" = CURRENT_DATE,
-      "uniqueTemplatesCount" = $5,
-      "uniqueBackgroundsCount" = $6,
-      "usedTemplates" = $7,
-      "usedBackgrounds" = $8,
-      "currentStreak" = $9,
-      "longestStreak" = $10,
-      "score" = $11,
-      "pointsToday" = $12,
-      "updatedAt" = NOW()
-    WHERE "userId" = $1`,
-    [userId, newExports, newCredited, newExportsToday, newTemplateCount, newBgCount, usedTemplates, usedBackgrounds, newStreak, newLongest, newScore, newPointsToday]
-  );
-
-  return {
-    pointsEarned,
-    pointsToday: newPointsToday,
-    stats: {
-      exportsCount: newExports,
+    const oldScore = stats.score;
+    const newScore = computeScore({
+      totalLoginDays: stats.totalLoginDays,
+      creditedExportsCount: newCredited,
       uniqueTemplatesCount: newTemplateCount,
       uniqueBackgroundsCount: newBgCount,
       longestStreak: newLongest,
-      score: newScore,
-    },
-  };
+    });
+
+    const pointsEarned = newScore - oldScore;
+    const newPointsToday = (isFirstActivityToday ? 0 : stats.pointsToday) + pointsEarned;
+
+    await client.query(
+      `UPDATE user_stats SET
+        "exportsCount" = $2,
+        "creditedExportsCount" = $3,
+        "exportsToday" = $4,
+        "lastExportDate" = CURRENT_DATE,
+        "uniqueTemplatesCount" = $5,
+        "uniqueBackgroundsCount" = $6,
+        "usedTemplates" = $7,
+        "usedBackgrounds" = $8,
+        "currentStreak" = $9,
+        "longestStreak" = $10,
+        "score" = $11,
+        "pointsToday" = $12,
+        "updatedAt" = NOW()
+      WHERE "userId" = $1`,
+      [userId, newExports, newCredited, newExportsToday, newTemplateCount, newBgCount, usedTemplates, usedBackgrounds, newStreak, newLongest, newScore, newPointsToday]
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      pointsEarned,
+      pointsToday: newPointsToday,
+      stats: {
+        exportsCount: newExports,
+        uniqueTemplatesCount: newTemplateCount,
+        uniqueBackgroundsCount: newBgCount,
+        longestStreak: newLongest,
+        score: newScore,
+      },
+    };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
 }

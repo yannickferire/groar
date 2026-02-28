@@ -33,10 +33,10 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
 export function welcomeEmail(name: string) {
   const firstName = name.split(" ")[0] || name;
   return {
-    subject: "Welcome to Groar! Your free trial is live 🐯",
+    subject: "Welcome to Groar! 🐯",
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Welcome ${firstName}!</h1>
-      <p>Your 3-day Pro trial just started — unlimited exports, no watermark, all templates & backgrounds.</p>
+      <p>You're in! Start a <strong>3-day Pro trial</strong> anytime — unlimited exports, no watermark, all templates & backgrounds. No credit card needed.</p>
       <p>Jump in and create your first image:</p>
       ${cta("Open the editor", `${SITE_URL}/dashboard`)}
       <p style="color:#6b7280;font-size:14px;">Questions? Just reply to this email.</p>
