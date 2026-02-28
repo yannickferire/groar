@@ -8,6 +8,7 @@ import { IconSvgElement } from "@hugeicons/react";
 import { authClient } from "@/lib/auth-client";
 import { BADGES, BADGE_MAP, BadgeId } from "@/lib/badges";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import XIcon from "@/components/icons/XIcon";
 
 type LeaderboardEntry = {
   id: string;
@@ -66,13 +67,6 @@ function Avatar({ image, name, size = 40 }: { image: string | null; name: string
   );
 }
 
-function XIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" aria-hidden="true">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
 
 const SCORE_RULES: { icon: IconSvgElement; label: string; pts: string }[] = [
   { icon: CalendarCheckIn01Icon, label: "Daily login", pts: "+20" },
@@ -84,15 +78,20 @@ const SCORE_RULES: { icon: IconSvgElement; label: string; pts: string }[] = [
 export default function LeaderboardPage() {
   const { data: session } = authClient.useSession();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
-  const [currentUserScore, setCurrentUserScore] = useState(0);
-  const [currentUserExports, setCurrentUserExports] = useState(0);
-  const [currentUserStreak, setCurrentUserStreak] = useState(0);
-  const [currentUserPointsToday, setCurrentUserPointsToday] = useState(0);
-  const [loggedInToday, setLoggedInToday] = useState(false);
-  const [exportsToday, setExportsToday] = useState(0);
-  const [currentUserBadges, setCurrentUserBadges] = useState<{ badgeId: string; earnedAt: string }[]>([]);
+  const [currentUser, setCurrentUser] = useState<{
+    id: string | null;
+    rank: number | null;
+    score: number;
+    exports: number;
+    streak: number;
+    pointsToday: number;
+    loggedInToday: boolean;
+    exportsToday: number;
+    badges: { badgeId: string; earnedAt: string }[];
+  }>({
+    id: null, rank: null, score: 0, exports: 0, streak: 0,
+    pointsToday: 0, loggedInToday: false, exportsToday: 0, badges: [],
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -100,15 +99,17 @@ export default function LeaderboardPage() {
       .then((res) => res.json())
       .then((data) => {
         setLeaderboard(data.leaderboard || []);
-        setCurrentUserId(data.currentUserId);
-        setCurrentUserRank(data.currentUserRank);
-        setCurrentUserScore(data.currentUserScore ?? 0);
-        setCurrentUserExports(data.currentUserExports ?? 0);
-        setCurrentUserStreak(data.currentUserStreak ?? 0);
-        setCurrentUserPointsToday(data.currentUserPointsToday ?? 0);
-        setLoggedInToday(data.currentUserLoggedInToday ?? false);
-        setExportsToday(data.currentUserExportsToday ?? 0);
-        setCurrentUserBadges(data.currentUserBadges || []);
+        setCurrentUser({
+          id: data.currentUserId,
+          rank: data.currentUserRank,
+          score: data.currentUserScore ?? 0,
+          exports: data.currentUserExports ?? 0,
+          streak: data.currentUserStreak ?? 0,
+          pointsToday: data.currentUserPointsToday ?? 0,
+          loggedInToday: data.currentUserLoggedInToday ?? false,
+          exportsToday: data.currentUserExportsToday ?? 0,
+          badges: data.currentUserBadges || [],
+        });
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -138,7 +139,7 @@ export default function LeaderboardPage() {
               </p>
               <div className="flex flex-wrap gap-1 mt-1 -ml-1.5">
                 {BADGES.map((badge) => {
-                  const earned = currentUserBadges.some((b) => b.badgeId === badge.id);
+                  const earned = currentUser.badges.some((b) => b.badgeId === badge.id);
                   return (
                     <Tooltip key={badge.id}>
                       <TooltipTrigger asChild>
@@ -164,7 +165,7 @@ export default function LeaderboardPage() {
             {/* Rank — always visible */}
             <div className="text-center pl-3 md:pl-4 border-l border-border/50">
               <p className="text-2xl font-mono font-bold text-primary">
-                {currentUserRank !== null ? `#${currentUserRank}` : "—"}
+                {currentUser.rank !== null ? `#${currentUser.rank}` : "—"}
               </p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Rank</p>
             </div>
@@ -172,11 +173,11 @@ export default function LeaderboardPage() {
 
           {/* Stats row — hidden on mobile */}
           <div className="hidden md:flex items-center gap-6 mt-4 pt-4 border-t border-border/30">
-            {currentUserStreak > 0 && (
+            {currentUser.streak > 0 && (
               <div className="text-center">
                 <p className="text-lg md:text-xl font-mono font-bold flex items-center justify-center gap-1">
                   <HugeiconsIcon icon={Fire02Icon} size={16} strokeWidth={2} className="text-orange-500" />
-                  {currentUserStreak}
+                  {currentUser.streak}
                 </p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Streak</p>
               </div>
@@ -184,31 +185,31 @@ export default function LeaderboardPage() {
             <div className="text-center">
               <p className="text-lg md:text-xl font-mono font-bold flex items-center justify-center gap-1">
                 <HugeiconsIcon icon={Download04Icon} size={16} strokeWidth={2} className="text-muted-foreground" />
-                {currentUserExports}
+                {currentUser.exports}
               </p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Exports</p>
             </div>
-            {currentUserPointsToday > 0 && (
+            {currentUser.pointsToday > 0 && (
               <div className="text-center">
-                <p className="text-lg md:text-xl font-mono font-bold">+{currentUserPointsToday}</p>
+                <p className="text-lg md:text-xl font-mono font-bold">+{currentUser.pointsToday}</p>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Today</p>
               </div>
             )}
             <div className="text-center">
-              <p className="text-lg md:text-xl font-mono font-bold">{currentUserScore}</p>
+              <p className="text-lg md:text-xl font-mono font-bold">{currentUser.score}</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Score</p>
             </div>
             <div className="flex-1" />
-            {currentUserRank !== null && currentUserScore > 0 && (
+            {currentUser.rank !== null && currentUser.score > 0 && (
               <a
                 href={`https://x.com/intent/tweet?text=${encodeURIComponent(
-                  `I'm ranked #${currentUserRank} on the 🐯 GROAR!\n\nJoin the community 👇\nhttps://groar.app`
+                  `I'm ranked #${currentUser.rank} on the 🐯 GROAR!\n\nJoin the community 👇\nhttps://groar.app`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-xl bg-foreground text-background h-9 px-4 text-sm font-medium hover:opacity-90 transition-opacity"
               >
-                <XIcon />
+                <XIcon className="w-3 h-3 fill-current" />
                 Share
               </a>
             )}
@@ -220,8 +221,8 @@ export default function LeaderboardPage() {
       <div className="flex flex-wrap gap-2">
         {SCORE_RULES.map((rule) => {
           const isDone =
-            rule.label === "Daily login" ? loggedInToday :
-            rule.label === "Export (max 5/day)" ? exportsToday >= 5 :
+            rule.label === "Daily login" ? currentUser.loggedInToday :
+            rule.label === "Export (max 5/day)" ? currentUser.exportsToday >= 5 :
             false;
           return (
             <span
@@ -305,7 +306,7 @@ export default function LeaderboardPage() {
           {/* Rows — Top 10 */}
           {leaderboard.map((user, index) => {
             const rank = index + 1;
-            const isCurrentUser = user.id === currentUserId;
+            const isCurrentUser = user.id === currentUser.id;
 
             return (
               <div
@@ -335,7 +336,7 @@ export default function LeaderboardPage() {
                         className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors group"
                       >
                         <span className="opacity-50 group-hover:opacity-100 transition-opacity">
-                          <XIcon />
+                          <XIcon className="w-3 h-3 fill-current" />
                         </span>
                         <span>@{user.xUsername}</span>
                       </a>

@@ -3,6 +3,7 @@
 
 import { pool } from "./db";
 import { PLANS, PlanType, PRO_PRICING_TIERS, LIFETIME_PRICING_TIERS, TRIAL_DURATION_DAYS } from "./plans";
+import { getStartOfWeek } from "./week";
 
 // Get user plan from database (accounts for trial expiration)
 export async function getUserPlanFromDB(userId: string): Promise<PlanType> {
@@ -183,9 +184,7 @@ export async function getWeeklyExportCount(userId: string): Promise<number> {
 
   if (plan === "free" && subscription?.trialEnd && new Date(subscription.trialEnd) <= new Date()) {
     const trialEndDate = new Date(subscription.trialEnd);
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    weekStart.setHours(0, 0, 0, 0);
+    const weekStart = getStartOfWeek();
     if (trialEndDate > weekStart) {
       countSinceClause = `$2::timestamptz`;
       queryParams.push(trialEndDate);

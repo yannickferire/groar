@@ -13,6 +13,7 @@ import { PlanType, PLANS, ProTierInfo, LifetimeTierInfo, fetchProTierInfo, fetch
 import XLogo from "@/components/icons/XLogo";
 import GoogleLogo from "@/components/icons/GoogleLogo";
 import { authClient } from "@/lib/auth-client";
+import { getStartOfWeek } from "@/lib/week";
 
 type Export = {
   id: string;
@@ -180,12 +181,9 @@ function DashboardContent() {
   const xConnectionCount = connectedAccounts.filter(a => a.providerId === "twitter").length;
   const isFree = plan === "free";
 
-  // This week's exports count
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
-  const exportsThisWeek = exports.filter(e => new Date(e.createdAt) >= startOfWeek).length;
+  // This week's exports count (Monday-based, matches server)
+  const weekStart = getStartOfWeek();
+  const exportsThisWeek = exports.filter(e => new Date(e.createdAt) >= weekStart).length;
 
   // Streak: count consecutive days with at least 1 export (including today)
   const streak = (() => {

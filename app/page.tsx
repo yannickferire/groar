@@ -10,37 +10,7 @@ import Pricing from "@/components/Pricing";
 import ProofSection from "@/components/ProofSection";
 import Testimonials from "@/components/Testimonials";
 import VsFaq from "@/components/VsFaq";
-
-const faqs = [
-  {
-    question: "What is GROAR and why should I use it?",
-    answer: "GROAR is a tool built specifically for X (Twitter) creators who want to turn their metrics into shareable visuals. Instead of spending time designing in generic tools like Canva, you pick a ready-to-use template, connect your X account, and your visual is ready to export in under 10 seconds. It's built to help you celebrate milestones and grow your audience.",
-  },
-  {
-    question: "Is GROAR free to use?",
-    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 3 exports per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month or a one-time payment for lifetime access.",
-  },
-  {
-    question: "How long does it take to create a visual?",
-    answer: "Under 10 seconds. Seriously. Pick a template, choose a background, and export. No design skills required, no learning curve. If you connect your X account, your followers, following, and post count are auto-imported — you don't even have to type them.",
-  },
-  {
-    question: "What metrics can I display?",
-    answer: "Right now, GROAR auto-imports your followers count, following count, and post count from your X account. You can also manually enter any custom metric. More automated metrics are coming soon.",
-  },
-  {
-    question: "Do I need design skills to use GROAR?",
-    answer: "Not at all. Every template is ready-to-use and optimized for X engagement. You don't need to resize anything, pick fonts, or match colors. Just pick a template and a background — GROAR handles the rest.",
-  },
-  {
-    question: "How is GROAR different from Canva or other design tools?",
-    answer: "Canva is a powerful general-purpose design tool, but you have to build everything from scratch. GROAR is purpose-built for X metrics visuals — it connects to your account, auto-imports your data, and gives you ready-to-export templates in seconds. It's way cheaper too (from $5/mo or a one-time lifetime payment vs $15/mo for Canva).",
-  },
-  {
-    question: "Can I connect multiple X accounts?",
-    answer: "Yes! The Pro plan lets you connect up to 3 accounts per platform. Perfect if you manage multiple accounts.",
-  },
-];
+import { faqs } from "@/lib/faqs";
 
 const faqJsonLd = {
   "@context": "https://schema.org",

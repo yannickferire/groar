@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { Toaster as SonnerToaster, toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Tick01Icon, Alert01Icon } from "@hugeicons/core-free-icons";
@@ -46,20 +47,20 @@ export function Toaster() {
 }
 
 export function useToast() {
-  return {
-    showToast: (message: string, type: "success" | "error" = "success", duration?: number) => {
-      if (type === "error") {
-        toast.error(message, {
-          duration,
-          style: {
-            "--normal-bg": "var(--destructive)",
-            "--normal-text": "#ffffff",
-            "--normal-border": "var(--destructive)",
-          } as React.CSSProperties,
-        });
-      } else {
-        toast.success(message, { duration });
-      }
-    },
-  };
+  const showToast = useCallback((message: string, type: "success" | "error" = "success", duration?: number) => {
+    if (type === "error") {
+      toast.error(message, {
+        duration,
+        style: {
+          "--normal-bg": "var(--destructive)",
+          "--normal-text": "#ffffff",
+          "--normal-border": "var(--destructive)",
+        } as React.CSSProperties,
+      });
+    } else {
+      toast.success(message, { duration });
+    }
+  }, []);
+
+  return { showToast };
 }

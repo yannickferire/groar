@@ -8,7 +8,6 @@ import Sidebar from "./editor/Sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import Preview from "./editor/Preview";
 import StyleControls from "./editor/StyleControls";
-import { BACKGROUNDS } from "@/lib/backgrounds";
 import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
 import { FONTS } from "@/lib/fonts";
 import { TEMPLATES } from "@/lib/templates";
@@ -21,145 +20,14 @@ import { FREE_WEEKLY_LIMIT } from "@/lib/plans";
 import TrialSignupModal from "@/components/TrialSignupModal";
 import { checkPremiumFeatures } from "@/lib/premium-check";
 import posthog from "posthog-js";
+import XIcon from "@/components/icons/XIcon";
+import { getStartOfWeek } from "@/lib/week";
+import { dataURLtoFile, ALL_BACKGROUNDS, defaultSettings, loadSettings, saveSettings } from "./editor/utils";
+import { METRIC_LABELS, type EditorSettings, type FontFamily, type TemplateType, type MetricType } from "./editor/types";
 
-// Convert data URL to File for upload
-function dataURLtoFile(dataUrl: string, filename: string): File {
-  const arr = dataUrl.split(",");
-  const mime = arr[0].match(/:(.*?);/)?.[1] || "image/jpeg";
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new File([u8arr], filename, { type: mime });
-}
-
-const STORAGE_KEY = "groar-editor-settings";
-
-// Solid color preset (displayed last in StyleControls)
-const SOLID_COLOR_PRESET: BackgroundPreset = {
-  id: "solid-color",
-  name: "Solid Color",
-  color: "#f59e0b", // Primary color as default
-};
-
-// Combine solid color with image backgrounds
-const ALL_BACKGROUNDS = [SOLID_COLOR_PRESET, ...BACKGROUNDS];
-
-export type PeriodType = "day" | "week" | "month" | "year";
-
-export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks";
-
-export type Metric = {
-  type: MetricType;
-  value: number;
-  prefix?: string;
-};
-
-export const METRIC_LABELS: Record<MetricType, string> = {
-  followers: "Followers",
-  verifiedFollowers: "Verified Followers",
-  followings: "Followings",
-  posts: "Posts",
-  impressions: "Impressions",
-  replies: "Replies",
-  engagementRate: "Engagement Rate",
-  engagement: "Engagement",
-  profileVisits: "Profile Visits",
-  likes: "Likes",
-  reposts: "Reposts",
-  bookmarks: "Bookmarks",
-};
-
-export type BackgroundPreset = {
-  id: string;
-  name: string;
-  image?: string;
-  color?: string;
-  gradient?: string;
-  premium?: boolean;
-};
-
-export type BackgroundSettings = {
-  presetId: string;
-  solidColor?: string;
-};
-
-export type PeriodSettings = {
-  type: PeriodType;
-  number: number;
-} | null;
-
-// Premium feature types
-export type AspectRatioType = "post" | "square" | "banner";
-export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono" | "averia-serif-libre" | "dm-serif-display";
-export type TemplateType = "metrics" | "milestone" | "progress";
-
-export type BrandingSettings = {
-  logoUrl?: string;
-  position: "left" | "center" | "right";
-};
-
-export type EditorSettings = {
-  // Existing fields
-  handle: string;
-  period: PeriodSettings;
-  metrics: Metric[];
-  background: BackgroundSettings;
-  textColor: string;
-  // Premium fields (optional for backward compatibility)
-  aspectRatio?: AspectRatioType;
-  font?: FontFamily;
-  template?: TemplateType;
-  branding?: BrandingSettings;
-  goal?: number;
-  abbreviateNumbers?: boolean;
-};
-
-const defaultSettings: EditorSettings = {
-  handle: "",
-  period: { type: "week", number: 1 },
-  metrics: [{ type: "followers", value: 56 }],
-  background: { presetId: BACKGROUNDS[0]?.id || "solid-color", solidColor: "#f59e0b" },
-  textColor: "#faf7e9",
-  // Premium defaults
-  aspectRatio: "post",
-  font: "dm-mono",
-  template: "metrics",
-  abbreviateNumbers: true,
-};
-
-function loadSettings(): EditorSettings {
-  if (typeof window === "undefined") return defaultSettings;
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Validate the structure and merge with defaults for backward compatibility
-      if (parsed.handle && parsed.metrics && parsed.background && parsed.textColor) {
-        return {
-          ...defaultSettings,
-          ...parsed,
-          // Ensure nested objects are properly merged
-          background: { ...defaultSettings.background, ...parsed.background },
-          branding: parsed.branding,
-        };
-      }
-    }
-  } catch {
-    // Invalid JSON, use defaults
-  }
-  return defaultSettings;
-}
-
-function saveSettings(settings: EditorSettings) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
-    // localStorage not available
-  }
-}
+// Re-export types and constants so existing imports from "@/components/Editor" still work
+export type { PeriodType, MetricType, Metric, BackgroundPreset, BackgroundSettings, PeriodSettings, AspectRatioType, FontFamily, TemplateType, BrandingSettings, EditorSettings } from "./editor/types";
+export { METRIC_LABELS } from "./editor/types";
 
 type EditorProps = {
   isPremium?: boolean;
@@ -238,12 +106,10 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   const exportToastIdRef = useRef<string | number | null>(null);
   const { showToast } = useToast();
 
-  // Track weekly exports for free users
+  // Track weekly exports for free users (Monday-based, matches server)
   const getWeekKey = () => {
-    const now = new Date();
-    const jan1 = new Date(now.getFullYear(), 0, 1);
-    const week = Math.ceil(((now.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7);
-    return `groar-exports-${now.getFullYear()}-w${week}`;
+    const weekStart = getStartOfWeek();
+    return `groar-exports-${weekStart.getFullYear()}-${(weekStart.getMonth() + 1).toString().padStart(2, "0")}-${weekStart.getDate().toString().padStart(2, "0")}`;
   };
 
   const getWeekExportCount = useCallback(() => {
@@ -513,7 +379,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       let dataUrl: string;
       try {
         dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: false });
-      } catch (fontError) {
+      } catch {
         // Firefox often fails with font embedding - retry without fonts
         // Firefox often fails with font embedding — retry without
         dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: true });
@@ -665,9 +531,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
               onClick={() => shareToXRef.current?.(dataUrl, id)}
               className="w-full flex items-center justify-center gap-2 bg-foreground text-background rounded-xl px-4 py-2 md:py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
+              <XIcon className="w-4 h-4 fill-current" />
               Share on X
             </button>
             <p className="text-[11px] text-muted-foreground/70 text-center -mt-1">Image copied to clipboard — just paste it!</p>
@@ -688,9 +552,8 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
           }
         }
       }
-    } catch (error) {
-      // Export failed — user sees toast error below
-      // Clean up injected watermark on error
+    } catch {
+      // Export failed — clean up injected watermark
       if (injectedWatermark) {
         injectedWatermark.remove();
       }
