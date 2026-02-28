@@ -133,10 +133,10 @@ export default function LeaderboardPage() {
               size={48}
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-semibold truncate">
                 {session?.user?.name || "You"}
               </p>
-              <div className="flex flex-wrap gap-1 mt-1">
+              <div className="flex flex-wrap gap-1 mt-1 -ml-1.5">
                 {BADGES.map((badge) => {
                   const earned = currentUserBadges.some((b) => b.badgeId === badge.id);
                   return (
