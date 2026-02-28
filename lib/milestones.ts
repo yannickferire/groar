@@ -152,13 +152,18 @@ async function insertMilestoneNotifications(
       ]
     );
 
-    // Send email for follower milestones only (if user opted in)
-    if (hit.metric === "followers" && user?.email && user.emailMilestones !== false) {
+  }
+
+  // Send a single email for the highest follower milestone (if user opted in)
+  if (user?.email && user.emailMilestones !== false) {
+    const followerHits = hits.filter((h) => h.metric === "followers");
+    if (followerHits.length > 0) {
+      const highest = followerHits[followerHits.length - 1];
       try {
         const email = milestoneEmail(
           user.name || "there",
-          formatted,
-          hit.metric
+          formatMilestone(highest.milestone),
+          highest.metric
         );
         await sendEmail({ to: user.email, ...email });
       } catch (e) {
