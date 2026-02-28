@@ -143,7 +143,7 @@ export default function LeaderboardPage() {
                     <Tooltip key={badge.id}>
                       <TooltipTrigger asChild>
                         <span
-                          className={`inline-flex items-center justify-center w-6 h-6 rounded-md bg-background/60 text-sm cursor-default ${
+                          className={`inline-flex items-center justify-center w-9 h-9 rounded-md bg-background/60 text-xl cursor-default ${
                             earned ? "" : "opacity-60 grayscale"
                           }`}
                           role="img"
