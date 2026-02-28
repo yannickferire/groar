@@ -12,6 +12,7 @@ type Tweet = {
   text: string;
   url: string;
   avatar: string;
+  badge?: string;
 };
 
 const TWEETS: Tweet[] = [
@@ -38,6 +39,15 @@ const TWEETS: Tweet[] = [
     text: "Thanks a lot @yannick_ferire for making these visuals creation that easy using groar.app",
     url: "https://x.com/nhrdev/status/2026321650895999168",
     avatar: "/testimonials/nhrdev.jpg",
+  },
+  {
+    author: "Daniel Merrick",
+    handle: "danmerrick117",
+    verified: true,
+    text: "So cool, especially how **smooth setting it up is**. Had my first graphic made in **~1min** after signing up. **One happy customer here!**",
+    url: "https://x.com/danmerrick117",
+    avatar: "/testimonials/danmerrick117.jpg",
+    badge: "First customer ever",
   },
   {
     author: "Özhan Yılmaz",
@@ -97,8 +107,16 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
         <XIcon className="w-4 h-4 text-[#71767b] shrink-0 mt-1" />
       </div>
 
+      {/* Badge */}
+      {tweet.badge && (
+        <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-primary/20 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+          <span>★</span>
+          {tweet.badge}
+        </div>
+      )}
+
       {/* Tweet body */}
-      <p className="mt-3 text-[15px] leading-[1.45] text-[#e7e9ea]">
+      <p className={`${tweet.badge ? "mt-2" : "mt-3"} text-[15px] leading-[1.45] text-[#e7e9ea]`}>
         {tweet.text.split(/(\*\*[^*]+\*\*|[@#][\w]+|https?:\/\/\S+|[\w]+\.[\w]+\.?\w*)/g).map((part, i) =>
           /^\*\*/.test(part) ? (
             <span key={i} className="text-white font-semibold bg-primary/40 px-1 py-0.5 -my-px">{part.slice(2, -2)}</span>
