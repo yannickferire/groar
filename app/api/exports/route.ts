@@ -36,6 +36,20 @@ export async function POST(request: NextRequest) {
 
     const metrics = JSON.parse(metricsJson);
 
+    // Validate premium features for free users
+    const isPremium = plan === "pro" || plan === "friend";
+    if (!isPremium) {
+      const bgId = metrics.background?.backgroundId || "";
+      const hasPremiumBg = bgId.startsWith("premium-") || bgId.startsWith("custom-");
+      const hasBranding = metrics.branding?.logo || metrics.branding?.showHandle;
+      if (hasPremiumBg || hasBranding) {
+        return NextResponse.json(
+          { error: "Premium feature used", code: "PREMIUM_REQUIRED" },
+          { status: 403 }
+        );
+      }
+    }
+
     // Upload image to Supabase Storage
     const supabase = createServerSupabaseClient();
     const fileName = `${session.user.id}/${Date.now()}.jpg`;

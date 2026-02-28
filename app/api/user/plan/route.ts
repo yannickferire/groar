@@ -1,9 +1,7 @@
-import { requireAuth } from "@/lib/api-auth";
+import { requireAuth, ADMIN_USER_ID } from "@/lib/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
 import { getUserPlanFromDB, getUserSubscription, setUserPlan, getWeeklyExportCount } from "@/lib/plans-server";
-
-const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
 
 export async function GET() {
   const { session, response } = await requireAuth();

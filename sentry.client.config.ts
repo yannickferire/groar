@@ -1,5 +1,5 @@
-// This file configures the initialization of Sentry on the server.
-// The config you add here will be used whenever the server handles a request.
+// This file configures the initialization of Sentry on the client.
+// The config you add here will be used whenever a user loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
@@ -10,9 +10,7 @@ Sentry.init({
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,
 
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
-
-  // Do not send user PII (IP, cookies) to Sentry (GDPR)
-  sendDefaultPii: false,
+  // Define how likely Replay events are sampled.
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 1.0,
 });

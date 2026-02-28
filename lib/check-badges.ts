@@ -1,7 +1,6 @@
 import { pool } from "@/lib/db";
 import { BadgeId } from "@/lib/badges";
-
-const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
+import { ADMIN_USER_ID } from "@/lib/api-auth";
 
 type UserStats = {
   exportsCount: number;

@@ -7,14 +7,18 @@ import { sendEmail, welcomeEmail } from "@/lib/email";
 async function getUserPlan(userId: string): Promise<PlanType> {
   try {
     const result = await pool.query(
-      `SELECT plan FROM subscription WHERE "userId" = $1`,
+      `SELECT plan, status, "trialEnd" FROM subscription WHERE "userId" = $1`,
       [userId]
     );
-    const plan = result.rows[0]?.plan as PlanType | undefined;
-    if (plan && plan in PLANS) {
-      return plan;
+    const row = result.rows[0];
+    if (!row || !(row.plan in PLANS)) return "free";
+
+    // Expired trials should be treated as free
+    if (row.status === "trialing" && row.trialEnd && new Date(row.trialEnd) < new Date()) {
+      return "free";
     }
-    return "free";
+
+    return row.plan as PlanType;
   } catch {
     return "free";
   }

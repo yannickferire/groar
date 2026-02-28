@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
+export const ADMIN_USER_ID = process.env.ADMIN_USER_ID || "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
+
 type Session = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
 
 type AuthSuccess = {

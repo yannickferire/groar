@@ -1,8 +1,6 @@
-import { requireAuth } from "@/lib/api-auth";
+import { requireAuth, ADMIN_USER_ID } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
-
-const ADMIN_USER_ID = "gZ0hUWX81uLZZLKwRYr4RKyqDNFN6ahc";
 
 export async function GET() {
   const { session, response } = await requireAuth();
