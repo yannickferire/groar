@@ -74,7 +74,7 @@ export default function GlobalStats() {
           <StaggerContainer
             staggerDelay={0.15}
             delayChildren={0.2}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 text-center"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 text-center"
           >
             <StaggerItem>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
@@ -112,7 +112,7 @@ export default function GlobalStats() {
               </div>
             </StaggerItem>
 
-            <StaggerItem>
+            <StaggerItem className="hidden lg:block">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} />
                 Templates
@@ -130,7 +130,7 @@ export default function GlobalStats() {
               </div>
             </StaggerItem>
 
-            <StaggerItem>
+            <StaggerItem className="hidden md:block">
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center justify-center gap-2">
                 <HugeiconsIcon icon={Image01Icon} size={18} strokeWidth={2} />
                 Backgrounds
