@@ -61,17 +61,23 @@ const STACK_GROUPS = [
     label: "Application",
     items: [
       { name: "Next.js", role: "Framework", cost: 0, logo: "/logos/stack/nextjs.svg", darkInvert: true },
+      { name: "Tailwind CSS", role: "Styling", cost: 0, logo: "/logos/stack/tailwind.svg" },
+      { name: "shadcn/ui", role: "UI components", cost: 0, logo: "/logos/stack/shadcn.svg", darkInvert: true },
+    ],
+  },
+  {
+    label: "Services",
+    items: [
       { name: "Inngest", role: "Cron jobs", cost: 0, logo: "/logos/stack/inngest.svg", darkInvert: true },
       { name: "Resend", role: "Emails", cost: 0, logo: "/logos/stack/resend.svg", darkInvert: true },
       { name: "Polar", role: "Payments", cost: 0, logo: "/logos/stack/polar.svg" },
     ],
   },
   {
-    label: "Analytics & AI",
+    label: "Analytics",
     items: [
-      { name: "PostHog", role: "Analytics", cost: 0, logo: "/logos/stack/posthog.svg" },
+      { name: "PostHog", role: "Product analysis", cost: 0, logo: "/logos/stack/posthog.svg" },
       { name: "DataFast", role: "Analytics widget", cost: 9, logo: "/logos/stack/datafast.png" },
-      { name: "Claude Code", role: "AI coding", cost: 123.15, logo: "/logos/stack/claude.svg" },
     ],
   },
 ];
