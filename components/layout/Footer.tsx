@@ -27,6 +27,9 @@ export default function Footer() {
                 <Link href="/pricing" className="hover:text-foreground transition-colors">
                   Pricing
                 </Link>
+                <Link href="/open" className="hover:text-foreground transition-colors">
+                  Open Stats
+                </Link>
                 <Link href="/login" className="hover:text-foreground transition-colors">
                   Login
                 </Link>

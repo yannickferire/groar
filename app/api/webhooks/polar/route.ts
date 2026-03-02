@@ -32,6 +32,7 @@ function parseSubscriptionData(data: Record<string, unknown>) {
     status: data.status as string,
     productId: (data.product_id ?? data.productId ?? "") as string,
     customerId: (data.customer_id ?? data.customerId ?? "") as string,
+    amountCents: (data.amount ?? data.recurring_amount ?? 0) as number,
     currentPeriodEnd: (data.current_period_end ?? data.currentPeriodEnd) as string | undefined,
     currentPeriodStart: (data.current_period_start ?? data.currentPeriodStart) as string | undefined,
     userId: metadata.userId,
@@ -47,9 +48,14 @@ function parseOrderData(data: Record<string, unknown>) {
   const productId = items.length > 0
     ? ((items[0].product_id ?? items[0].productId ?? "") as string)
     : ((data.product_id ?? data.productId ?? "") as string);
+  // Amount in cents from order items or top-level
+  const amountCents = items.length > 0
+    ? ((items[0].amount ?? 0) as number)
+    : ((data.amount ?? 0) as number);
   return {
     id: data.id as string,
     productId,
+    amountCents,
     customerId: (data.customer_id ?? data.customerId ?? customer.id ?? "") as string,
     customerEmail: (customer.email ?? data.customer_email ?? "") as string,
     userId: metadata.userId,
@@ -126,6 +132,15 @@ export async function POST(request: NextRequest) {
         });
         console.log(`Order: set plan ${plan} (${billingPeriod}) for user ${orderUserId} (order: ${order.id})`);
 
+        // Track revenue
+        if (order.amountCents > 0) {
+          await pool.query(
+            `INSERT INTO counter (key, value) VALUES ('total_revenue_cents', $1)
+             ON CONFLICT (key) DO UPDATE SET value = counter.value + $1`,
+            [order.amountCents]
+          );
+        }
+
         // PostHog + confirmation email
         const posthog = getPostHogClient();
         posthog.capture({
@@ -185,6 +200,15 @@ export async function POST(request: NextRequest) {
             billingPeriod,
           });
           console.log(`Set plan ${plan} (${billingPeriod}) for user ${sub.userId} (subscription: ${sub.id})`);
+
+          // Track revenue for new activations
+          if (isNewActivation && sub.amountCents > 0) {
+            await pool.query(
+              `INSERT INTO counter (key, value) VALUES ('total_revenue_cents', $1)
+               ON CONFLICT (key) DO UPDATE SET value = counter.value + $1`,
+              [sub.amountCents]
+            );
+          }
 
           // Only track in PostHog + send email if this is a genuinely new activation
           if (isNewActivation) {

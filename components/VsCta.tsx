@@ -33,8 +33,10 @@ export default function VsCta() {
       <h2 className="text-2xl md:text-3xl font-bold mb-3">
         Ready to showcase your X metrics?
       </h2>
-      <p className="text-muted-foreground mb-6 text-balance">
-        Try 🐯 GROAR for free — no credit card required. Create your first metric visual in under 30 seconds.
+      <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+        Try 🐯 GROAR for free — no credit card required.
+        <br />
+        Create your first metric visual in under 30 seconds.
       </p>
       <Button asChild variant="default" size="lg">
         <Link href="/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart">

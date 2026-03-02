@@ -72,14 +72,14 @@ const RANDOM_TEXT_COLORS = [
 
 function randomizeStyle(
   backgrounds: BackgroundPreset[],
-  isPremium: boolean,
+  includeAll: boolean,
 ): Pick<EditorSettings, "background" | "textColor" | "font"> {
-  // Filter to image backgrounds only (no solid color), respect premium
-  const eligible = backgrounds.filter(b => !b.color && (isPremium || !b.premium));
+  // Filter to image backgrounds only (no solid color)
+  const eligible = backgrounds.filter(b => !b.color && (includeAll || !b.premium));
   const randomBg = eligible[Math.floor(Math.random() * eligible.length)];
 
-  // Random font (respect premium)
-  const eligibleFonts = FONT_LIST.filter(f => isPremium || !f.premium);
+  // Random font
+  const eligibleFonts = FONT_LIST.filter(f => includeAll || !f.premium);
   const randomFont = eligibleFonts[Math.floor(Math.random() * eligibleFonts.length)];
 
   // Random text color
@@ -192,9 +192,10 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
   }, [onSettingsChange]);
 
   const handleRandomStyle = useCallback(() => {
-    const randomized = randomizeStyle(backgrounds, isPremium);
+    const includeAll = isPremium || !lockPremiumFeatures;
+    const randomized = randomizeStyle(backgrounds, includeAll);
     onSettingsChange({ ...settingsRef.current, ...randomized });
-  }, [backgrounds, isPremium, onSettingsChange]);
+  }, [backgrounds, isPremium, lockPremiumFeatures, onSettingsChange]);
 
   const updateSetting = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value });
