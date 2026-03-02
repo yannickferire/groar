@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Notification03Icon,
-  CheckmarkCircle02Icon,
   SparklesIcon,
   UserLove01Icon,
   News01Icon,
@@ -60,11 +59,9 @@ function buildEditorUrl(metadata: Notification["metadata"]): string {
 
 function NotificationCard({
   notification,
-  onMarkRead,
   isFirst,
 }: {
   notification: Notification;
-  onMarkRead: (id: string) => void;
   isFirst: boolean;
 }) {
   const isMilestone = notification.type === "milestone";
@@ -72,20 +69,13 @@ function NotificationCard({
   const isFollowers = notification.metadata.metric === "followers";
   const isExports = notification.metadata.metric === "exports";
 
-  const handleClick = () => {
-    if (!notification.read) {
-      onMarkRead(notification.id);
-    }
-  };
-
   return (
     <div
-      className={`rounded-2xl border p-5 transition-colors cursor-pointer ${
+      className={`rounded-2xl border p-5 ${
         notification.read
           ? "border-border/50 bg-background"
           : "border-primary/20 bg-primary/5"
       }`}
-      onClick={handleClick}
     >
       <div className="flex items-start gap-4">
         {/* Icon */}
@@ -179,38 +169,20 @@ export default function NotificationsPage() {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  const markRead = useCallback(
-    async (id: string) => {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+  // Mark all as read in DB when page is opened (keep highlight in UI until reload)
+  useEffect(() => {
+    if (!loading && unreadCount > 0) {
+      // Clear sidebar badge immediately
+      window.dispatchEvent(new CustomEvent("groar:notifications-all-read"));
 
-      // Update sidebar badge via custom event
-      window.dispatchEvent(new CustomEvent("groar:notification-read"));
-
-      await fetch("/api/notifications", {
+      // Mark as read in DB (don't update local notification state — keep highlight)
+      fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ markAllRead: true }),
       });
-    },
-    []
-  );
-
-  const markAllRead = useCallback(async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
-
-    // Update sidebar badge via custom event
-    window.dispatchEvent(new CustomEvent("groar:notifications-all-read"));
-
-    await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ markAllRead: true }),
-    });
-  }, []);
+    }
+  }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -250,16 +222,6 @@ export default function NotificationsPage() {
             Notification settings
           </Link>
         </div>
-        {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={markAllRead}>
-            <HugeiconsIcon
-              icon={CheckmarkCircle02Icon}
-              size={14}
-              strokeWidth={2}
-            />
-            Mark all read
-          </Button>
-        )}
       </div>
 
       {/* Empty state */}
@@ -289,7 +251,6 @@ export default function NotificationsPage() {
           <NotificationCard
             key={notification.id}
             notification={notification}
-            onMarkRead={markRead}
             isFirst={index === 0}
           />
         ))}
