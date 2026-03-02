@@ -42,6 +42,24 @@ export type PeriodSettings = {
   number: number;
 } | null;
 
+export type HeadingType = "period" | "last" | "date-range" | "quote" | "custom";
+
+export type HeadingSettings = {
+  type: HeadingType;
+  // Period mode (handles both single "Week 1" and range "Week 1–4")
+  periodType?: PeriodType;
+  periodFrom?: number;
+  periodTo?: number; // when set, renders "Week 1–4" range style
+  // Last mode ("Last 7 days")
+  lastCount?: number;
+  lastUnit?: PeriodType;
+  // Date range mode ("Jan 1 – Mar 2")
+  dateFrom?: string; // ISO date string "2026-01-01"
+  dateTo?: string;   // ISO date string "2026-03-02"
+  // Headline / Quote / Custom mode
+  text?: string;
+} | null;
+
 export type AspectRatioType = "post" | "square" | "banner";
 export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono" | "averia-serif-libre" | "dm-serif-display";
 export type TemplateType = "metrics" | "milestone" | "progress";
@@ -54,6 +72,7 @@ export type BrandingSettings = {
 export type EditorSettings = {
   handle: string;
   period: PeriodSettings;
+  heading: HeadingSettings;
   metrics: Metric[];
   background: BackgroundSettings;
   textColor: string;

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 type Shortcut = {
   key: string;
   meta?: boolean;
+  shift?: boolean;
   action: () => void;
 };
 
@@ -11,7 +12,9 @@ export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
     const handleKeyDown = (e: KeyboardEvent) => {
       for (const shortcut of shortcuts) {
         if (shortcut.meta && !(e.metaKey || e.ctrlKey)) continue;
-        if (e.key === shortcut.key) {
+        if (shortcut.shift && !e.shiftKey) continue;
+        if (!shortcut.shift && e.shiftKey) continue;
+        if (e.key.toLowerCase() === shortcut.key.toLowerCase()) {
           e.preventDefault();
           shortcut.action();
           return;

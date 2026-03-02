@@ -65,16 +65,24 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
           >
             {settings.handle || ""}
           </p>
-          {settings.period && (
-            <p
-              className="opacity-60"
-              style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : "2.4cqi" }}
-            >
-              {settings.template === "milestone" || settings.template === "progress"
-                ? new Date().getFullYear()
-                : getDateLabel(settings.period.type)}
-            </p>
-          )}
+          {(() => {
+            // Show date label for period-based headings and milestone/progress templates
+            const dateLabelStyle = { color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : "2.4cqi" };
+            if (settings.template === "milestone" || settings.template === "progress") {
+              return settings.period ? (
+                <p className="opacity-60" style={dateLabelStyle}>{new Date().getFullYear()}</p>
+              ) : null;
+            }
+            const h = settings.heading;
+            if (!h) return null;
+            if (h.type === "period" && h.periodType) {
+              return <p className="opacity-60" style={dateLabelStyle}>{getDateLabel(h.periodType)}</p>;
+            }
+            if (h.type === "last" && h.lastUnit) {
+              return <p className="opacity-60" style={dateLabelStyle}>{getDateLabel(h.lastUnit)}</p>;
+            }
+            return null;
+          })()}
         </header>
 
         {/* Template Content */}
@@ -85,26 +93,90 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         ) : (
           /* Default: Metrics Template */
           <div
-            className="relative z-10 flex flex-col items-center"
+            className="relative z-10 flex flex-col items-center w-full px-4"
             style={{ color: settings.textColor, textShadow, gap: isBanner ? "0.3cqi" : "0.5cqi" }}
           >
-            {settings.period && (
-              <p className="font-bold tracking-tight" style={{ fontSize: isBanner ? "6cqi" : "8cqi" }}>
-                <span className="capitalize">{settings.period.type}</span> {settings.period.number}
-              </p>
-            )}
+            {(() => {
+              const h = settings.heading;
+              if (!h) return null;
+              const baseFontSize = isBanner ? "6cqi" : "8cqi";
+
+              // Helper for text-based headings: scale down font for longer text
+              const textSize = (len: number) =>
+                len > 30 ? (isBanner ? "3.5cqi" : "4.5cqi") : len > 20 ? (isBanner ? "4.5cqi" : "6cqi") : baseFontSize;
+
+              if (h.type === "period" && h.periodType) {
+                const from = h.periodFrom ?? 1;
+                const to = h.periodTo;
+                return (
+                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>
+                    <span className="capitalize">{h.periodType}</span>{" "}{to !== undefined ? `${from} - ${to}` : from}
+                  </p>
+                );
+              }
+              if (h.type === "last" && h.lastUnit) {
+                const count = h.lastCount ?? 7;
+                const unit = h.lastUnit;
+                return (
+                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>
+                    Last {count} <span className="capitalize">{unit}{count !== 1 ? "s" : ""}</span>
+                  </p>
+                );
+              }
+              if (h.type === "date-range" && h.dateFrom && h.dateTo) {
+                const fmt = (iso: string) => {
+                  const d = new Date(iso + "T00:00:00");
+                  const fullMonth = d.toLocaleDateString("en-US", { month: "long" });
+                  const month = fullMonth.length > 5
+                    ? d.toLocaleDateString("en-US", { month: "short" })
+                    : fullMonth;
+                  return `${month} ${d.getDate()}`;
+                };
+                const fromDate = new Date(h.dateFrom + "T00:00:00");
+                const toDate = new Date(h.dateTo + "T00:00:00");
+                const sameMonth = fromDate.getMonth() === toDate.getMonth() && fromDate.getFullYear() === toDate.getFullYear();
+                const label = h.dateFrom === h.dateTo
+                  ? fmt(h.dateFrom)
+                  : sameMonth
+                    ? `${fmt(h.dateFrom)} – ${toDate.getDate()}`
+                    : `${fmt(h.dateFrom)} – ${fmt(h.dateTo)}`;
+                return (
+                  <p className="font-bold tracking-tight" style={{ fontSize: textSize(label.length) }}>
+                    {label}
+                  </p>
+                );
+              }
+              if (h.type === "quote" && h.text) {
+                const size = isBanner ? "5cqi" : "6.5cqi";
+                return (
+                  <p className="italic tracking-tight text-center text-balance px-[2%]" style={{ fontSize: size, lineHeight: 1.1 }}>
+                    &ldquo;{h.text}&rdquo;
+                  </p>
+                );
+              }
+              if (h.type === "custom" && h.text) {
+                const size = isBanner ? "5cqi" : "6.5cqi";
+                return (
+                  <p className="tracking-tight text-center text-balance px-[2%]" style={{ fontSize: size, lineHeight: 1.1 }}>
+                    {h.text}
+                  </p>
+                );
+              }
+              return null;
+            })()}
             <div className="flex flex-col items-center" style={{ gap: isBanner ? "0.3cqi" : "0.5cqi" }}>
               {settings.metrics.map((metric, index) => {
-                const primarySize = settings.period
+                const hasHeading = !!settings.heading;
+                const primarySize = hasHeading
                   ? (isBanner ? "3.2cqi" : "4cqi")
                   : (isBanner ? "4.8cqi" : "6cqi");
-                const secondarySize = settings.period
+                const secondarySize = hasHeading
                   ? (isBanner ? "2cqi" : "2.5cqi")
                   : (isBanner ? "2.4cqi" : "3cqi");
-                const primaryIcon = settings.period
+                const primaryIcon = hasHeading
                   ? (isBanner ? "3.6cqi" : iconSizes.primaryWithPeriod)
                   : (isBanner ? "5.2cqi" : iconSizes.primaryNoPeriod);
-                const secondaryIcon = settings.period
+                const secondaryIcon = hasHeading
                   ? (isBanner ? "2.6cqi" : iconSizes.secondaryWithPeriod)
                   : (isBanner ? "3.4cqi" : iconSizes.secondaryNoPeriod);
                 return (

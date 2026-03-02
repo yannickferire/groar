@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, memo, useEffect, useRef } from "react";
-import { EditorSettings, PeriodType, MetricType, Metric, METRIC_LABELS } from "../Editor";
+import { EditorSettings, PeriodType, HeadingType, HeadingSettings, PeriodSettings, MetricType, Metric, METRIC_LABELS } from "../Editor";
 import { parseMetricInput, detectPrefix } from "@/lib/metrics";
 import { normalizeHandle } from "@/lib/validation";
 import { Label } from "@/components/ui/label";
@@ -20,8 +20,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ChevronDownIcon } from "lucide-react";
+import { type DateRange } from "react-day-picker";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Calendar03Icon, Download04Icon, LockIcon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon } from "@hugeicons/core-free-icons";
+import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon } from "@hugeicons/core-free-icons";
 import { TEMPLATE_LIST } from "@/lib/templates";
 import { compressImage } from "@/lib/image-compress";
 import { TemplateType } from "../Editor";
@@ -66,16 +70,29 @@ type SortableMetricItemProps = {
   canDrag: boolean;
 };
 
-function PeriodNumberInput({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
+  value: number;
+  onChange: (value: number) => void;
+  onBlurEmpty?: () => void;
+  autoFocus?: boolean;
+}) {
   const [inputValue, setInputValue] = useState(value.toString());
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Sync local state when value changes (e.g., from localStorage)
   useEffect(() => {
     setInputValue(value.toString());
   }, [value]);
 
+  // Auto-focus on mount if requested
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
+    // Limit to 4 digits max
+    if (val.length > 4) return;
     setInputValue(val);
 
     const parsed = parseInt(val, 10);
@@ -85,16 +102,19 @@ function PeriodNumberInput({ value, onChange }: { value: number; onChange: (valu
   };
 
   const handleBlur = () => {
-    // If empty or invalid, reset to current value
     const parsed = parseInt(inputValue, 10);
-    if (isNaN(parsed) || parsed < 0) {
+    if (isNaN(parsed) || parsed < 0 || inputValue.trim() === "") {
+      if (onBlurEmpty && inputValue.trim() === "") {
+        onBlurEmpty();
+        return;
+      }
       setInputValue(value.toString());
     }
   };
 
   return (
     <Input
-      id="periodNumber"
+      ref={inputRef}
       type="text"
       inputMode="numeric"
       value={inputValue}
@@ -384,6 +404,16 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     onSettingsChange({ ...settings, [key]: value });
   }, [settings, onSettingsChange]);
 
+  const updateHeading = useCallback((heading: HeadingSettings) => {
+    let period: PeriodSettings = null;
+    if (heading?.type === "period" && heading.periodType) {
+      period = { type: heading.periodType, number: heading.periodFrom ?? 1 };
+    } else if (heading?.type === "last" && heading.lastUnit) {
+      period = { type: heading.lastUnit, number: heading.lastCount ?? 7 };
+    }
+    onSettingsChange({ ...settings, heading, period });
+  }, [settings, onSettingsChange]);
+
   const addMetric = useCallback((type: MetricType) => {
     // Auto-populate from connected account analytics if available
     const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
@@ -549,49 +579,184 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           )}
         </div>
 
-        {/* Period - only for metrics template */}
+        {/* Heading - only for metrics template */}
         {(settings.template || "metrics") === "metrics" && (
-          settings.period ? (
+          settings.heading ? (
             <div className="flex flex-col gap-2">
-              <Label>Period</Label>
+              <Label>Heading</Label>
               <div className="flex gap-2">
                 <Select
-                  value={settings.period.type}
-                  onValueChange={(value) => updateSetting("period", { ...settings.period!, type: value as PeriodType })}
+                  value={settings.heading.type}
+                  onValueChange={(value) => {
+                    const newType = value as HeadingType;
+                    const h = settings.heading;
+                    const userText = h?.text && h.text !== "Your quote" && h.text !== "Your text" ? h.text : "";
+                    const defaults: Record<HeadingType, HeadingSettings> = {
+                      "period": { type: "period", periodType: h?.periodType || "week", periodFrom: h?.periodFrom ?? 1 },
+                      "last": { type: "last", lastCount: h?.lastCount ?? 7, lastUnit: h?.lastUnit || h?.periodType || "day" },
+                      "date-range": { type: "date-range", dateFrom: h?.dateFrom || new Date().toISOString().slice(0, 10), dateTo: h?.dateTo || new Date().toISOString().slice(0, 10) },
+                      "quote": { type: "quote", text: userText || "Your quote" },
+                      "custom": { type: "custom", text: userText || "Your text" },
+                    };
+                    updateHeading(defaults[newType]);
+                  }}
                 >
                   <SelectTrigger className="flex-1 bg-white">
-                    <SelectValue placeholder="Select period" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="day">Day</SelectItem>
-                    <SelectItem value="week">Week</SelectItem>
-                    <SelectItem value="month">Month</SelectItem>
-                    <SelectItem value="year">Year</SelectItem>
+                    <SelectItem value="period">Period</SelectItem>
+                    <SelectItem value="last">Last</SelectItem>
+                    <SelectItem value="date-range">Date range</SelectItem>
+                    <SelectItem value="quote">Quote</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
                   </SelectContent>
                 </Select>
-                <PeriodNumberInput
-                  value={settings.period.number}
-                  onChange={(value) => updateSetting("period", { ...settings.period!, number: value })}
-                />
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => updateSetting("period", null)}
+                  onClick={() => updateHeading(null)}
                   className="shrink-0"
-                  aria-label="Remove period"
+                  aria-label="Remove heading"
                 >
                   <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
                 </Button>
               </div>
+
+              {/* Period controls: type selector + from number + optional "to" for range */}
+              {settings.heading.type === "period" && (
+                <div className="flex gap-2 items-center">
+                  <Select
+                    value={settings.heading.periodType || "week"}
+                    onValueChange={(value) => updateHeading({ ...settings.heading!, periodType: value as PeriodType })}
+                  >
+                    <SelectTrigger className="flex-1 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="day">Day</SelectItem>
+                      <SelectItem value="week">Week</SelectItem>
+                      <SelectItem value="month">Month</SelectItem>
+                      <SelectItem value="year">Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <PeriodNumberInput
+                    value={settings.heading.periodFrom ?? 1}
+                    onChange={(value) => updateHeading({ ...settings.heading!, periodFrom: value })}
+                  />
+                  {settings.heading.periodTo !== undefined ? (
+                    <>
+                      <span className="text-muted-foreground text-sm">–</span>
+                      <PeriodNumberInput
+                        value={settings.heading.periodTo}
+                        onChange={(value) => updateHeading({ ...settings.heading!, periodTo: value })}
+                        onBlurEmpty={() => {
+                          const { periodTo: _, ...rest } = settings.heading!;
+                          updateHeading(rest as HeadingSettings);
+                        }}
+                        autoFocus
+                      />
+                    </>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => updateHeading({ ...settings.heading!, periodTo: (settings.heading!.periodFrom ?? 1) + 3 })}
+                      className="shrink-0 text-xs text-muted-foreground"
+                    >
+                      – to
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Last controls: "Last X days/weeks/months/years" */}
+              {settings.heading.type === "last" && (
+                <div className="flex gap-2 items-center">
+                  <PeriodNumberInput
+                    value={settings.heading.lastCount ?? 7}
+                    onChange={(value) => updateHeading({ ...settings.heading!, lastCount: value })}
+                  />
+                  <Select
+                    value={settings.heading.lastUnit || "day"}
+                    onValueChange={(value) => updateHeading({ ...settings.heading!, lastUnit: value as PeriodType })}
+                  >
+                    <SelectTrigger className="flex-1 bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="day">{(settings.heading.lastCount ?? 7) === 1 ? "day" : "days"}</SelectItem>
+                      <SelectItem value="week">{(settings.heading.lastCount ?? 7) === 1 ? "week" : "weeks"}</SelectItem>
+                      <SelectItem value="month">{(settings.heading.lastCount ?? 7) === 1 ? "month" : "months"}</SelectItem>
+                      <SelectItem value="year">{(settings.heading.lastCount ?? 7) === 1 ? "year" : "years"}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Date range controls */}
+              {settings.heading.type === "date-range" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between font-normal bg-white">
+                      {settings.heading.dateFrom && settings.heading.dateTo
+                        ? `${new Date(settings.heading.dateFrom + "T00:00:00").toLocaleDateString()} – ${new Date(settings.heading.dateTo + "T00:00:00").toLocaleDateString()}`
+                        : "Pick a date range"}
+                      <ChevronDownIcon className="size-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                    <Calendar
+                      mode="range"
+                      selected={
+                        settings.heading.dateFrom && settings.heading.dateTo
+                          ? { from: new Date(settings.heading.dateFrom + "T00:00:00"), to: new Date(settings.heading.dateTo + "T00:00:00") }
+                          : undefined
+                      }
+                      onSelect={(range: DateRange | undefined) => {
+                        const toLocalISO = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                        updateHeading({
+                          ...settings.heading!,
+                          dateFrom: range?.from ? toLocalISO(range.from) : settings.heading!.dateFrom,
+                          dateTo: range?.to ? toLocalISO(range.to) : range?.from ? toLocalISO(range.from) : settings.heading!.dateTo,
+                        });
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+
+              {/* Text input for quote / custom */}
+              {(settings.heading.type === "quote" || settings.heading.type === "custom") && (
+                <textarea
+                  ref={(el) => {
+                    if (el) {
+                      el.focus();
+                      el.select();
+                    }
+                  }}
+                  value={settings.heading.text || ""}
+                  onChange={(e) => {
+                    if (settings.heading?.type === "quote" && e.target.value.length > 50) return;
+                    updateHeading({ ...settings.heading!, text: e.target.value });
+                  }}
+                  maxLength={settings.heading?.type === "quote" ? 50 : undefined}
+                  placeholder={
+                    settings.heading.type === "quote" ? "Your favorite quote..." :
+                    "Your text..."
+                  }
+                  rows={2}
+                  className="w-full rounded-xl border border-input bg-white px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                />
+              )}
             </div>
           ) : (
             <Button
               variant="outline"
               className="w-full justify-start text-muted-foreground bg-white"
-              onClick={() => updateSetting("period", { type: "week", number: 1 })}
+              onClick={() => updateHeading({ type: "period", periodType: "week", periodFrom: 1 })}
             >
-              <HugeiconsIcon icon={Calendar03Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
-              Add period
+              <HugeiconsIcon icon={Heading01Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
+              Add heading
             </Button>
           )
         )}

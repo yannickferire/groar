@@ -26,6 +26,7 @@ export const ALL_BACKGROUNDS = [SOLID_COLOR_PRESET, ...BACKGROUNDS];
 export const defaultSettings: EditorSettings = {
   handle: "",
   period: { type: "week", number: 1 },
+  heading: { type: "period", periodType: "week", periodFrom: 1 },
   metrics: [{ type: "followers", value: 56 }],
   background: { presetId: BACKGROUNDS[0]?.id || "solid-color", solidColor: "#f59e0b" },
   textColor: "#faf7e9",
@@ -42,6 +43,19 @@ export function loadSettings(): EditorSettings {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed.handle && parsed.metrics && parsed.background && parsed.textColor) {
+        // Migrate old period → heading format
+        if (parsed.period && !parsed.heading) {
+          parsed.heading = {
+            type: "period" as const,
+            periodType: parsed.period.type,
+            periodFrom: parsed.period.number,
+          };
+        }
+        // Migrate old heading format (periodNumber → periodFrom)
+        if (parsed.heading?.periodNumber !== undefined && parsed.heading?.periodFrom === undefined) {
+          parsed.heading.periodFrom = parsed.heading.periodNumber;
+          delete parsed.heading.periodNumber;
+        }
         return {
           ...defaultSettings,
           ...parsed,

@@ -6,6 +6,7 @@ import { toJpeg } from "html-to-image";
 import { inlineBackgroundImages, buildFontEmbedCSS } from "@/lib/export-preprocess";
 import Sidebar from "./editor/Sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
 import Preview from "./editor/Preview";
 import StyleControls from "./editor/StyleControls";
 import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
@@ -26,7 +27,7 @@ import { dataURLtoFile, ALL_BACKGROUNDS, defaultSettings, loadSettings, saveSett
 import { METRIC_LABELS, type EditorSettings, type FontFamily, type TemplateType, type MetricType } from "./editor/types";
 
 // Re-export types and constants so existing imports from "@/components/Editor" still work
-export type { PeriodType, MetricType, Metric, BackgroundPreset, BackgroundSettings, PeriodSettings, AspectRatioType, FontFamily, TemplateType, BrandingSettings, EditorSettings } from "./editor/types";
+export type { PeriodType, MetricType, Metric, BackgroundPreset, BackgroundSettings, PeriodSettings, HeadingType, HeadingSettings, AspectRatioType, FontFamily, TemplateType, BrandingSettings, EditorSettings } from "./editor/types";
 export { METRIC_LABELS } from "./editor/types";
 
 type EditorProps = {
@@ -73,7 +74,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
 
   const lockPremiumFeatures = isDashboard && !isPremium;
 
-  const [settings, setSettings] = useState<EditorSettings>(defaultSettings);
+  const { state: settings, setState: setSettings, undo, redo, reset: resetSettings } = useUndoRedo<EditorSettings>(defaultSettings);
   const settingsLoadedRef = useRef(false);
 
   // Load settings from localStorage after mount to avoid hydration mismatch
@@ -90,8 +91,8 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       if (loaded.template && TEMPLATES[loaded.template]?.premium) loaded.template = defaultSettings.template;
       if (loaded.aspectRatio && ASPECT_RATIOS[loaded.aspectRatio]?.premium) loaded.aspectRatio = defaultSettings.aspectRatio;
     }
-    setSettings(loaded);
-  }, [isPremium, lockPremiumFeatures]);
+    resetSettings(loaded);
+  }, [isPremium, lockPremiumFeatures, resetSettings]);
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!importId);
   const [cooldown, setCooldown] = useState(0);
@@ -149,7 +150,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         if (data.export?.metrics) {
           const raw = data.export.metrics;
           const imported = (typeof raw === "string" ? JSON.parse(raw) : raw) as Partial<EditorSettings>;
-          setSettings({
+          resetSettings({
             ...defaultSettings,
             ...imported,
             background: { ...defaultSettings.background, ...imported.background },
@@ -157,7 +158,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         }
       })
       .catch(() => {
-        setSettings(loadSettings());
+        resetSettings(loadSettings());
       })
       .finally(() => {
         setIsLoading(false);
@@ -576,10 +577,22 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         metricLine = `Just hit ${value.toLocaleString()} ${metricLabel}! 🎉\n\n`;
       } else if (template === "progress") {
         metricLine = `${value.toLocaleString()} ${metricLabel} and counting 🚀\n\n`;
-      } else if (settings.period) {
-        const periodLabel = `${settings.period.number > 1 ? `${settings.period.number} ` : ""}${settings.period.type}${settings.period.number > 1 ? "s" : ""}`;
+      } else if (settings.heading?.type === "period" && settings.heading.periodType) {
+        const from = settings.heading.periodFrom ?? 1;
+        const to = settings.heading.periodTo;
         const prefix = mainMetric.prefix || "+";
-        metricLine = `${prefix}${value.toLocaleString()} ${metricLabel} this ${periodLabel} 📈\n\n`;
+        if (to) {
+          const periodLabel = `${settings.heading.periodType}s ${from}–${to}`;
+          metricLine = `${prefix}${value.toLocaleString()} ${metricLabel} over ${periodLabel} 📈\n\n`;
+        } else {
+          const periodLabel = `${from > 1 ? `${from} ` : ""}${settings.heading.periodType}${from > 1 ? "s" : ""}`;
+          metricLine = `${prefix}${value.toLocaleString()} ${metricLabel} this ${periodLabel} 📈\n\n`;
+        }
+      } else if (settings.heading?.type === "last" && settings.heading.lastUnit) {
+        const count = settings.heading.lastCount ?? 7;
+        const unit = settings.heading.lastUnit;
+        const prefix = mainMetric.prefix || "+";
+        metricLine = `${prefix}${value.toLocaleString()} ${metricLabel} in the last ${count} ${unit}${count > 1 ? "s" : ""} 📈\n\n`;
       } else {
         const prefix = mainMetric.prefix || "+";
         metricLine = `${prefix}${value.toLocaleString()} ${metricLabel} 📈\n\n`;
@@ -616,11 +629,15 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       exportToastIdRef.current = null;
     }
     posthog.capture("share_to_x", { source: isDashboard ? "dashboard" : "landing" });
-  }, [settings.metrics, settings.template, settings.period, isDashboard]);
+  }, [settings.metrics, settings.template, settings.heading, isDashboard]);
   shareToXRef.current = shareToX;
 
   useKeyboardShortcuts(
-    useMemo(() => [{ key: "s", meta: true, action: handleExport }], [handleExport])
+    useMemo(() => [
+      { key: "s", meta: true, action: handleExport },
+      { key: "z", meta: true, action: undo },
+      { key: "z", meta: true, shift: true, action: redo },
+    ], [handleExport, undo, redo])
   );
 
   // Auto-export when returning from trial signup
