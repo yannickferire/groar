@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/api-auth";
 import { NextResponse } from "next/server";
 import { startTrial, hasUsedTrial, getUserSubscription } from "@/lib/plans-server";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { sendEmail, newTrialNotificationEmail } from "@/lib/email";
 
 export async function POST() {
   const { session, response } = await requireAuth();
@@ -34,6 +35,13 @@ export async function POST() {
       },
     });
     await posthog.shutdown();
+
+    // Notify admin
+    const notification = newTrialNotificationEmail(
+      session.user.name || "Unknown",
+      session.user.email || "no email"
+    );
+    sendEmail({ to: "yannick.ferire@gmail.com", ...notification });
 
     return NextResponse.json({ success: true, trialEnd });
   } catch (error) {

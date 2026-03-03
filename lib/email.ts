@@ -159,6 +159,19 @@ export function subscriptionConfirmedEmail(name: string, billingPeriod: "monthly
   };
 }
 
+export function newTrialNotificationEmail(userName: string, userEmail: string) {
+  return {
+    subject: `🐯 New trial started — ${userName}`,
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">New trial started!</h1>
+      <ul style="margin:12px 0;padding-left:20px;">
+        <li><strong>Name:</strong> ${userName}</li>
+        <li><strong>Email:</strong> ${userEmail}</li>
+      </ul>
+    `),
+  };
+}
+
 // ─── Helpers ───
 
 function cta(text: string, href: string) {
