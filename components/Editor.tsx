@@ -540,9 +540,9 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         ), { duration: Infinity });
         exportToastIdRef.current = toastId;
       } else {
-        // Increment export count and show upsell after 2nd export
+        // Increment export count and show upsell after 1st export
         const newCount = incrementExportCount();
-        if (newCount >= 2) {
+        if (newCount >= 1) {
           if (hasUsedTrial) {
             setUpgradeReason("limit");
             setShowUpgradeModal(true);
