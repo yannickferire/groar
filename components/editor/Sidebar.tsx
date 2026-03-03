@@ -244,7 +244,7 @@ type ConnectedAccount = {
 };
 
 export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock }: SidebarProps) {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(940);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [deletingLogoId, setDeletingLogoId] = useState<string | null>(null);
   const [brandingLogos, setBrandingLogos] = useState<BrandingLogo[]>([]);
@@ -475,7 +475,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   ), [settings.metrics]);
 
   return (
-    <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-3xl bg-card min-h-full">
+    <aside className="w-full min-[940px]:w-96 flex flex-col gap-6 p-4 border rounded-3xl bg-card min-h-full">
       {/* Template Selector */}
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">

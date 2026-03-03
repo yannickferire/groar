@@ -290,7 +290,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
       </div>
 
       {/* Row 2: Text color + Font + Random */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">Text</span>
           <Input
@@ -354,7 +354,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
           className="h-9 bg-white"
         >
           <HugeiconsIcon icon={ShuffleSquareIcon} size={14} strokeWidth={2} />
-          Randomize style
+          <span className="hidden sm:inline">Randomize style</span>
         </Button>
       </div>
 

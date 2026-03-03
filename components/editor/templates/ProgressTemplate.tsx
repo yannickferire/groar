@@ -114,7 +114,7 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
         className="font-semibold"
         style={{ fontSize: isBanner ? "2.4cqi" : "3cqi" }}
       >
-        {Math.round(progress)}% complete
+        {progress.toFixed(2)}% complete
       </p>
     </div>
   );

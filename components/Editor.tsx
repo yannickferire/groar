@@ -686,7 +686,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   }, [hasUsedTrial, isDashboard]);
 
   const editorContent = (
-    <section id="editor" className="relative flex flex-col md:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-18">
+    <section id="editor" className="relative flex flex-col min-[940px]:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-18">
       <Sidebar
         settings={settings}
         onSettingsChange={setSettings}
