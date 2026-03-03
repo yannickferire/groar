@@ -64,7 +64,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
             className="opacity-60"
             style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : "2.4cqi" }}
           >
-            {settings.handle || ""}
+            {settings.handle && settings.handle !== "@your_handle" ? settings.handle : ""}
           </p>
           {(() => {
             // Show date label for period-based headings and milestone/progress templates
