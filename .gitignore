@@ -21,6 +21,9 @@ POSTHOG_REPORTS.md
 /.next/
 /out/
 
+# Generated WebP backgrounds (built from source PNG/JPG at build time)
+public/backgrounds/*.webp
+
 # production
 /build
 

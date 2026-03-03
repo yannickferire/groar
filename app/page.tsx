@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -6,11 +7,12 @@ import Hero from "@/components/Hero";
 
 import Editor from "@/components/Editor";
 import HowItWorks from "@/components/HowItWorks";
-import Pricing from "@/components/Pricing";
 import ProofSection from "@/components/ProofSection";
-import Testimonials from "@/components/Testimonials";
-import VsFaq from "@/components/VsFaq";
 import { faqs } from "@/lib/faqs";
+
+const Testimonials = dynamic(() => import("@/components/Testimonials"));
+const Pricing = dynamic(() => import("@/components/Pricing"));
+const VsFaq = dynamic(() => import("@/components/VsFaq"));
 
 const faqJsonLd = {
   "@context": "https://schema.org",
