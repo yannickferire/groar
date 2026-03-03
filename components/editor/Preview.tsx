@@ -295,10 +295,10 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
               src={settings.branding.logoUrl}
               alt="Branding"
               width={300}
-              height={settings.branding.logoSize ?? 40}
+              height={settings.branding.logoSize ?? 30}
               className="object-contain"
               style={{
-                height: `${settings.branding.logoSize ?? 40}px`,
+                height: `${settings.branding.logoSize ?? 30}px`,
                 objectPosition: settings.branding.position === "right" ? "right" : settings.branding.position === "left" ? "left" : "center",
               }}
             />

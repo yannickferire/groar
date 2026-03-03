@@ -5,20 +5,29 @@ import { createServerSupabaseClient } from "@/lib/supabase";
 import { getUserPlanFromDB } from "@/lib/plans-server";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_LOGOS = 6;
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
 
-// POST: Upload branding logo (premium only)
+// POST: Upload branding logo (premium only, max 5)
 export async function POST(request: NextRequest) {
   const { session, response } = await requireAuth();
   if (response) return response;
 
-  // Only premium users can upload a branding logo
   const plan = await getUserPlanFromDB(session.user.id);
   if (plan === "free") {
     return NextResponse.json({ error: "Premium feature" }, { status: 403 });
   }
 
   try {
+    // Check logo count
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS count FROM branding_logos WHERE "userId" = $1`,
+      [session.user.id]
+    );
+    if (countResult.rows[0].count >= MAX_LOGOS) {
+      return NextResponse.json({ error: `Maximum ${MAX_LOGOS} logos reached` }, { status: 400 });
+    }
+
     const formData = await request.formData();
     const logo = formData.get("logo") as File;
 
@@ -26,7 +35,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No logo file provided" }, { status: 400 });
     }
 
-    // Validate file type
     if (!ALLOWED_TYPES.includes(logo.type)) {
       return NextResponse.json(
         { error: "Invalid file type. Allowed: PNG, JPG, SVG, WebP" },
@@ -34,7 +42,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size
     if (logo.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: "File too large. Maximum size: 2MB" },
@@ -44,26 +51,9 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServerSupabaseClient();
 
-    // Delete existing logo if any
-    const existingResult = await pool.query(
-      `SELECT "brandingLogoUrl" FROM "user" WHERE id = $1`,
-      [session.user.id]
-    );
-
-    if (existingResult.rows[0]?.brandingLogoUrl) {
-      // Extract path from URL and delete
-      const existingUrl = existingResult.rows[0].brandingLogoUrl;
-      const pathMatch = existingUrl.match(/\/exports\/(.+)$/);
-      if (pathMatch) {
-        await supabase.storage.from("exports").remove([pathMatch[1]]);
-      }
-    }
-
-    // Get file extension — use timestamp in filename to bust cache
     const ext = logo.name.split(".").pop() || "png";
     const fileName = `${session.user.id}/branding/logo-${Date.now()}.${ext}`;
 
-    // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from("exports")
       .upload(fileName, logo, {
@@ -77,74 +67,116 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to upload logo" }, { status: 500 });
     }
 
-    // Get public URL
     const { data: urlData } = supabase.storage
       .from("exports")
       .getPublicUrl(fileName);
 
     const logoUrl = urlData.publicUrl;
 
-    // Update user record
-    await pool.query(
-      `UPDATE "user" SET "brandingLogoUrl" = $1 WHERE id = $2`,
-      [logoUrl, session.user.id]
+    // Insert into branding_logos table
+    const insertResult = await pool.query(
+      `INSERT INTO branding_logos ("userId", url) VALUES ($1, $2) RETURNING id, url, "createdAt"`,
+      [session.user.id, logoUrl]
     );
 
-    return NextResponse.json({ logoUrl });
+    const newLogo = insertResult.rows[0];
+
+    return NextResponse.json({ logo: { id: newLogo.id, url: newLogo.url, createdAt: newLogo.createdAt } });
   } catch (error) {
     console.error("Branding upload error:", error);
     return NextResponse.json({ error: "Failed to upload branding" }, { status: 500 });
   }
 }
 
-// GET: Get current branding logo
+// GET: Get all branding logos
 export async function GET() {
   const { session, response } = await requireAuth();
   if (response) return response;
 
   try {
     const result = await pool.query(
-      `SELECT "brandingLogoUrl" FROM "user" WHERE id = $1`,
+      `SELECT id, url, "createdAt" FROM branding_logos WHERE "userId" = $1 ORDER BY "createdAt" ASC`,
       [session.user.id]
     );
 
-    return NextResponse.json({
-      logoUrl: result.rows[0]?.brandingLogoUrl || null,
-    });
+    // Fallback: if no logos in new table but legacy column has a value
+    if (result.rows.length === 0) {
+      const legacyResult = await pool.query(
+        `SELECT "brandingLogoUrl" FROM "user" WHERE id = $1`,
+        [session.user.id]
+      );
+      if (legacyResult.rows[0]?.brandingLogoUrl) {
+        return NextResponse.json({
+          logos: [{ id: "legacy", url: legacyResult.rows[0].brandingLogoUrl, createdAt: new Date().toISOString() }],
+        });
+      }
+    }
+
+    return NextResponse.json({ logos: result.rows });
   } catch (error) {
     console.error("Branding fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch branding" }, { status: 500 });
   }
 }
 
-// DELETE: Remove branding logo
-export async function DELETE() {
+// DELETE: Remove a specific branding logo by id
+export async function DELETE(request: NextRequest) {
   const { session, response } = await requireAuth();
   if (response) return response;
 
   try {
-    const result = await pool.query(
-      `SELECT "brandingLogoUrl" FROM "user" WHERE id = $1`,
-      [session.user.id]
-    );
+    const { searchParams } = new URL(request.url);
+    const logoId = searchParams.get("id");
 
-    const logoUrl = result.rows[0]?.brandingLogoUrl;
+    if (!logoId) {
+      return NextResponse.json({ error: "Logo id is required" }, { status: 400 });
+    }
 
-    if (logoUrl) {
-      const supabase = createServerSupabaseClient();
-
-      // Extract path from URL and delete
-      const pathMatch = logoUrl.match(/\/exports\/(.+)$/);
-      if (pathMatch) {
-        await supabase.storage.from("exports").remove([pathMatch[1]]);
-      }
-
-      // Clear database record
-      await pool.query(
-        `UPDATE "user" SET "brandingLogoUrl" = NULL WHERE id = $1`,
+    // Handle legacy logo
+    if (logoId === "legacy") {
+      const result = await pool.query(
+        `SELECT "brandingLogoUrl" FROM "user" WHERE id = $1`,
         [session.user.id]
       );
+      const logoUrl = result.rows[0]?.brandingLogoUrl;
+      if (logoUrl) {
+        const supabase = createServerSupabaseClient();
+        const pathMatch = logoUrl.match(/\/exports\/(.+)$/);
+        if (pathMatch) {
+          await supabase.storage.from("exports").remove([pathMatch[1]]);
+        }
+        await pool.query(
+          `UPDATE "user" SET "brandingLogoUrl" = NULL WHERE id = $1`,
+          [session.user.id]
+        );
+      }
+      return NextResponse.json({ success: true });
     }
+
+    // Look up the logo
+    const result = await pool.query(
+      `SELECT url FROM branding_logos WHERE id = $1 AND "userId" = $2`,
+      [logoId, session.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: "Logo not found" }, { status: 404 });
+    }
+
+    const logoUrl = result.rows[0].url;
+
+    // Delete from Supabase Storage
+    const supabase = createServerSupabaseClient();
+    const pathMatch = logoUrl.match(/\/exports\/(.+)$/);
+    if (pathMatch) {
+      await supabase.storage.from("exports").remove([pathMatch[1]]);
+    }
+
+    // Delete from database
+    await pool.query(
+      `DELETE FROM branding_logos WHERE id = $1 AND "userId" = $2`,
+      [logoId, session.user.id]
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

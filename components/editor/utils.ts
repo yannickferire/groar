@@ -24,7 +24,7 @@ export const SOLID_COLOR_PRESET: BackgroundPreset = {
 export const ALL_BACKGROUNDS = [SOLID_COLOR_PRESET, ...BACKGROUNDS];
 
 export const defaultSettings: EditorSettings = {
-  handle: "your_handle",
+  handle: "@your_handle",
   period: { type: "week", number: 1 },
   heading: { type: "period", periodType: "week", periodFrom: 1 },
   metrics: [{ type: "followers", value: 100 }],

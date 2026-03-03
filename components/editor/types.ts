@@ -64,6 +64,12 @@ export type AspectRatioType = "post" | "square" | "banner";
 export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono" | "averia-serif-libre" | "dm-serif-display";
 export type TemplateType = "metrics" | "milestone" | "progress" | "announcement";
 
+export type BrandingLogo = {
+  id: string;
+  url: string;
+  createdAt: string;
+};
+
 export type BrandingSettings = {
   logoUrl?: string;
   position: "left" | "center" | "right";

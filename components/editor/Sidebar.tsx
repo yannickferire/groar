@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, memo, useEffect, useRef } from "react";
-import { EditorSettings, PeriodType, HeadingType, HeadingSettings, PeriodSettings, MetricType, Metric, METRIC_LABELS } from "../Editor";
+import { EditorSettings, PeriodType, HeadingType, HeadingSettings, PeriodSettings, MetricType, Metric, METRIC_LABELS, BrandingLogo } from "../Editor";
 import { parseMetricInput, detectPrefix } from "@/lib/metrics";
 import { normalizeHandle } from "@/lib/validation";
 import { Label } from "@/components/ui/label";
@@ -233,7 +233,8 @@ type ConnectedAccount = {
 
 export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock }: SidebarProps) {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [isDeletingLogo, setIsDeletingLogo] = useState(false);
+  const [deletingLogoId, setDeletingLogoId] = useState<string | null>(null);
+  const [brandingLogos, setBrandingLogos] = useState<BrandingLogo[]>([]);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [handleMode, setHandleMode] = useState<"custom" | string>("custom"); // "custom" or account username
   const handleTouchedRef = useRef(settings.handle !== ""); // track if user has interacted with handle
@@ -250,17 +251,20 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     })
   );
 
-  // Load branding on mount
+  // Load branding logos on mount
   useEffect(() => {
     if (isPremium) {
       fetch("/api/user/branding")
         .then((res) => res.ok ? res.json() : null)
         .then((data) => {
+          if (!data?.logos) return;
+          setBrandingLogos(data.logos);
           const current = settingsRef.current;
-          if (data?.logoUrl && data.logoUrl !== current.branding?.logoUrl) {
+          // Auto-select first logo if none selected or selected logo no longer exists
+          if (data.logos.length > 0 && (!current.branding?.logoUrl || !data.logos.some((l: BrandingLogo) => l.url === current.branding?.logoUrl))) {
             onSettingsChange({
               ...current,
-              branding: { ...current.branding, logoUrl: data.logoUrl, position: current.branding?.position || "center" },
+              branding: { ...current.branding, logoUrl: data.logos[0].url, position: current.branding?.position || "center" },
             });
           }
         })
@@ -341,10 +345,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
       });
 
       const data = await res.json();
-      if (res.ok && data.logoUrl) {
+      if (res.ok && data.logo) {
+        setBrandingLogos(prev => [...prev, data.logo]);
+        // Auto-select the newly uploaded logo
         onSettingsChange({
           ...settings,
-          branding: { ...settings.branding, logoUrl: data.logoUrl, position: settings.branding?.position || "center" },
+          branding: { ...settings.branding, logoUrl: data.logo.url, position: settings.branding?.position || "center" },
         });
       }
     } catch {
@@ -354,20 +360,25 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     }
   }, [settings, onSettingsChange]);
 
-  const handleLogoDelete = useCallback(async () => {
-    setIsDeletingLogo(true);
+  const handleLogoDelete = useCallback(async (logoId: string, logoUrl: string) => {
+    setDeletingLogoId(logoId);
     try {
-      await fetch("/api/user/branding", { method: "DELETE" });
-      onSettingsChange({
-        ...settings,
-        branding: { ...settings.branding, logoUrl: undefined, position: settings.branding?.position || "center" },
-      });
+      await fetch(`/api/user/branding?id=${logoId}`, { method: "DELETE" });
+      setBrandingLogos(prev => prev.filter(l => l.id !== logoId));
+      // If deleted logo was selected, select another or clear
+      if (settings.branding?.logoUrl === logoUrl) {
+        const remaining = brandingLogos.filter(l => l.id !== logoId);
+        onSettingsChange({
+          ...settings,
+          branding: { ...settings.branding, logoUrl: remaining[0]?.url, position: settings.branding?.position || "center" },
+        });
+      }
     } catch {
       // Delete failed — spinner stops, user can retry
     } finally {
-      setIsDeletingLogo(false);
+      setDeletingLogoId(null);
     }
-  }, [settings, onSettingsChange]);
+  }, [settings, onSettingsChange, brandingLogos]);
 
   const handleAccountSelect = useCallback((value: string) => {
     setHandleMode(value);
@@ -471,7 +482,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                     if (lockPremiumFeatures && template.premium) { onPremiumBlock?.("Premium template"); return; }
                     updateSetting("template", template.id as TemplateType);
                     if (template.id === "announcement" && (!settings.announcements || settings.announcements.length === 0)) {
-                      updateSetting("announcements", [{ emoji: "✅", text: "Feature 1" }, { emoji: "✅", text: "Feature 2" }, { emoji: "✅", text: "Feature 3" }]);
+                      updateSetting("announcements", [{ emoji: "✅", text: "Item 1" }]);
                     }
                     if (template.id === "announcement" && !settings.heading) {
                       updateSetting("heading", { type: "period", periodType: "day", periodFrom: 1 });
@@ -1040,75 +1051,142 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           </h3>
 
           <div className="flex flex-col gap-2">
-            {settings.branding?.logoUrl ? (
+            {brandingLogos.length > 0 ? (
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                  <Image
-                    src={settings.branding.logoUrl}
-                    alt="Your logo"
-                    width={120}
-                    height={40}
-                    className="rounded object-contain max-h-10"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    {([
-                      { pos: "left" as const, icon: AlignBoxBottomLeftIcon },
-                      { pos: "center" as const, icon: AlignBoxBottomCenterIcon },
-                      { pos: "right" as const, icon: AlignBoxBottomRightIcon },
-                    ]).map(({ pos, icon }) => (
-                      <button
-                        key={pos}
-                        type="button"
-                        onClick={() => updateSetting("branding", { ...settings.branding!, position: pos })}
-                        className={`p-1.5 rounded-lg transition-all border ${
-                          (settings.branding?.position || "center") === pos
-                            ? "bg-primary text-primary-foreground border-transparent"
-                            : "bg-white text-muted-foreground hover:bg-muted border-border"
-                        }`}
-                      >
-                        <HugeiconsIcon icon={icon} size={16} strokeWidth={1.5} />
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex-1 flex flex-col gap-0">
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-[10px] text-muted-foreground">20</span>
-                      <Slider
-                        min={20}
-                        max={40}
-                        step={1}
-                        value={[settings.branding?.logoSize ?? 40]}
-                        onValueChange={([v]) => updateSetting("branding", { ...settings.branding!, logoSize: v })}
-                        className="flex-1"
-                      />
-                      <span className="text-[10px] text-muted-foreground">40</span>
+                {/* Logo selector popover */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg hover:bg-muted transition-colors w-full"
+                    >
+                      {settings.branding?.logoUrl ? (
+                        <Image
+                          src={settings.branding.logoUrl}
+                          alt="Selected logo"
+                          width={120}
+                          height={40}
+                          className="rounded object-contain max-h-10"
+                        />
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Select logo</span>
+                      )}
+                      <ChevronDownIcon className="ml-auto h-4 w-4 text-muted-foreground shrink-0" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-2" align="start">
+                    <div className="grid grid-cols-2 gap-2">
+                      {brandingLogos.map((logo) => (
+                        <div
+                          key={logo.id}
+                          className="relative group"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateSetting("branding", { ...settings.branding, logoUrl: logo.url, position: settings.branding?.position || "center" });
+                            }}
+                            className={`w-full p-2 rounded-lg border-2 transition-all flex items-center justify-center min-h-12 ${
+                              settings.branding?.logoUrl === logo.url
+                                ? "border-primary bg-primary/5"
+                                : "border-transparent bg-muted/50 hover:bg-muted"
+                            }`}
+                          >
+                            <Image
+                              src={logo.url}
+                              alt="Logo"
+                              width={96}
+                              height={40}
+                              className="object-contain max-h-10"
+                            />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleLogoDelete(logo.id, logo.url); }}
+                            disabled={deletingLogoId === logo.id}
+                            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            {deletingLogoId === logo.id ? (
+                              <HugeiconsIcon icon={Loading03Icon} size={12} strokeWidth={2} className="animate-spin" />
+                            ) : (
+                              <HugeiconsIcon icon={Cancel01Icon} size={12} strokeWidth={2} />
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                      {/* Add logo tile */}
+                      {brandingLogos.length < 6 && (
+                        <label className={`flex flex-col items-center justify-center gap-1 min-h-12 rounded-lg border-2 border-dashed cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors ${isUploadingLogo ? "opacity-50 pointer-events-none" : ""}`}>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                            onChange={handleLogoUpload}
+                            ref={fileInputRef}
+                            className="hidden"
+                            disabled={isUploadingLogo}
+                          />
+                          <HugeiconsIcon
+                            icon={isUploadingLogo ? Loading03Icon : PlusSignIcon}
+                            size={16}
+                            strokeWidth={1.5}
+                            className={`text-muted-foreground ${isUploadingLogo ? "animate-spin" : ""}`}
+                          />
+                          <span className="text-[10px] text-muted-foreground">
+                            {isUploadingLogo ? "Uploading..." : "Add logo"}
+                          </span>
+                        </label>
+                      )}
                     </div>
-                    <div className="relative h-3 mx-3.5">
-                      <span
-                        className="absolute text-[10px] text-muted-foreground -translate-x-1/2"
-                        style={{ left: `${(((settings.branding?.logoSize ?? 40) - 20) / 20) * 100}%` }}
-                      >
-                        {settings.branding?.logoSize ?? 40}px
-                      </span>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Position & size controls */}
+                {settings.branding?.logoUrl && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      {([
+                        { pos: "left" as const, icon: AlignBoxBottomLeftIcon },
+                        { pos: "center" as const, icon: AlignBoxBottomCenterIcon },
+                        { pos: "right" as const, icon: AlignBoxBottomRightIcon },
+                      ]).map(({ pos, icon }) => (
+                        <button
+                          key={pos}
+                          type="button"
+                          onClick={() => updateSetting("branding", { ...settings.branding!, position: pos })}
+                          className={`p-1.5 rounded-lg transition-all border ${
+                            (settings.branding?.position || "center") === pos
+                              ? "bg-primary text-primary-foreground border-transparent"
+                              : "bg-white text-muted-foreground hover:bg-muted border-border"
+                          }`}
+                        >
+                          <HugeiconsIcon icon={icon} size={16} strokeWidth={1.5} />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex-1 flex flex-col gap-0">
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-[10px] text-muted-foreground">20</span>
+                        <Slider
+                          min={20}
+                          max={40}
+                          step={1}
+                          value={[settings.branding?.logoSize ?? 30]}
+                          onValueChange={([v]) => updateSetting("branding", { ...settings.branding!, logoSize: v })}
+                          className="flex-1"
+                        />
+                        <span className="text-[10px] text-muted-foreground">40</span>
+                      </div>
+                      <div className="relative h-3 mx-3.5">
+                        <span
+                          className="absolute text-[10px] text-muted-foreground -translate-x-1/2"
+                          style={{ left: `${(((settings.branding?.logoSize ?? 30) - 20) / 20) * 100}%` }}
+                        >
+                          {settings.branding?.logoSize ?? 30}px
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleLogoDelete}
-                    disabled={isDeletingLogo}
-                    className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <HugeiconsIcon
-                      icon={isDeletingLogo ? Loading03Icon : Delete02Icon}
-                      size={18}
-                      strokeWidth={1.5}
-                      className={isDeletingLogo ? "animate-spin" : ""}
-                    />
-                  </Button>
-                </div>
+                )}
               </div>
             ) : (
               <label className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
