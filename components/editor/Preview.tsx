@@ -272,7 +272,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                       strokeWidth={2}
                       color="currentColor"
                     />
-                    {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {METRIC_LABELS[metric.type].toLowerCase()}
+                    {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {METRIC_LABELS[metric.type]}
                   </p>
                 );
               })}
@@ -281,7 +281,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         )}
 
         {/* Branding Logo */}
-        {isPremium && settings.branding?.logoUrl && (
+        {isPremium && settings.branding?.logoUrl && settings.branding?.enabled !== false && (
           <div
             className="absolute z-10"
             style={{

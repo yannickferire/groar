@@ -26,7 +26,7 @@ export default function MilestoneTemplate({ settings }: MilestoneTemplateProps) 
   // Use the first metric (usually followers) for the milestone
   const primaryMetric = settings.metrics[0];
   const value = primaryMetric?.value || 0;
-  const metricLabel = METRIC_LABELS[primaryMetric?.type || "followers"].toLowerCase();
+  const metricLabel = METRIC_LABELS[primaryMetric?.type || "followers"];
 
   const step = getStepSize(value);
   const previousMilestone = value - step;

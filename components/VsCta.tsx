@@ -31,7 +31,7 @@ export default function VsCta() {
   return (
     <section className="text-center py-10 md:py-14">
       <h2 className="text-2xl md:text-3xl font-bold mb-3">
-        Ready to showcase your X metrics?
+        Ready to showcase your growth?
       </h2>
       <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
         Try 🐯 GROAR for free — no credit card required.

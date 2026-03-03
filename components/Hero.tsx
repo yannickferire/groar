@@ -1,6 +1,8 @@
 "use client";
 
 import XLogo from "@/components/icons/XLogo";
+import GithubLogo from "@/components/icons/GithubLogo";
+import RedditLogo from "@/components/icons/RedditLogo";
 import { FadeIn } from "@/components/ui/motion";
 import LovedBy from "@/components/LovedBy";
 import Image from "next/image";
@@ -10,7 +12,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { SparklesIcon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
 
-const xLogoClass = "w-8! h-8! sm:w-9! sm:h-9! md:w-14! md:h-14! rounded-lg! md:rounded-xl! align-middle -mt-1 ml-1.5 mr-0.5 -rotate-2 [&>svg]:w-4! [&>svg]:h-4! sm:[&>svg]:w-4.5! sm:[&>svg]:h-4.5! md:[&>svg]:w-7! md:[&>svg]:h-7!";
+const logoContainerClass = "w-8! h-8! sm:w-9! sm:h-9! md:w-14! md:h-14! rounded-lg! md:rounded-xl!";
+const xSvgClass = "[&>svg]:w-4! [&>svg]:h-4! sm:[&>svg]:w-4.5! sm:[&>svg]:h-4.5! md:[&>svg]:w-7! md:[&>svg]:h-7!";
+const platformSvgClass = "[&>svg]:w-5! [&>svg]:h-5! sm:[&>svg]:w-5.5! sm:[&>svg]:h-5.5! md:[&>svg]:w-9! md:[&>svg]:h-9!";
 
 export default function Hero() {
   const { data: session } = authClient.useSession();
@@ -19,7 +23,14 @@ export default function Hero() {
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto">
       <FadeIn delay={0.25} duration={0.6}>
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight leading-[1.3] md:leading-[1.15]">
-          Turn your <XLogo className={xLogoClass} /> growth into visuals that <span className="highlighted">Roaaar</span>
+          Turn your{" "}
+            <span className="group inline-flex items-center -space-x-2 sm:-space-x-2.5 md:-space-x-4 align-middle -mt-1 ml-1.5 mr-0.5">
+              <XLogo className={`${logoContainerClass} ${xSvgClass} -rotate-2 group-hover:rotate-0 group-hover:-translate-x-1 md:group-hover:-translate-x-2 relative z-30 transition-transform duration-300 ease-out`} />
+              <RedditLogo className={`${logoContainerClass} ${platformSvgClass} rotate-4 group-hover:rotate-0 relative z-20 transition-transform duration-300 ease-out`} />
+              <GithubLogo className={`${logoContainerClass} ${platformSvgClass} -rotate-1 group-hover:rotate-0 group-hover:translate-x-1 md:group-hover:translate-x-2 relative z-10 transition-transform duration-300 ease-out`} />
+            </span>
+            <span className="sr-only">X, Reddit, GitHub and SaaS</span>{" "}
+            growth into visuals that <span className="highlighted">Roaaar</span>
         </h1>
       </FadeIn>
       <FadeIn delay={0.35} duration={0.6}>

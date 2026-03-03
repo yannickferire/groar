@@ -1,6 +1,6 @@
 export type PeriodType = "day" | "week" | "month" | "year";
 
-export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks";
+export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "redditUpvoteRatio";
 
 export type Metric = {
   type: MetricType;
@@ -21,6 +21,25 @@ export const METRIC_LABELS: Record<MetricType, string> = {
   likes: "Likes",
   reposts: "Reposts",
   bookmarks: "Bookmarks",
+  builders: "Builders",
+  mrr: "MRR",
+  arr: "ARR",
+  revenue: "Revenue",
+  churnRate: "Churn Rate",
+  ltv: "LTV",
+  newCustomers: "New Customers",
+  totalCustomers: "Total Customers",
+  sales: "Sales",
+  domainRating: "Domain Rating",
+  githubStars: "Stars",
+  githubCommits: "Commits",
+  githubForks: "Forks",
+  githubContributors: "Contributors",
+  githubPRsClosed: "PRs Closed",
+  githubIssuesResolved: "Issues Resolved",
+  redditKarma: "Karma",
+  redditUpvotes: "Upvotes",
+  redditUpvoteRatio: "Upvote Ratio",
 };
 
 export type BackgroundPreset = {
@@ -74,6 +93,7 @@ export type BrandingSettings = {
   logoUrl?: string;
   position: "left" | "center" | "right";
   logoSize?: number; // height in px, 20–60, default 40
+  enabled?: boolean; // default true when logoUrl is set
 };
 
 export type EditorSettings = {

@@ -18,7 +18,7 @@ export default function ProofSection() {
             Turn raw data into scroll-stopping content
           </h2>
           <p className="text-muted-foreground">
-            Your X analytics are powerful. Make them look awesome.
+            Your analytics are powerful. Make them look awesome.
           </p>
         </div>
       </FadeInView>
@@ -30,20 +30,20 @@ export default function ProofSection() {
           <div className="relative rounded-2xl overflow-hidden">
             <Image
               src="/proof-backgrounds/graph.jpg"
-              alt="Raw X analytics dashboard showing impressions, follows, posts and replies charts"
+              alt="Raw analytics dashboard showing impressions, follows, posts and replies charts"
               width={1200}
               height={758}
               sizes="(max-width: 768px) 100vw, 40vw"
               className="w-full h-auto"
             />
             <div className="absolute top-2 left-2 bg-foreground/80 backdrop-blur-sm text-background text-xs font-medium px-3 py-1.5 rounded-full">
-              Your X analytics
+              Your analytics
             </div>
           </div>
           <div className="relative rounded-2xl overflow-hidden ml-2 -mt-16 rotate-4 w-[105%]">
             <Image
               src="/proof-backgrounds/graph-2.jpg"
-              alt="X analytics metrics — impressions, engagement, likes, reposts and more"
+              alt="Analytics metrics — impressions, engagement, likes, reposts and more"
               width={1200}
               height={280}
               sizes="(max-width: 768px) 100vw, 42vw"

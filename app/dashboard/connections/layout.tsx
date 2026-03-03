@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import PremiumGate from "@/components/dashboard/PremiumGate";
 
 export const metadata: Metadata = {
-  title: "Connections — Manage your X accounts",
+  title: "Connections — Manage your accounts",
 };
 
 export default function ConnectionsLayout({

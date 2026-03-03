@@ -74,6 +74,9 @@ export default function Footer() {
           <a href="https://twelve.tools" target="_blank" rel="noopener noreferrer">
             <img src="https://twelve.tools/badge0-white.svg" alt="Featured on Twelve Tools" className="h-12" />
           </a>
+          <a href="https://wired.business" target="_blank" rel="noopener noreferrer">
+            <img src="https://wired.business/badge0-white.svg" alt="Featured on Wired Business" className="max-h-12" />
+          </a>
           <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer">
             <img src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" />
           </a>

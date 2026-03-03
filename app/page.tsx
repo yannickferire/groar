@@ -31,7 +31,7 @@ const jsonLd = {
   name: "Groar",
   url: "https://groar.app",
   description:
-    "Your X (Twitter) analytics deserve better than a screenshot. Create eye-catching visuals of your milestones, growth metrics and wins in 10 seconds. Built for creators who build in public.",
+    "Your analytics deserve better than a screenshot. Create eye-catching visuals of your milestones, growth metrics and wins in 10 seconds. Built for creators who build in public.",
   applicationCategory: "DesignApplication",
   operatingSystem: "Web",
   offers: {

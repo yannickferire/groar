@@ -23,7 +23,7 @@ export async function GET() {
         s."uniqueTemplatesCount",
         s."uniqueBackgroundsCount",
         s.score,
-        s."pointsToday"
+        CASE WHEN GREATEST(s."lastLoginDate", s."lastExportDate") = CURRENT_DATE THEN s."pointsToday" ELSE 0 END AS "pointsToday"
       FROM "user" u
       INNER JOIN user_stats s ON s."userId" = u.id
       WHERE s.score > 0 AND u.id != $1

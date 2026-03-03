@@ -18,8 +18,8 @@ export const parseMetricInput = (input: string, metricType: MetricType): number 
   const trimmed = input.trim().replace(/,/g, "").replace(/\.(?=\d{3}(?:\D|$))/g, "").toLowerCase();
   if (trimmed === "" || trimmed === "-" || trimmed === "+") return 0;
 
-  // For engagement rate, allow decimals but cap at 100
-  if (metricType === "engagementRate") {
+  // For percentage metrics, allow decimals but cap at 100
+  if (metricType === "engagementRate" || metricType === "churnRate" || metricType === "redditUpvoteRatio") {
     const num = parseFloat(trimmed);
     if (isNaN(num)) return null;
     return Math.min(100, Math.max(0, num));
@@ -81,8 +81,12 @@ export const formatNumber = (value: number, abbreviate = true): string => {
  * Format a metric value for display based on its type
  */
 export const formatMetricValue = (type: MetricType, value: number, abbreviate = true, prefix?: string): string => {
-  if (type === "engagementRate") {
+  if (type === "engagementRate" || type === "churnRate" || type === "redditUpvoteRatio") {
     return `${value}%`;
+  }
+  if (type === "mrr" || type === "arr" || type === "revenue" || type === "ltv") {
+    const formatted = formatNumber(value, abbreviate);
+    return prefix ? `${prefix}$${formatted}` : `$${formatted}`;
   }
   const formatted = formatNumber(value, abbreviate);
   return prefix ? `${prefix}${formatted}` : formatted;

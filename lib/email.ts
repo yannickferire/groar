@@ -178,7 +178,7 @@ function layout(body: string) {
       ${body}
     </div>
     <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:24px;">
-      🐯 GROAR – Turn your X metrics into high-signal visuals<br>
+      🐯 GROAR – Turn your metrics into high-signal visuals<br>
       <a href="${SITE_URL}" style="color:#9ca3af;">groar.app</a> · <a href="https://x.com/yannick_ferire" style="color:#9ca3af;">@yannick_ferire</a>
     </p>
   </div>

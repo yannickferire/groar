@@ -19,13 +19,19 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ChevronDownIcon } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon, AlignBoxBottomLeftIcon, AlignBoxBottomCenterIcon, AlignBoxBottomRightIcon } from "@hugeicons/core-free-icons";
+import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon, AlignBoxBottomLeftIcon, AlignBoxBottomCenterIcon, AlignBoxBottomRightIcon, NewTwitterIcon, GithubIcon, RedditIcon, BrowserIcon } from "@hugeicons/core-free-icons";
 import { TEMPLATE_LIST } from "@/lib/templates";
 import { compressImage } from "@/lib/image-compress";
 import { TemplateType } from "../Editor";
@@ -60,7 +66,13 @@ type SidebarProps = {
   onPremiumBlock?: (feature: string) => void;
 };
 
-const ALL_METRICS: MetricType[] = ["followers", "verifiedFollowers", "followings", "posts", "impressions", "replies", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
+const X_METRICS_PRIMARY: MetricType[] = ["followers", "verifiedFollowers", "impressions", "replies", "posts", "builders"];
+const X_METRICS_MORE: MetricType[] = ["followings", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
+const X_METRICS: MetricType[] = [...X_METRICS_PRIMARY, ...X_METRICS_MORE];
+const SAAS_METRICS: MetricType[] = ["mrr", "arr", "revenue", "churnRate", "ltv", "newCustomers", "totalCustomers", "sales", "domainRating"];
+const GITHUB_METRICS: MetricType[] = ["githubStars", "githubCommits", "githubForks", "githubContributors", "githubPRsClosed", "githubIssuesResolved"];
+const REDDIT_METRICS: MetricType[] = ["redditKarma", "redditUpvotes", "redditUpvoteRatio"];
+const ALL_METRICS: MetricType[] = [...X_METRICS, ...SAAS_METRICS, ...GITHUB_METRICS, ...REDDIT_METRICS];
 const MAX_METRICS = 5;
 
 type SortableMetricItemProps = {
@@ -205,7 +217,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
         aria-label={`${METRIC_LABELS[metric.type]} value`}
       />
       <span className="text-sm text-muted-foreground whitespace-nowrap flex-1" aria-hidden="true">
-        {METRIC_LABELS[metric.type].toLowerCase()}
+        {METRIC_LABELS[metric.type]}
       </span>
       <Button
         variant="ghost"
@@ -232,6 +244,7 @@ type ConnectedAccount = {
 };
 
 export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock }: SidebarProps) {
+  const isMobile = useIsMobile();
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [deletingLogoId, setDeletingLogoId] = useState<string | null>(null);
   const [brandingLogos, setBrandingLogos] = useState<BrandingLogo[]>([]);
@@ -264,7 +277,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           if (data.logos.length > 0 && (!current.branding?.logoUrl || !data.logos.some((l: BrandingLogo) => l.url === current.branding?.logoUrl))) {
             onSettingsChange({
               ...current,
-              branding: { ...current.branding, logoUrl: data.logos[0].url, position: current.branding?.position || "center" },
+              branding: { ...current.branding, logoUrl: data.logos[0].url, position: current.branding?.position || "center", enabled: true },
             });
           }
         })
@@ -350,7 +363,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         // Auto-select the newly uploaded logo
         onSettingsChange({
           ...settings,
-          branding: { ...settings.branding, logoUrl: data.logo.url, position: settings.branding?.position || "center" },
+          branding: { ...settings.branding, logoUrl: data.logo.url, position: settings.branding?.position || "center", enabled: true },
         });
       }
     } catch {
@@ -876,12 +889,90 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                       Add metric
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-full">
-                    {availableMetrics.map((type) => (
-                      <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
-                        {METRIC_LABELS[type]}
-                      </DropdownMenuItem>
-                    ))}
+                  <DropdownMenuContent align="start" className="bg-white max-h-[60vh] overflow-y-auto" style={{ width: isMobile ? "var(--radix-dropdown-menu-trigger-width)" : "calc(var(--radix-dropdown-menu-trigger-width) * 0.5)" }}>
+                    {isMobile ? (
+                      <>
+                        {[
+                          { label: "X", icon: NewTwitterIcon, metrics: availableMetrics.filter(t => X_METRICS.includes(t)) },
+                          { label: "GitHub", icon: GithubIcon, metrics: availableMetrics.filter(t => GITHUB_METRICS.includes(t)) },
+                          { label: "Reddit", icon: RedditIcon, metrics: availableMetrics.filter(t => REDDIT_METRICS.includes(t)) },
+                          { label: "SaaS", icon: BrowserIcon, metrics: availableMetrics.filter(t => SAAS_METRICS.includes(t)) },
+                        ].filter(g => g.metrics.length > 0).map((group, i) => (
+                          <div key={group.label}>
+                            {i > 0 && <DropdownMenuSeparator />}
+                            <DropdownMenuLabel className="flex items-center gap-1.5"><HugeiconsIcon icon={group.icon} size={14} strokeWidth={1.5} /> {group.label}</DropdownMenuLabel>
+                            {group.metrics.map((type) => (
+                              <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
+                                {METRIC_LABELS[type]}
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {availableMetrics.some(t => X_METRICS.includes(t)) && (
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger><HugeiconsIcon icon={NewTwitterIcon} size={14} strokeWidth={1.5} /> X</DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="bg-white">
+                              {availableMetrics.filter(t => X_METRICS_PRIMARY.includes(t)).map((type) => (
+                                <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
+                                  {METRIC_LABELS[type]}
+                                </DropdownMenuItem>
+                              ))}
+                              {availableMetrics.some(t => X_METRICS_MORE.includes(t)) && (
+                                <DropdownMenuSub>
+                                  <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent className="bg-white">
+                                    {availableMetrics.filter(t => X_METRICS_MORE.includes(t)).map((type) => (
+                                      <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
+                                        {METRIC_LABELS[type]}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                              )}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        )}
+                        {availableMetrics.some(t => GITHUB_METRICS.includes(t)) && (
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger><HugeiconsIcon icon={GithubIcon} size={14} strokeWidth={1.5} /> GitHub</DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="bg-white">
+                              {availableMetrics.filter(t => GITHUB_METRICS.includes(t)).map((type) => (
+                                <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
+                                  {METRIC_LABELS[type]}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        )}
+                        {availableMetrics.some(t => REDDIT_METRICS.includes(t)) && (
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger><HugeiconsIcon icon={RedditIcon} size={14} strokeWidth={1.5} /> Reddit</DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="bg-white">
+                              {availableMetrics.filter(t => REDDIT_METRICS.includes(t)).map((type) => (
+                                <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
+                                  {METRIC_LABELS[type]}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        )}
+                        {availableMetrics.some(t => SAAS_METRICS.includes(t)) && (
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger><HugeiconsIcon icon={BrowserIcon} size={14} strokeWidth={1.5} /> SaaS</DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="bg-white">
+                              {availableMetrics.filter(t => SAAS_METRICS.includes(t)).map((type) => (
+                                <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
+                                  {METRIC_LABELS[type]}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        )}
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )
@@ -906,32 +997,140 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                 className="flex-1 bg-white"
                 aria-label="Metric value"
               />
-              <Select
-                value={settings.metrics[0]?.type || "followers"}
-                onValueChange={(value) => {
-                  const newType = value as MetricType;
-                  // Auto-populate from connected account analytics if available
-                  const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
-                  const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
-                    followers: selectedAccount.latest.followersCount,
-                    followings: selectedAccount.latest.followingCount,
-                    posts: selectedAccount.latest.tweetCount,
-                  } : {};
-                  const autoValue = metricMap[newType];
-                  updateSetting("metrics", [{ type: newType, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
-                }}
-              >
-                <SelectTrigger className="flex-1 bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ALL_METRICS.filter(type => type !== "engagementRate").map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {METRIC_LABELS[type]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex-1 bg-white justify-between font-normal">
+                    {METRIC_LABELS[settings.metrics[0]?.type || "followers"]}
+                    <ChevronDownIcon className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-white max-h-[60vh] overflow-y-auto" style={{ width: isMobile ? "var(--radix-dropdown-menu-trigger-width)" : "calc(var(--radix-dropdown-menu-trigger-width) * 0.5)" }}>
+                  {isMobile ? (
+                    <>
+                      {(() => {
+                        const handleSelect = (type: MetricType) => {
+                          const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
+                          const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
+                            followers: selectedAccount.latest.followersCount,
+                            followings: selectedAccount.latest.followingCount,
+                            posts: selectedAccount.latest.tweetCount,
+                          } : {};
+                          const autoValue = metricMap[type];
+                          updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
+                        };
+                        return [
+                          { label: "X", icon: NewTwitterIcon, metrics: X_METRICS.filter(t => t !== "engagementRate") },
+                          { label: "GitHub", icon: GithubIcon, metrics: GITHUB_METRICS },
+                          { label: "Reddit", icon: RedditIcon, metrics: REDDIT_METRICS.filter(t => t !== "redditUpvoteRatio") },
+                          { label: "SaaS", icon: BrowserIcon, metrics: SAAS_METRICS.filter(t => t !== "churnRate") },
+                        ].map((group, i) => (
+                          <div key={group.label}>
+                            {i > 0 && <DropdownMenuSeparator />}
+                            <DropdownMenuLabel className="flex items-center gap-1.5"><HugeiconsIcon icon={group.icon} size={14} strokeWidth={1.5} /> {group.label}</DropdownMenuLabel>
+                            {group.metrics.map((type) => (
+                              <DropdownMenuItem key={type} onClick={() => handleSelect(type)}>
+                                {METRIC_LABELS[type]}
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        ));
+                      })()}
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger><HugeiconsIcon icon={NewTwitterIcon} size={14} strokeWidth={1.5} /> X</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="bg-white">
+                          {X_METRICS_PRIMARY.filter(type => type !== "engagementRate").map((type) => {
+                            const handleClick = () => {
+                              const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
+                              const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
+                                followers: selectedAccount.latest.followersCount,
+                                followings: selectedAccount.latest.followingCount,
+                                posts: selectedAccount.latest.tweetCount,
+                              } : {};
+                              const autoValue = metricMap[type];
+                              updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
+                            };
+                            return (
+                              <DropdownMenuItem key={type} onClick={handleClick}>
+                                {METRIC_LABELS[type]}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="bg-white">
+                              {X_METRICS_MORE.filter(type => type !== "engagementRate").map((type) => {
+                                const handleClick = () => {
+                                  const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
+                                  const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
+                                    followers: selectedAccount.latest.followersCount,
+                                    followings: selectedAccount.latest.followingCount,
+                                    posts: selectedAccount.latest.tweetCount,
+                                  } : {};
+                                  const autoValue = metricMap[type];
+                                  updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
+                                };
+                                return (
+                                  <DropdownMenuItem key={type} onClick={handleClick}>
+                                    {METRIC_LABELS[type]}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger><HugeiconsIcon icon={GithubIcon} size={14} strokeWidth={1.5} /> GitHub</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="bg-white">
+                          {GITHUB_METRICS.map((type) => (
+                            <DropdownMenuItem
+                              key={type}
+                              onClick={() => {
+                                updateSetting("metrics", [{ type, value: settings.metrics[0]?.value ?? 0 }]);
+                              }}
+                            >
+                              {METRIC_LABELS[type]}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger><HugeiconsIcon icon={RedditIcon} size={14} strokeWidth={1.5} /> Reddit</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="bg-white">
+                          {REDDIT_METRICS.filter(type => type !== "redditUpvoteRatio").map((type) => (
+                            <DropdownMenuItem
+                              key={type}
+                              onClick={() => {
+                                updateSetting("metrics", [{ type, value: settings.metrics[0]?.value ?? 0 }]);
+                              }}
+                            >
+                              {METRIC_LABELS[type]}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger><HugeiconsIcon icon={BrowserIcon} size={14} strokeWidth={1.5} /> SaaS</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="bg-white">
+                          {SAAS_METRICS.filter(type => type !== "churnRate").map((type) => (
+                            <DropdownMenuItem
+                              key={type}
+                              onClick={() => {
+                                updateSetting("metrics", [{ type, value: settings.metrics[0]?.value ?? 0 }]);
+                              }}
+                            >
+                              {METRIC_LABELS[type]}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         )}
@@ -1048,6 +1247,24 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <HugeiconsIcon icon={ImageAdd01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
             Branding
+            {settings.branding?.logoUrl && (
+              <button
+                type="button"
+                role="switch"
+                aria-checked={settings.branding?.enabled !== false}
+                aria-label="Toggle branding"
+                onClick={() => updateSetting("branding", { ...settings.branding!, enabled: settings.branding?.enabled === false })}
+                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ml-auto ${
+                  settings.branding?.enabled !== false ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                    settings.branding?.enabled !== false ? "translate-x-4.5" : "translate-x-0.75"
+                  }`}
+                />
+              </button>
+            )}
           </h3>
 
           <div className="flex flex-col gap-2">
@@ -1084,7 +1301,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                           <button
                             type="button"
                             onClick={() => {
-                              updateSetting("branding", { ...settings.branding, logoUrl: logo.url, position: settings.branding?.position || "center" });
+                              updateSetting("branding", { ...settings.branding, logoUrl: logo.url, position: settings.branding?.position || "center", enabled: true });
                             }}
                             className={`w-full p-2 rounded-lg border-2 transition-all flex items-center justify-center min-h-12 ${
                               settings.branding?.logoUrl === logo.url

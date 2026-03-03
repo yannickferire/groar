@@ -1,5 +1,5 @@
 import { MetricType } from "@/components/Editor";
-import { UserLove01Icon, CheckmarkBadge02Icon, UserAdd01Icon, News01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon } from "@hugeicons/core-free-icons";
+import { UserLove01Icon, CheckmarkBadge02Icon, UserAdd01Icon, UserAdd02Icon, News01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon, DollarCircleIcon, DollarReceive01Icon, ChartLineData01Icon, SaleTag01Icon, ChartDecreaseIcon, MoneyBag01Icon, UserGroupIcon, DashboardSpeed01Icon, StarIcon, GitCommitIcon, GitForkIcon, UserMultipleIcon, GitPullRequestClosedIcon, CheckmarkCircle01Icon, UploadSquare01Icon, ThumbsUpIcon, ThumbsUpDownIcon, AccountSetting03Icon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 
 export const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
@@ -15,4 +15,23 @@ export const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
   likes: FavouriteIcon,
   reposts: RepeatIcon,
   bookmarks: Bookmark01Icon,
+  builders: AccountSetting03Icon,
+  mrr: DollarCircleIcon,
+  arr: ChartLineData01Icon,
+  revenue: DollarReceive01Icon,
+  churnRate: ChartDecreaseIcon,
+  ltv: MoneyBag01Icon,
+  newCustomers: UserAdd02Icon,
+  totalCustomers: UserGroupIcon,
+  sales: SaleTag01Icon,
+  domainRating: DashboardSpeed01Icon,
+  githubStars: StarIcon,
+  githubCommits: GitCommitIcon,
+  githubForks: GitForkIcon,
+  githubContributors: UserMultipleIcon,
+  githubPRsClosed: GitPullRequestClosedIcon,
+  githubIssuesResolved: CheckmarkCircle01Icon,
+  redditKarma: UploadSquare01Icon,
+  redditUpvotes: ThumbsUpIcon,
+  redditUpvoteRatio: ThumbsUpDownIcon,
 };

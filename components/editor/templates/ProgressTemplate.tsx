@@ -74,7 +74,7 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
         className="uppercase tracking-widest opacity-60"
         style={{ fontSize: isBanner ? "1.6cqi" : "2cqi" }}
       >
-        Goal: {formatMetricValue(primaryMetric?.type || "followers", goal, settings.abbreviateNumbers !== false)} {METRIC_LABELS[primaryMetric?.type || "followers"].toLowerCase()}
+        Goal: {formatMetricValue(primaryMetric?.type || "followers", goal, settings.abbreviateNumbers !== false)} {METRIC_LABELS[primaryMetric?.type || "followers"]}
       </p>
 
       {/* Current value - big */}

@@ -62,24 +62,25 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Groar — Turn your X growth into visuals that Roaaar",
+    default: "Groar — Turn your growth into visuals that Roaaar",
     template: "%s | Groar",
   },
   description:
     "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
   keywords: [
-    "x analytics visual",
-    "twitter growth",
-    "twitter milestone",
+    "growth metrics visual",
     "build in public",
     "x metrics",
-    "twitter analytics design",
+    "github metrics",
+    "reddit metrics",
+    "saas metrics",
     "social media visuals",
-    "follower milestone",
-    "x growth visual",
+    "milestone visual",
+    "analytics design",
     "creator tools",
     "share analytics",
     "engagement",
+    "indie hacker tools",
   ],
   authors: [{ name: "Yannick Ferire", url: "https://x.com/yannick_ferire" }],
   creator: "Yannick Ferire",
@@ -88,7 +89,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "Groar",
-    title: "Groar — Turn your X growth into visuals that Roaaar",
+    title: "Groar — Turn your growth into visuals that Roaaar",
     description:
       "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
     images: [
@@ -96,13 +97,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Groar — Share your X growth with stunning visuals",
+        alt: "Groar — Share your growth with stunning visuals",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Groar — Turn your X growth into visuals that Roaaar",
+    title: "Groar — Turn your growth into visuals that Roaaar",
     description:
       "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
     images: ["/og-image.png"],
