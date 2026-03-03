@@ -25,11 +25,12 @@ import { type DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon } from "@hugeicons/core-free-icons";
+import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon, AlignBoxBottomLeftIcon, AlignBoxBottomCenterIcon, AlignBoxBottomRightIcon } from "@hugeicons/core-free-icons";
 import { TEMPLATE_LIST } from "@/lib/templates";
 import { compressImage } from "@/lib/image-compress";
 import { TemplateType } from "../Editor";
 import Image from "next/image";
+import { Slider } from "@/components/ui/slider";
 import {
   DndContext,
   closestCenter,
@@ -458,7 +459,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
             Template
           </h3>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {TEMPLATE_LIST.map((template) => {
               const isSelected = (settings.template || "metrics") === template.id;
 
@@ -469,6 +470,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   onClick={() => {
                     if (lockPremiumFeatures && template.premium) { onPremiumBlock?.("Premium template"); return; }
                     updateSetting("template", template.id as TemplateType);
+                    if (template.id === "announcement" && (!settings.announcements || settings.announcements.length === 0)) {
+                      updateSetting("announcements", [{ emoji: "✅", text: "Feature 1" }, { emoji: "✅", text: "Feature 2" }, { emoji: "✅", text: "Feature 3" }]);
+                    }
+                    if (template.id === "announcement" && !settings.heading) {
+                      updateSetting("heading", { type: "period", periodType: "day", periodFrom: 1 });
+                    }
                   }}
                   className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
                     lockPremiumFeatures && template.premium
@@ -500,6 +507,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                         <div className={`w-full h-1.5 rounded-full ${isSelected ? "bg-primary/20" : "bg-muted-foreground/15"}`}>
                           <div className={`w-3/4 h-full rounded-full ${isSelected ? "bg-primary" : "bg-muted-foreground/40"}`} />
                         </div>
+                      </div>
+                    )}
+                    {template.id === "announcement" && (
+                      <div className="flex flex-col items-center gap-0.5 w-full px-2">
+                        <div className={`w-4 h-0.5 rounded-full mb-0.5 ${isSelected ? "bg-primary" : "bg-muted-foreground/30"}`} />
+                        <div className={`w-full h-1 rounded-sm ${isSelected ? "bg-primary/50" : "bg-muted-foreground/20"}`} />
+                        <div className={`w-full h-1 rounded-sm ${isSelected ? "bg-primary/50" : "bg-muted-foreground/20"}`} />
+                        <div className={`w-full h-1 rounded-sm ${isSelected ? "bg-primary/50" : "bg-muted-foreground/20"}`} />
                       </div>
                     )}
                   </div>
@@ -579,8 +594,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           )}
         </div>
 
-        {/* Heading - only for metrics template */}
-        {(settings.template || "metrics") === "metrics" && (
+        {/* Heading - for metrics and announcement templates */}
+        {((settings.template || "metrics") === "metrics" || settings.template === "announcement") && (
           settings.heading ? (
             <div className="flex flex-col gap-2">
               <Label>Heading</Label>
@@ -728,8 +743,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
               {/* Text input for quote / custom */}
               {(settings.heading.type === "quote" || settings.heading.type === "custom") && (
                 <textarea
+                  key={settings.heading.type}
                   ref={(el) => {
-                    if (el) {
+                    if (el && !el.dataset.initialized) {
+                      el.dataset.initialized = "true";
                       el.focus();
                       el.select();
                     }
@@ -762,8 +779,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         )}
       </div>
 
-      {/* Metrics */}
-      <div className="flex flex-col gap-3">
+      {/* Metrics - hidden for announcement template */}
+      {settings.template !== "announcement" && <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
@@ -908,7 +925,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           </div>
         )}
 
-      </div>
+      </div>}
 
       {/* Goal - only for progress template */}
       {(settings.template || "metrics") === "progress" && (
@@ -934,6 +951,86 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         </div>
       )}
 
+      {/* Liste - only for announcement template */}
+      {settings.template === "announcement" && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+            <HugeiconsIcon icon={Menu01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
+            List
+          </h3>
+          <div className="flex flex-col gap-2">
+            {(settings.announcements || []).map((feature, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="shrink-0 w-9 h-9 rounded-xl border border-input bg-white flex items-center justify-center text-lg hover:bg-muted/50 transition-colors"
+                    >
+                      {feature.emoji || "✅"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2" align="start">
+                    <div className="grid grid-cols-6 gap-1">
+                      {["✅", "🚀", "⚡", "🎨", "🔧", "💡", "📦", "🔒", "🎯", "💬", "📊", "🌙", "⭐", "🔥", "💪", "🎉", "✨", "🛠️", "🐛", "🔔", "💳", "🔗", "📈", "💰"].map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => {
+                            const updated = [...(settings.announcements || [])];
+                            updated[index] = { ...updated[index], emoji };
+                            updateSetting("announcements", updated);
+                          }}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-lg"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Input
+                  type="text"
+                  value={feature.text}
+                  onChange={(e) => {
+                    const updated = [...(settings.announcements || [])];
+                    updated[index] = { ...updated[index], text: e.target.value };
+                    updateSetting("announcements", updated);
+                  }}
+                  placeholder={`Feature ${index + 1}`}
+                  className="bg-white flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    const updated = (settings.announcements || []).filter((_, i) => i !== index);
+                    updateSetting("announcements", updated);
+                  }}
+                  className="shrink-0"
+                  aria-label="Remove feature"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={1.5} />
+                </Button>
+              </div>
+            ))}
+            {(settings.announcements || []).length < 4 && (
+              <Button
+                variant="outline"
+                className="w-full bg-white"
+                onClick={() => {
+                  const updated = [...(settings.announcements || []), { text: "" }];
+                  updateSetting("announcements", updated);
+                }}
+              >
+                <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={1.5} />
+                Add feature
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Branding (Premium only) */}
       {isPremium && (
         <div className="flex flex-col gap-3">
@@ -955,21 +1052,47 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex gap-2 flex-1">
-                    {(["left", "center", "right"] as const).map((pos) => (
+                  <div className="flex gap-1">
+                    {([
+                      { pos: "left" as const, icon: AlignBoxBottomLeftIcon },
+                      { pos: "center" as const, icon: AlignBoxBottomCenterIcon },
+                      { pos: "right" as const, icon: AlignBoxBottomRightIcon },
+                    ]).map(({ pos, icon }) => (
                       <button
                         key={pos}
                         type="button"
                         onClick={() => updateSetting("branding", { ...settings.branding!, position: pos })}
-                        className={`flex-1 py-1.5 min-h-6 text-xs rounded-lg transition-all capitalize border ${
+                        className={`p-1.5 rounded-lg transition-all border ${
                           (settings.branding?.position || "center") === pos
                             ? "bg-primary text-primary-foreground border-transparent"
                             : "bg-white text-muted-foreground hover:bg-muted border-border"
                         }`}
                       >
-                        {pos}
+                        <HugeiconsIcon icon={icon} size={16} strokeWidth={1.5} />
                       </button>
                     ))}
+                  </div>
+                  <div className="flex-1 flex flex-col gap-0">
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-[10px] text-muted-foreground">20</span>
+                      <Slider
+                        min={20}
+                        max={40}
+                        step={1}
+                        value={[settings.branding?.logoSize ?? 40]}
+                        onValueChange={([v]) => updateSetting("branding", { ...settings.branding!, logoSize: v })}
+                        className="flex-1"
+                      />
+                      <span className="text-[10px] text-muted-foreground">40</span>
+                    </div>
+                    <div className="relative h-3 mx-3.5">
+                      <span
+                        className="absolute text-[10px] text-muted-foreground -translate-x-1/2"
+                        style={{ left: `${(((settings.branding?.logoSize ?? 40) - 20) / 20) * 100}%` }}
+                      >
+                        {settings.branding?.logoSize ?? 40}px
+                      </span>
+                    </div>
                   </div>
                   <Button
                     variant="ghost"

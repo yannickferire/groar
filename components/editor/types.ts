@@ -62,11 +62,12 @@ export type HeadingSettings = {
 
 export type AspectRatioType = "post" | "square" | "banner";
 export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono" | "averia-serif-libre" | "dm-serif-display";
-export type TemplateType = "metrics" | "milestone" | "progress";
+export type TemplateType = "metrics" | "milestone" | "progress" | "announcement";
 
 export type BrandingSettings = {
   logoUrl?: string;
   position: "left" | "center" | "right";
+  logoSize?: number; // height in px, 20–60, default 40
 };
 
 export type EditorSettings = {
@@ -81,5 +82,6 @@ export type EditorSettings = {
   template?: TemplateType;
   branding?: BrandingSettings;
   goal?: number;
+  announcements?: { emoji?: string; text: string }[];
   abbreviateNumbers?: boolean;
 };

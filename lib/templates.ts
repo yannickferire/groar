@@ -22,6 +22,11 @@ export const TEMPLATES: Record<TemplateType, TemplateConfig> = {
     description: "Show progress towards a goal",
     premium: true,
   },
+  announcement: {
+    name: "List",
+    description: "List features or updates",
+    premium: true,
+  },
 };
 
 export const TEMPLATE_LIST = Object.entries(TEMPLATES).map(([id, config]) => ({

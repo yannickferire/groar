@@ -348,10 +348,10 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       const baseOptions: Record<string, unknown> = {
         canvasWidth: exportWidth,
         canvasHeight: exportHeight,
-        quality: 0.8,
+        quality: 0.92,
         cacheBust: true,
         skipAutoScale: true,
-        pixelRatio: 2,
+        pixelRatio: 3,
         includeQueryParams: true,
         filter: (node: Element) => {
           const tagName = node.tagName;
