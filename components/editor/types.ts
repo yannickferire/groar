@@ -1,6 +1,6 @@
 export type PeriodType = "day" | "week" | "month" | "year";
 
-export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "redditUpvoteRatio";
+export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "visitors" | "redditUpvoteRatio";
 
 export type Metric = {
   type: MetricType;
@@ -30,6 +30,7 @@ export const METRIC_LABELS: Record<MetricType, string> = {
   newCustomers: "New Customers",
   totalCustomers: "Total Customers",
   sales: "Sales",
+  visitors: "Visitors",
   domainRating: "Domain Rating",
   githubStars: "Stars",
   githubCommits: "Commits",
