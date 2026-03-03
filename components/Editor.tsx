@@ -93,6 +93,19 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     }
     resetSettings(loaded);
   }, [isPremium, lockPremiumFeatures, resetSettings]);
+  // Track first editor interaction (landing only)
+  const editorInteractedRef = useRef(false);
+  const settingsChangeCountRef = useRef(0);
+  useEffect(() => {
+    if (isDashboard || editorInteractedRef.current) return;
+    // Skip the first 2 renders (initial + localStorage load)
+    settingsChangeCountRef.current++;
+    if (settingsChangeCountRef.current <= 2) return;
+    editorInteractedRef.current = true;
+    posthog.capture("editor_interacted", { source: "landing" });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings]);
+
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(!!importId);
   const [cooldown, setCooldown] = useState(0);
