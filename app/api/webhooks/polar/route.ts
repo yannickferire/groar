@@ -27,11 +27,13 @@ function getBillingPeriodFromProductId(productId: string): "monthly" | "lifetime
 // Extract subscription fields from webhook event.data
 function parseSubscriptionData(data: Record<string, unknown>) {
   const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
+  const customer = (data.customer ?? {}) as Record<string, unknown>;
   return {
     id: data.id as string,
     status: data.status as string,
     productId: (data.product_id ?? data.productId ?? "") as string,
     customerId: (data.customer_id ?? data.customerId ?? "") as string,
+    customerEmail: (customer.email ?? data.customer_email ?? "") as string,
     amountCents: (data.amount ?? data.recurring_amount ?? 0) as number,
     currentPeriodEnd: (data.current_period_end ?? data.currentPeriodEnd) as string | undefined,
     currentPeriodStart: (data.current_period_start ?? data.currentPeriodStart) as string | undefined,
@@ -170,9 +172,10 @@ export async function POST(request: NextRequest) {
       case "subscription.updated": {
         const sub = parseSubscriptionData(event.data as Record<string, unknown>);
 
-        if (!sub.userId) {
-          console.error("No userId in subscription metadata");
-          return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+        const subUserId = await resolveUserId(sub.userId, sub.customerEmail);
+        if (!subUserId) {
+          console.error("Subscription: could not resolve user —", { userId: sub.userId, email: sub.customerEmail });
+          return NextResponse.json({ error: "Cannot resolve user" }, { status: 400 });
         }
 
         const plan = getPlanFromProductId(sub.productId);
@@ -185,10 +188,10 @@ export async function POST(request: NextRequest) {
           const billingPeriod = getBillingPeriodFromProductId(sub.productId);
 
           // Check if this subscription is already active (deduplicate webhooks)
-          const existing = await getUserSubscription(sub.userId);
+          const existing = await getUserSubscription(subUserId);
           const isNewActivation = !existing || existing.externalId !== sub.id || existing.status !== "active";
 
-          await setUserPlan(sub.userId, plan, {
+          await setUserPlan(subUserId, plan, {
             externalId: sub.id,
             externalCustomerId: sub.customerId,
             currentPeriodEnd: sub.currentPeriodEnd
@@ -199,7 +202,7 @@ export async function POST(request: NextRequest) {
               : undefined,
             billingPeriod,
           });
-          console.log(`Set plan ${plan} (${billingPeriod}) for user ${sub.userId} (subscription: ${sub.id})`);
+          console.log(`Set plan ${plan} (${billingPeriod}) for user ${subUserId} (subscription: ${sub.id})`);
 
           // Track revenue for new activations
           if (isNewActivation && sub.amountCents > 0) {
@@ -214,7 +217,7 @@ export async function POST(request: NextRequest) {
           if (isNewActivation) {
             const posthog = getPostHogClient();
             posthog.capture({
-              distinctId: sub.userId,
+              distinctId: subUserId,
               event: "subscription_activated",
               properties: {
                 plan,
@@ -229,7 +232,7 @@ export async function POST(request: NextRequest) {
             try {
               const userResult = await pool.query(
                 `SELECT email, name FROM "user" WHERE id = $1`,
-                [sub.userId]
+                [subUserId]
               );
               const user = userResult.rows[0];
               if (user?.email) {
@@ -246,15 +249,16 @@ export async function POST(request: NextRequest) {
 
       case "subscription.canceled": {
         const sub = parseSubscriptionData(event.data as Record<string, unknown>);
+        const cancelUserId = await resolveUserId(sub.userId, sub.customerEmail);
 
-        if (sub.userId) {
-          await cancelUserSubscription(sub.userId);
-          console.log(`Marked subscription as canceled for user ${sub.userId}`);
+        if (cancelUserId) {
+          await cancelUserSubscription(cancelUserId);
+          console.log(`Marked subscription as canceled for user ${cancelUserId}`);
 
           // Track subscription cancellation server-side
           const posthog = getPostHogClient();
           posthog.capture({
-            distinctId: sub.userId,
+            distinctId: cancelUserId,
             event: "subscription_canceled",
             properties: {
               subscription_id: sub.id,
@@ -268,10 +272,11 @@ export async function POST(request: NextRequest) {
 
       case "subscription.revoked": {
         const sub = parseSubscriptionData(event.data as Record<string, unknown>);
+        const revokeUserId = await resolveUserId(sub.userId, sub.customerEmail);
 
-        if (sub.userId) {
-          await setUserPlan(sub.userId, "free");
-          console.log(`Reverted user ${sub.userId} to free plan (subscription revoked)`);
+        if (revokeUserId) {
+          await setUserPlan(revokeUserId, "free");
+          console.log(`Reverted user ${revokeUserId} to free plan (subscription revoked)`);
         }
         break;
       }

@@ -107,6 +107,11 @@ function DashboardContent() {
       localStorage.removeItem("groar-pending-export");
     } catch {}
     fetch("/api/user/trial", { method: "POST" })
+      .then((res) => {
+        if (res.ok) {
+          window.dispatchEvent(new Event("groar:plan-updated"));
+        }
+      })
       .finally(() => {
         if (hasPendingExport) {
           // Redirect to editor with autoexport to finish the pending export

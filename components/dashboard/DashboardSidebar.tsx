@@ -51,7 +51,7 @@ export default function DashboardSidebar() {
   const animTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
-  useEffect(() => {
+  const fetchPlan = useCallback(() => {
     fetch("/api/user/plan")
       .then((res) => res.json())
       .then((data) => {
@@ -61,10 +61,21 @@ export default function DashboardSidebar() {
         setIsAdmin(!!data.isAdmin);
       })
       .catch(() => setUserPlan("free"));
+  }, []);
+
+  useEffect(() => {
+    fetchPlan();
     fetchProTierInfo()
       .then(setProTierInfo)
       .catch(() => {});
-  }, []);
+  }, [fetchPlan]);
+
+  // Re-fetch plan when trial starts or plan changes
+  useEffect(() => {
+    const onPlanUpdated = () => fetchPlan();
+    window.addEventListener("groar:plan-updated", onPlanUpdated);
+    return () => window.removeEventListener("groar:plan-updated", onPlanUpdated);
+  }, [fetchPlan]);
 
   // Poll unread notification count every 60s
   useEffect(() => {
@@ -167,22 +178,25 @@ export default function DashboardSidebar() {
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.href)}
                         tooltip={`${item.label} (Pro)`}
-                        className="opacity-50 cursor-not-allowed"
-                        disabled
+                        className="opacity-70"
                       >
-                        <HugeiconsIcon
-                          icon={item.icon}
-                          size={20}
-                          strokeWidth={2}
-                        />
-                        <span className="flex-1">{item.label}</span>
-                        <HugeiconsIcon
-                          icon={CrownIcon}
-                          size={14}
-                          strokeWidth={2}
-                          className="text-primary opacity-85"
-                        />
+                        <Link href={item.href}>
+                          <HugeiconsIcon
+                            icon={item.icon}
+                            size={20}
+                            strokeWidth={2}
+                          />
+                          <span className="flex-1">{item.label}</span>
+                          <HugeiconsIcon
+                            icon={CrownIcon}
+                            size={14}
+                            strokeWidth={2}
+                            className="text-primary opacity-85"
+                          />
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );

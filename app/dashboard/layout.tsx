@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
@@ -13,7 +14,22 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const { data: session } = authClient.useSession();
+
+  // Refresh router when tab regains focus after being hidden for 5+ minutes
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVisible = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+      } else if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000) {
+        router.refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [router]);
 
   useEffect(() => {
     if (session?.user) {
