@@ -1,6 +1,6 @@
 export type PeriodType = "day" | "week" | "month" | "year";
 
-export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "visitors" | "redditUpvoteRatio";
+export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "valuation" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "visitors" | "redditUpvoteRatio";
 
 export type Metric = {
   type: MetricType;
@@ -24,6 +24,7 @@ export const METRIC_LABELS: Record<MetricType, string> = {
   builders: "Builders",
   mrr: "MRR",
   arr: "ARR",
+  valuation: "Valuation",
   revenue: "Revenue",
   churnRate: "Churn Rate",
   ltv: "LTV",
@@ -111,4 +112,6 @@ export type EditorSettings = {
   goal?: number;
   announcements?: { emoji?: string; text: string }[];
   abbreviateNumbers?: boolean;
+  milestoneEmoji?: string;
+  milestoneEmojiCount?: number; // 0–10, default 3
 };

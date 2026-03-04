@@ -84,7 +84,7 @@ export const formatMetricValue = (type: MetricType, value: number, abbreviate = 
   if (type === "engagementRate" || type === "churnRate" || type === "redditUpvoteRatio") {
     return `${value}%`;
   }
-  if (type === "mrr" || type === "arr" || type === "revenue" || type === "ltv") {
+  if (type === "mrr" || type === "arr" || type === "valuation" || type === "revenue" || type === "ltv") {
     const formatted = formatNumber(value, abbreviate);
     return prefix ? `${prefix}$${formatted}` : `$${formatted}`;
   }

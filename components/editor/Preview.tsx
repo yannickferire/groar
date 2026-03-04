@@ -10,7 +10,7 @@ import { METRIC_ICONS } from "@/lib/metric-icons";
 import BackgroundCanvas from "./BackgroundCanvas";
 import { FONTS } from "@/lib/fonts";
 import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
-import MilestoneTemplate from "./templates/MilestoneTemplate";
+import MilestoneTemplate, { MilestoneEmojis } from "./templates/MilestoneTemplate";
 import ProgressTemplate from "./templates/ProgressTemplate";
 import AnnouncementTemplate from "./templates/AnnouncementTemplate";
 
@@ -59,6 +59,9 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
           backgrounds={backgrounds}
           className="absolute inset-0"
         />
+        {settings.template === "milestone" && (
+          <MilestoneEmojis settings={{ ...settings, abbreviateNumbers: abbreviate }} />
+        )}
         <header className="absolute top-[3%] left-0 right-0 px-[3%] flex justify-between items-center z-10">
           <p
             className="opacity-60"

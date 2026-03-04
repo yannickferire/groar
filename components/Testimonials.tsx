@@ -45,7 +45,7 @@ const TWEETS: Tweet[] = [
     author: "Daniel Merrick",
     handle: "danmerrick117",
     verified: true,
-    text: "So cool, especially how **smooth setting it up is**. Had my first graphic made in **~1min** after signing up. **One happy customer here!**",
+    text: "So cool, especially how **smooth setting it up is**. Had my first graphic made in ~1min after signing up. **One happy customer here!**",
     url: "https://x.com/danmerrick117",
     avatar: "/testimonials/danmerrick117.jpg",
     badge: "First customer ever",

@@ -31,7 +31,7 @@ import { type DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon, AlignBoxBottomLeftIcon, AlignBoxBottomCenterIcon, AlignBoxBottomRightIcon, NewTwitterIcon, GithubIcon, RedditIcon, BrowserIcon } from "@hugeicons/core-free-icons";
+import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon, AlignBoxBottomLeftIcon, AlignBoxBottomCenterIcon, AlignBoxBottomRightIcon, NewTwitterIcon, GithubIcon, RedditIcon, BrowserIcon, ShuffleIcon } from "@hugeicons/core-free-icons";
 import { TEMPLATE_LIST } from "@/lib/templates";
 import { compressImage } from "@/lib/image-compress";
 import { TemplateType } from "../Editor";
@@ -69,7 +69,7 @@ type SidebarProps = {
 const X_METRICS_PRIMARY: MetricType[] = ["followers", "verifiedFollowers", "impressions", "replies", "posts", "builders"];
 const X_METRICS_MORE: MetricType[] = ["followings", "engagementRate", "engagement", "profileVisits", "likes", "reposts", "bookmarks"];
 const X_METRICS: MetricType[] = [...X_METRICS_PRIMARY, ...X_METRICS_MORE];
-const SAAS_METRICS: MetricType[] = ["mrr", "arr", "revenue", "churnRate", "ltv", "visitors", "newCustomers", "totalCustomers", "sales", "domainRating"];
+const SAAS_METRICS: MetricType[] = ["mrr", "arr", "valuation", "revenue", "churnRate", "ltv", "visitors", "newCustomers", "totalCustomers", "sales", "domainRating"];
 const GITHUB_METRICS: MetricType[] = ["githubStars", "githubCommits", "githubForks", "githubContributors", "githubPRsClosed", "githubIssuesResolved"];
 const REDDIT_METRICS: MetricType[] = ["redditKarma", "redditUpvotes", "redditUpvoteRatio"];
 const ALL_METRICS: MetricType[] = [...X_METRICS, ...SAAS_METRICS, ...GITHUB_METRICS, ...REDDIT_METRICS];
@@ -499,6 +499,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                     }
                     if (template.id === "announcement" && !settings.heading) {
                       updateSetting("heading", { type: "period", periodType: "day", periodFrom: 1 });
+                    }
+                    if (template.id === "milestone" && !settings.milestoneEmoji) {
+                      updateSetting("milestoneEmoji", "🎉");
+                      updateSetting("milestoneEmojiCount", 3);
                     }
                   }}
                   className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
@@ -1137,6 +1141,82 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
 
       </div>}
 
+      {/* Emoji decoration - only for milestone template */}
+      {(settings.template || "metrics") === "milestone" && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Emoji
+          </h3>
+          <div className="flex gap-1">
+            {(() => {
+              const emojis: { key: string; src: string }[] = [
+                { key: "🎉", src: "/emoji/party.png" },
+                { key: "🔥", src: "/emoji/fire.png" },
+                { key: "🚀", src: "/emoji/rocket.png" },
+                { key: "✨", src: "/emoji/sparkles.png" },
+                { key: "🎯", src: "/emoji/bullseye.png" },
+                { key: "🐯", src: "/emoji/tiger.png" },
+                { key: "❤️", src: "/emoji/heart.png" },
+                { key: "🎈", src: "/emoji/balloon.png" },
+              ];
+              return (
+                <>
+                  {emojis.map(({ key, src }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => updateSetting("milestoneEmoji", settings.milestoneEmoji === key ? undefined : key)}
+                      className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-colors ${
+                        settings.milestoneEmoji === key
+                          ? "border-primary bg-primary/10"
+                          : "border-input bg-white hover:bg-muted/50"
+                      }`}
+                    >
+                      <img src={src} alt="" className="w-5 h-5 object-contain" draggable={false} />
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const available = emojis.filter(e => e.key !== settings.milestoneEmoji);
+                      updateSetting("milestoneEmoji", available[Math.floor(Math.random() * available.length)].key);
+                    }}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-input bg-white hover:bg-muted/50 text-xs font-medium text-muted-foreground transition-colors"
+                    title="Random emoji"
+                  >
+                    <HugeiconsIcon icon={ShuffleIcon} size={16} strokeWidth={2} />
+                  </button>
+                </>
+              );
+            })()}
+          </div>
+          {settings.milestoneEmoji && (
+            <div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-muted-foreground w-2.5 text-right">0</span>
+                <Slider
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={[settings.milestoneEmojiCount ?? 3]}
+                  onValueChange={([v]) => updateSetting("milestoneEmojiCount", v)}
+                  className="flex-1"
+                />
+                <span className="text-[10px] text-muted-foreground w-2.5">10</span>
+              </div>
+              <div className="relative h-3 mx-3.5">
+                <span
+                  className="absolute text-[10px] text-muted-foreground -translate-x-1/2"
+                  style={{ left: `calc(${((settings.milestoneEmojiCount ?? 3) / 10) * 100}% + ${8 - ((settings.milestoneEmojiCount ?? 3) / 10) * 16}px)` }}
+                >
+                  {settings.milestoneEmojiCount ?? 3}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Goal - only for progress template */}
       {(settings.template || "metrics") === "progress" && (
         <div className="flex flex-col gap-3">
@@ -1396,7 +1476,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                       <div className="relative h-3 mx-3.5">
                         <span
                           className="absolute text-[10px] text-muted-foreground -translate-x-1/2"
-                          style={{ left: `${(((settings.branding?.logoSize ?? 30) - 20) / 20) * 100}%` }}
+                          style={{ left: `calc(${(((settings.branding?.logoSize ?? 30) - 20) / 20) * 100}% + ${8 - (((settings.branding?.logoSize ?? 30) - 20) / 20) * 16}px)` }}
                         >
                           {settings.branding?.logoSize ?? 30}px
                         </span>
