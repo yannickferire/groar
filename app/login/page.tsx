@@ -13,12 +13,14 @@ import posthog from "posthog-js";
 
 function LoginContent() {
   const [loading, setLoading] = useState<"google" | "twitter" | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = authClient.useSession();
   const planParam = searchParams.get("plan") as PlanType | null;
   const billingParam = searchParams.get("billing");
   const callbackUrlParam = searchParams.get("callbackUrl");
+  const errorParam = searchParams.get("error");
 
   // If already logged in (e.g. user pressed back after OAuth), redirect
   useEffect(() => {
@@ -27,16 +29,26 @@ function LoginContent() {
     }
   }, [session, router]);
 
-  // Reset loading state when page becomes visible again (back button)
+  // Detect failed OAuth: user returns to login page after sign-in attempt
   useEffect(() => {
+    if (errorParam) {
+      setError("Sign in failed. Please try again or use a different provider.");
+      posthog.capture("sign_in_failed", { error: errorParam });
+      return;
+    }
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
+        // User came back from OAuth provider without being authenticated
+        if (loading && !session) {
+          setError("Sign in failed. Please try again or use a different provider.");
+          posthog.capture("sign_in_failed", { provider: loading });
+        }
         setLoading(null);
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
+  }, [loading, session, errorParam]);
 
   // Determine callback URL based on params
   const getCallbackURL = () => {
@@ -60,6 +72,7 @@ function LoginContent() {
 
   const handleGoogle = () => {
     setLoading("google");
+    setError(null);
     posthog.capture("sign_in_started", {
       provider: "google",
       plan: planParam,
@@ -70,6 +83,7 @@ function LoginContent() {
 
   const handleTwitter = () => {
     setLoading("twitter");
+    setError(null);
     posthog.capture("sign_in_started", {
       provider: "twitter",
       plan: planParam,
@@ -108,6 +122,12 @@ function LoginContent() {
                 : "Sign in to access your dashboard"}
             </p>
           </div>
+
+          {error && (
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive text-center">
+              {error}
+            </div>
+          )}
 
           <div className="flex flex-col gap-3">
             <Button

@@ -3,6 +3,7 @@
 import XLogo from "@/components/icons/XLogo";
 import GithubLogo from "@/components/icons/GithubLogo";
 import RedditLogo from "@/components/icons/RedditLogo";
+import { useState, useEffect } from "react";
 import { FadeIn } from "@/components/ui/motion";
 import LovedBy from "@/components/LovedBy";
 import Image from "next/image";
@@ -18,6 +19,11 @@ const platformSvgClass = "[&>svg]:w-5! [&>svg]:h-5! sm:[&>svg]:w-5.5! sm:[&>svg]
 
 export default function Hero() {
   const { data: session } = authClient.useSession();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto">
@@ -58,7 +64,7 @@ export default function Hero() {
       </FadeIn>
       <FadeIn delay={0.55} duration={0.6}>
         <div className="mt-4">
-          {session ? (
+          {mounted && session ? (
             <Button asChild variant="default" size="lg">
               <Link href="/dashboard">
                 <HugeiconsIcon icon={DashboardSquare01Icon} size={18} strokeWidth={2} aria-hidden="true" />

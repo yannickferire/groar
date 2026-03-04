@@ -233,7 +233,7 @@ export default function DashboardSidebar() {
                         </span>
                         {animatingPoints !== null && (
                           <span
-                            key={Date.now()}
+                            key={animatingPoints + "-" + pointsToday}
                             className="absolute -top-1 left-0 text-[11px] font-mono font-bold text-green-500 pointer-events-none"
                             style={{
                               animation: "points-float 1.5s ease-out forwards",
@@ -258,7 +258,7 @@ export default function DashboardSidebar() {
           <div className="mx-2 mb-2 rounded-2xl bg-primary/10 border border-primary/20 p-4">
             <div className="flex items-center gap-2 mb-2">
               <HugeiconsIcon icon={CrownIcon} size={16} strokeWidth={2} className="text-primary" />
-              <span className="font-heading font-bold text-sm">
+              <span className="font-heading font-bold text-sm" suppressHydrationWarning>
                 Pro trial — {Math.max(0, Math.ceil((new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} day{Math.ceil((new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) !== 1 ? "s" : ""} left
               </span>
             </div>
