@@ -493,17 +493,18 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   type="button"
                   onClick={() => {
                     if (lockPremiumFeatures && template.premium) { onPremiumBlock?.("Premium template"); return; }
-                    updateSetting("template", template.id as TemplateType);
+                    const updates: Partial<EditorSettings> = { template: template.id as TemplateType };
                     if (template.id === "announcement" && (!settings.announcements || settings.announcements.length === 0)) {
-                      updateSetting("announcements", [{ emoji: "✅", text: "Item 1" }]);
+                      updates.announcements = [{ emoji: "✅", text: "Item 1" }];
                     }
                     if (template.id === "announcement" && !settings.heading) {
-                      updateSetting("heading", { type: "period", periodType: "day", periodFrom: 1 });
+                      updates.heading = { type: "period", periodType: "day", periodFrom: 1 };
                     }
                     if (template.id === "milestone" && !settings.milestoneEmoji) {
-                      updateSetting("milestoneEmoji", "🎉");
-                      updateSetting("milestoneEmojiCount", 3);
+                      updates.milestoneEmoji = "🎉";
+                      updates.milestoneEmojiCount = 3;
                     }
+                    onSettingsChange({ ...settings, ...updates });
                   }}
                   className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
                     lockPremiumFeatures && template.premium
