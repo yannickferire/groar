@@ -23,18 +23,19 @@ export async function POST(request: Request) {
     [userId]
   );
 
+  // Gift plans (pro, friend) get lifetime billing period
+  const billingPeriod = plan === "free" ? null : "lifetime";
+
   if (existing.rows.length > 0) {
-    // Update existing subscription
     await pool.query(
-      `UPDATE subscription SET plan = $1, status = 'active', "updatedAt" = NOW() WHERE "userId" = $2`,
-      [plan, userId]
+      `UPDATE subscription SET plan = $1, status = 'active', "billingPeriod" = COALESCE($3, "billingPeriod"), "updatedAt" = NOW() WHERE "userId" = $2`,
+      [plan, userId, billingPeriod]
     );
   } else {
-    // Create new subscription
     await pool.query(
-      `INSERT INTO subscription (id, "userId", plan, status, "createdAt", "updatedAt")
-       VALUES (gen_random_uuid(), $1, $2, 'active', NOW(), NOW())`,
-      [userId, plan]
+      `INSERT INTO subscription (id, "userId", plan, status, "billingPeriod", "createdAt", "updatedAt")
+       VALUES (gen_random_uuid(), $1, $2, 'active', $3, NOW(), NOW())`,
+      [userId, plan, billingPeriod]
     );
   }
 
