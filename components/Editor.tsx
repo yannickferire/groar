@@ -615,6 +615,9 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     const tweetText = `${metricLine}Made with 🐯 GROAR by @yannick_ferire`;
     const intentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
 
+    // Open X intent immediately (must be synchronous from user gesture to avoid popup blockers on mobile)
+    window.open(intentUrl, "_blank", "noopener");
+
     // Copy image to clipboard as PNG (clipboard API requires PNG)
     try {
       const pngBlob = await new Promise<Blob>((resolve, reject) => {
@@ -635,8 +638,6 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     } catch {
       // Clipboard not supported — image was already downloaded
     }
-
-    window.open(intentUrl, "_blank", "noopener");
     if (toastId) {
       toast.dismiss(toastId);
       exportToastIdRef.current = null;
