@@ -506,8 +506,8 @@ export default function AdminPage() {
                       <dd className="mt-0.5 text-xs">{formatDate(selectedUser.subscriptionUpdatedAt)}</dd>
                     </div>
                   </dl>
-                  {getUserCategory(selectedUser) !== "pro" && selectedUser.plan !== "friend" && (
-                    <div className="flex gap-2 mt-3">
+                  <div className="flex gap-2 mt-3">
+                    {selectedUser.plan !== "friend" && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -517,6 +517,8 @@ export default function AdminPage() {
                         <HugeiconsIcon icon={GiftIcon} size={14} strokeWidth={2} />
                         {giftingPlan ? "Gifting..." : "Gift Friend plan"}
                       </Button>
+                    )}
+                    {selectedUser.plan !== "pro" && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -526,8 +528,8 @@ export default function AdminPage() {
                         <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} />
                         {giftingPro ? "Gifting..." : "Gift Pro plan"}
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </section>
 
                 {/* Trial */}
