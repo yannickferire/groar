@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { setUserPlan, cancelUserSubscription, getUserSubscription } from "@/lib/plans-server";
+import { setUserPlan, cancelUserSubscription, getUserSubscription, resolveUserId } from "@/lib/plans-server";
 import { getPolarProductId, validateEvent, WebhookVerificationError } from "@/lib/polar";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { pool } from "@/lib/db";
@@ -62,17 +62,6 @@ function parseOrderData(data: Record<string, unknown>) {
     customerEmail: (customer.email ?? data.customer_email ?? "") as string,
     userId: metadata.userId,
   };
-}
-
-// Resolve userId from metadata or fallback to email lookup
-async function resolveUserId(userId: string | undefined, email: string): Promise<string | null> {
-  if (userId) return userId;
-  if (!email) return null;
-  const result = await pool.query(
-    `SELECT id FROM "user" WHERE email = $1 LIMIT 1`,
-    [email]
-  );
-  return result.rows[0]?.id ?? null;
 }
 
 export async function POST(request: NextRequest) {
