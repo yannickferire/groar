@@ -139,6 +139,7 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [giftingPlan, setGiftingPlan] = useState(false);
+  const [giftingPro, setGiftingPro] = useState(false);
 
   const handleGiftFriend = async (userId: string) => {
     setGiftingPlan(true);
@@ -149,7 +150,6 @@ export default function AdminPage() {
         body: JSON.stringify({ userId, plan: "friend" }),
       });
       if (!res.ok) throw new Error("Failed");
-      // Update local state
       setUsers((prev) =>
         prev.map((u) =>
           u.id === userId ? { ...u, plan: "friend", status: "active" } : u
@@ -162,6 +162,30 @@ export default function AdminPage() {
       alert("Failed to update plan");
     } finally {
       setGiftingPlan(false);
+    }
+  };
+
+  const handleGiftPro = async (userId: string) => {
+    setGiftingPro(true);
+    try {
+      const res = await fetch("/api/admin/users/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, plan: "pro" }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, plan: "pro", status: "active" } : u
+        )
+      );
+      setSelectedUser((prev) =>
+        prev && prev.id === userId ? { ...prev, plan: "pro", status: "active" } : prev
+      );
+    } catch {
+      alert("Failed to update plan");
+    } finally {
+      setGiftingPro(false);
     }
   };
 
@@ -483,16 +507,26 @@ export default function AdminPage() {
                     </div>
                   </dl>
                   {getUserCategory(selectedUser) !== "pro" && selectedUser.plan !== "friend" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-3"
-                      disabled={giftingPlan}
-                      onClick={() => handleGiftFriend(selectedUser.id)}
-                    >
-                      <HugeiconsIcon icon={GiftIcon} size={14} strokeWidth={2} />
-                      {giftingPlan ? "Gifting..." : "Gift Friend plan"}
-                    </Button>
+                    <div className="flex gap-2 mt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={giftingPlan}
+                        onClick={() => handleGiftFriend(selectedUser.id)}
+                      >
+                        <HugeiconsIcon icon={GiftIcon} size={14} strokeWidth={2} />
+                        {giftingPlan ? "Gifting..." : "Gift Friend plan"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={giftingPro}
+                        onClick={() => handleGiftPro(selectedUser.id)}
+                      >
+                        <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} />
+                        {giftingPro ? "Gifting..." : "Gift Pro plan"}
+                      </Button>
+                    </div>
                   )}
                 </section>
 
