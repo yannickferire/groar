@@ -295,8 +295,9 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
         const now = Date.now();
         const isNewBg = (b: BackgroundPreset) =>
           b.addedAt ? (now - new Date(b.addedAt).getTime()) < NEW_DAYS * 86400000 : false;
-        const newBgs = allImages.filter(b => isNewBg(b) && b.premium);
-        const regularBgs = allImages.filter(b => !(isNewBg(b) && b.premium));
+        const isPromotedNew = (b: BackgroundPreset) => isNewBg(b) && (isPremium || b.premium);
+        const newBgs = allImages.filter(isPromotedNew);
+        const regularBgs = allImages.filter(b => !isPromotedNew(b));
         // Reserve slots for: +X button + solid + new backgrounds
         const reservedSlots = 1 + (solidPreset ? 1 : 0) + newBgs.length;
         const regularSlots = Math.max(bgPerRow - reservedSlots, 0);
