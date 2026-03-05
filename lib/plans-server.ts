@@ -198,6 +198,17 @@ export async function getWeeklyExportCount(userId: string): Promise<number> {
   return parseInt(result.rows[0].count);
 }
 
+// Resolve userId from metadata or fallback to email lookup
+export async function resolveUserId(userId: string | undefined, email: string): Promise<string | null> {
+  if (userId) return userId;
+  if (!email) return null;
+  const result = await pool.query(
+    `SELECT id FROM "user" WHERE email = $1 LIMIT 1`,
+    [email]
+  );
+  return result.rows[0]?.id ?? null;
+}
+
 // Cancel user subscription (set status to canceled, keep plan until period end)
 export async function cancelUserSubscription(userId: string): Promise<void> {
   try {
