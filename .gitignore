@@ -21,8 +21,10 @@ POSTHOG_REPORTS.md
 /.next/
 /out/
 
-# Generated WebP backgrounds (built from source PNG/JPG at build time)
-public/backgrounds/*.webp
+# Source image files (keep only WebP in git)
+public/backgrounds/**/*.png
+public/backgrounds/**/*.jpg
+public/backgrounds/**/*.jpeg
 
 # production
 /build
