@@ -135,6 +135,13 @@ export default function TermsPage() {
               <p className="leading-relaxed">
                 For questions about these Terms of Service, please contact us at{" "}
                 <a
+                  href="mailto:yannick.ferire@gmail.com"
+                  className="text-primary hover:underline"
+                >
+                  yannick.ferire@gmail.com
+                </a>
+                {" "}or{" "}
+                <a
                   href="https://x.com/yannick_ferire"
                   target="_blank"
                   rel="noopener"

@@ -24,6 +24,17 @@ function getBillingPeriodFromProductId(productId: string): "monthly" | "lifetime
   return "monthly";
 }
 
+// Extract a product ID from various Polar payload shapes
+function extractProductId(data: Record<string, unknown>): string {
+  // Direct top-level field
+  if (data.product_id) return data.product_id as string;
+  if (data.productId) return data.productId as string;
+  // Nested product object (newer Polar API)
+  const product = data.product as Record<string, unknown> | undefined;
+  if (product?.id) return product.id as string;
+  return "";
+}
+
 // Extract subscription fields from webhook event.data
 function parseSubscriptionData(data: Record<string, unknown>) {
   const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
@@ -31,8 +42,8 @@ function parseSubscriptionData(data: Record<string, unknown>) {
   return {
     id: data.id as string,
     status: data.status as string,
-    productId: (data.product_id ?? data.productId ?? "") as string,
-    customerId: (data.customer_id ?? data.customerId ?? "") as string,
+    productId: extractProductId(data),
+    customerId: (data.customer_id ?? data.customerId ?? customer.id ?? "") as string,
     customerEmail: (customer.email ?? data.customer_email ?? "") as string,
     amountCents: (data.amount ?? data.recurring_amount ?? 0) as number,
     currentPeriodEnd: (data.current_period_end ?? data.currentPeriodEnd) as string | undefined,
@@ -45,11 +56,15 @@ function parseSubscriptionData(data: Record<string, unknown>) {
 function parseOrderData(data: Record<string, unknown>) {
   const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
   const customer = (data.customer ?? {}) as Record<string, unknown>;
-  // Product ID from order items
+  // Product ID from order items (check nested product object too)
   const items = (data.items ?? data.order_items ?? []) as Array<Record<string, unknown>>;
-  const productId = items.length > 0
-    ? ((items[0].product_id ?? items[0].productId ?? "") as string)
-    : ((data.product_id ?? data.productId ?? "") as string);
+  let productId = "";
+  if (items.length > 0) {
+    productId = extractProductId(items[0]);
+  }
+  if (!productId) {
+    productId = extractProductId(data);
+  }
   // Amount in cents from order items or top-level
   const amountCents = items.length > 0
     ? ((items[0].amount ?? 0) as number)
@@ -95,7 +110,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    console.log("Polar webhook received:", event.type, JSON.stringify(event.data).slice(0, 500));
+    console.log("Polar webhook received:", event.type, JSON.stringify(event.data).slice(0, 1000));
 
     switch (event.type) {
       case "checkout.created": {
@@ -115,7 +130,7 @@ export async function POST(request: NextRequest) {
         console.log("Order parsed:", JSON.stringify(order));
         const plan = getPlanFromProductId(order.productId);
         if (!plan) {
-          console.log("Order for non-plan product:", order.productId);
+          console.error("Order: unknown product ID:", order.productId, "— expected:", getPolarProductId("pro", "monthly"), "or", getPolarProductId("pro", "lifetime"));
           break;
         }
 
