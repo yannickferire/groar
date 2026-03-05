@@ -4,6 +4,7 @@ import XLogo from "@/components/icons/XLogo";
 import GithubLogo from "@/components/icons/GithubLogo";
 import RedditLogo from "@/components/icons/RedditLogo";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FadeIn } from "@/components/ui/motion";
 import LovedBy from "@/components/LovedBy";
 import Image from "next/image";
@@ -20,6 +21,7 @@ const platformSvgClass = "[&>svg]:w-5! [&>svg]:h-5! sm:[&>svg]:w-5.5! sm:[&>svg]
 export default function Hero() {
   const { data: session } = authClient.useSession();
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -72,19 +74,36 @@ export default function Hero() {
               </Link>
             </Button>
           ) : (
-            <Button
-              variant="default"
-              size="lg"
-              onClick={() => {
-                import("posthog-js").then(({ default: posthog }) => {
-                  posthog.capture("hero_cta_clicked");
-                }).catch(() => {});
-                document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-              Create your first visual
-            </Button>
+            <>
+              {/* Mobile: Start for free (same as header CTA) */}
+              <Button
+                variant="default"
+                size="lg"
+                className="md:hidden"
+                onClick={() => {
+                  localStorage.setItem("groar-trial-intent", "true");
+                  router.push("/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart");
+                }}
+              >
+                <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+                Start for free
+              </Button>
+              {/* Desktop: scroll to editor */}
+              <Button
+                variant="default"
+                size="lg"
+                className="hidden md:inline-flex"
+                onClick={() => {
+                  import("posthog-js").then(({ default: posthog }) => {
+                    posthog.capture("hero_cta_clicked");
+                  }).catch(() => {});
+                  document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+                Create your first visual
+              </Button>
+            </>
           )}
         </div>
       </FadeIn>
