@@ -31,6 +31,7 @@ posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   // Turn on debug in development mode
   debug: process.env.NODE_ENV === "development",
   before_send: (event) => {
+    if (!event) return null;
     // Filter out noisy ResizeObserver errors
     if (event.event === "$exception" && event.properties?.$exception_message?.includes("ResizeObserver loop")) {
       return null;
