@@ -77,8 +77,11 @@ export default function Footer() {
           <a href="https://wired.business" target="_blank" rel="noopener noreferrer">
             <img src="https://wired.business/badge0-white.svg" alt="Featured on Wired Business" className="max-h-12" />
           </a>
-          <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer">
-            <img src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" />
+          <a href="https://neeed.directory/products/groar?utm_source=groar" target="_blank" rel="noopener">
+            <img src="https://neeed.directory/badges/neeed-badge-light.svg" alt="Featured on neeed.directory" width="139" className="h-12" />
+          </a>
+          <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer" className="-ml-3 -mr-3">
+            <img src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" className="h-14 -my-1" />
           </a>
         </div>
       </footer>
