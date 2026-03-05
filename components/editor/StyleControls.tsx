@@ -191,12 +191,6 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
     setActivePresetId(preset.id);
   }, [onSettingsChange]);
 
-  const handleRandomStyle = useCallback(() => {
-    const includeAll = isPremium || !lockPremiumFeatures;
-    const randomized = randomizeStyle(backgrounds, includeAll);
-    onSettingsChange({ ...settingsRef.current, ...randomized });
-  }, [backgrounds, isPremium, lockPremiumFeatures, onSettingsChange]);
-
   const updateSetting = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value });
   };
@@ -220,74 +214,192 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
     updateSetting("aspectRatio", ratioId);
   };
 
-  // Reorder backgrounds: image backgrounds first, solid color last
-  const orderedBackgrounds = [
-    ...backgrounds.filter(b => !b.color),
-    ...backgrounds.filter(b => b.color),
-  ];
+  // Background popularity (global export counts)
+  const [bgPopularity, setBgPopularity] = useState<Record<string, number>>({});
+  const [showAllBgs, setShowAllBgs] = useState(false);
+  const [bgPerRow, setBgPerRow] = useState(0);
+  const bgWrapperRef = useRef<HTMLDivElement>(null);
+
+  const handleRandomStyle = useCallback(() => {
+    const includeAll = isPremium || !lockPremiumFeatures;
+    // Only randomize among visible backgrounds
+    const visibleBgs = showAllBgs ? backgrounds : (() => {
+      const allImages = backgrounds.filter(b => !b.color);
+      const now = Date.now();
+      const isNewPremium = (b: BackgroundPreset) =>
+        b.premium && b.addedAt ? (now - new Date(b.addedAt).getTime()) < NEW_DAYS * 86400000 : false;
+      const newBgs = allImages.filter(isNewPremium);
+      const regularBgs = allImages.filter(b => !isNewPremium(b));
+      const solidSlots = backgrounds.some(b => b.color) ? 1 : 0;
+      const reservedSlots = 1 + solidSlots + newBgs.length;
+      const regularSlots = Math.max(bgPerRow - reservedSlots, 0);
+      return [...regularBgs.slice(0, regularSlots), ...newBgs];
+    })();
+    const randomized = randomizeStyle(visibleBgs, includeAll);
+    onSettingsChange({ ...settingsRef.current, ...randomized });
+  }, [backgrounds, isPremium, lockPremiumFeatures, onSettingsChange, showAllBgs, bgPerRow]);
+
+  useEffect(() => {
+    fetch("/api/backgrounds/popularity")
+      .then(res => res.ok ? res.json() : {})
+      .then(data => setBgPopularity(data))
+      .catch(() => {});
+  }, []);
+
+  // Measure how many bg thumbnails fit in one row (observe stable parent wrapper)
+  useEffect(() => {
+    const el = bgWrapperRef.current;
+    if (!el) return;
+    const measure = () => {
+      const itemSize = 40; // w-10
+      const gap = 8; // gap-2
+      const width = el.clientWidth;
+      const count = Math.floor((width + gap) / (itemSize + gap));
+      setBgPerRow(prev => {
+        const next = Math.max(count, 2);
+        return prev === next ? prev : next;
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const NEW_DAYS = 3;
+  const orderedBackgrounds = (() => {
+    const sortByPopularity = (a: BackgroundPreset, b: BackgroundPreset) =>
+      (bgPopularity[b.id] || 0) - (bgPopularity[a.id] || 0);
+    const imageBackgrounds = backgrounds.filter(b => !b.color);
+    const solid = backgrounds.filter(b => b.color);
+    if (isPremium) {
+      // Dashboard: all images sorted by popularity together
+      return [...imageBackgrounds.sort(sortByPopularity), ...solid];
+    } else {
+      // Landing: free first, then premium, both sorted by popularity
+      const free = imageBackgrounds.filter(b => !b.premium).sort(sortByPopularity);
+      const premium = imageBackgrounds.filter(b => b.premium).sort(sortByPopularity);
+      return [...free, ...premium, ...solid];
+    }
+  })();
 
   const nextPresetNumber = presets.length + 1;
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div ref={bgWrapperRef} className="flex flex-col items-center gap-3">
       {/* Row 1: Background presets */}
-      <div className="flex items-center gap-2 flex-wrap justify-center">
-        <span className="text-xs text-muted-foreground shrink-0 sr-only">Background</span>
-        {orderedBackgrounds.map((preset) => (
-          preset.color ? (
-            <div
-              key={preset.id}
-              className={`relative w-10 h-10 rounded-lg overflow-hidden transition-all ${
-                settings.background.presetId === preset.id
+      {(() => {
+        if (bgPerRow === 0) return <div className="h-10" />; // placeholder while measuring
+        const solidPreset = orderedBackgrounds.find(b => b.color);
+        const allImages = orderedBackgrounds.filter(b => !b.color);
+        const now = Date.now();
+        const isNewBg = (b: BackgroundPreset) =>
+          b.addedAt ? (now - new Date(b.addedAt).getTime()) < NEW_DAYS * 86400000 : false;
+        const newBgs = allImages.filter(b => isNewBg(b) && b.premium);
+        const regularBgs = allImages.filter(b => !(isNewBg(b) && b.premium));
+        // Reserve slots for: +X button + solid + new backgrounds
+        const reservedSlots = 1 + (solidPreset ? 1 : 0) + newBgs.length;
+        const regularSlots = Math.max(bgPerRow - reservedSlots, 0);
+        const firstRowRegular = regularBgs.slice(0, regularSlots);
+        const extraImages = regularBgs.slice(regularSlots);
+        const canExpand = extraImages.length > 0;
+        const hiddenCount = extraImages.length;
+
+        const renderImageBg = (preset: BackgroundPreset) => (
+          <button
+            key={preset.id}
+            type="button"
+            onClick={() => { if (lockPremiumFeatures && preset.premium) { onPremiumBlock?.("Premium background"); return; } selectBgPreset(preset.id); }}
+            className={`relative w-10 h-10 shrink-0 rounded-lg overflow-visible transition-all ${
+              lockPremiumFeatures && preset.premium
+                ? "opacity-50 cursor-not-allowed"
+                : settings.background.presetId === preset.id
                   ? "ring-2 ring-primary ring-offset-2 ring-offset-card"
                   : "hover:ring-2 hover:ring-foreground/30"
-              }`}
-              title={preset.name}
-            >
-              <Input
-                type="color"
-                value={settings.background.solidColor || preset.color}
-                onChange={(e) => {
-                  selectBgPreset(preset.id);
-                  updateSolidColor(e.target.value);
-                }}
-                onClick={() => selectBgPreset(preset.id)}
-                className="absolute inset-0 w-full h-full p-0 cursor-pointer border-0 rounded-lg [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-lg"
-                aria-label="Background color picker"
+            }`}
+            title={lockPremiumFeatures && preset.premium ? `${preset.name} (Pro)` : preset.name}
+          >
+            {preset.image && (
+              <Image
+                src={preset.image}
+                alt={preset.name}
+                width={40}
+                height={40}
+                className="w-full h-full object-cover rounded-lg"
               />
+            )}
+            {!isPremium && preset.premium && (
+              <span className="absolute inset-0 rounded-lg bg-black/30 flex items-end justify-end p-1">
+                <HugeiconsIcon icon={CrownIcon} size={12} strokeWidth={2.5} className="text-white/80" />
+              </span>
+            )}
+            {isPremium && preset.addedAt && (Date.now() - new Date(preset.addedAt).getTime()) < NEW_DAYS * 86400000 && (
+              <span className="absolute -top-2 left-[calc(50%+1px)] -translate-x-1/2 bg-primary text-primary-foreground text-[8px] font-medium uppercase leading-none px-1.5 py-0.5 rounded-full z-10">
+                new
+              </span>
+            )}
+          </button>
+        );
+
+        return (
+          <div className="w-full flex flex-col items-center gap-2 py-1">
+            {/* First row: fixed — images + solid + expand/collapse button */}
+            <div className="flex items-center gap-2 justify-center flex-nowrap">
+              {firstRowRegular.map(renderImageBg)}
+              {newBgs.map(renderImageBg)}
+              {solidPreset && (
+                <div
+                  key={solidPreset.id}
+                  className={`relative w-10 h-10 shrink-0 rounded-lg overflow-hidden transition-all ${
+                    settings.background.presetId === solidPreset.id
+                      ? "ring-2 ring-primary ring-offset-2 ring-offset-card"
+                      : "hover:ring-2 hover:ring-foreground/30"
+                  }`}
+                  title={solidPreset.name}
+                >
+                  <Input
+                    type="color"
+                    value={settings.background.solidColor || solidPreset.color}
+                    onChange={(e) => {
+                      selectBgPreset(solidPreset.id);
+                      updateSolidColor(e.target.value);
+                    }}
+                    onClick={() => selectBgPreset(solidPreset.id)}
+                    className="absolute inset-0 w-full h-full p-0 cursor-pointer border-0 rounded-lg [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-lg"
+                    aria-label="Background color picker"
+                  />
+                </div>
+              )}
+              {canExpand && !showAllBgs && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllBgs(true)}
+                  className="w-10 h-10 shrink-0 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors font-[DM_Mono,monospace]"
+                  title="Show more backgrounds"
+                >
+                  +{hiddenCount}
+                </button>
+              )}
+              {canExpand && showAllBgs && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllBgs(false)}
+                  className="w-10 h-10 shrink-0 rounded-lg border border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors"
+                  title="Show less"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={2} />
+                </button>
+              )}
             </div>
-          ) : (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => { if (lockPremiumFeatures && preset.premium) { onPremiumBlock?.("Premium background"); return; } selectBgPreset(preset.id); }}
-              className={`relative w-10 h-10 rounded-lg transition-all ${
-                lockPremiumFeatures && preset.premium
-                  ? "opacity-50 cursor-not-allowed"
-                  : settings.background.presetId === preset.id
-                    ? "ring-2 ring-primary ring-offset-2 ring-offset-card"
-                    : "hover:ring-2 hover:ring-foreground/30"
-              }`}
-              title={lockPremiumFeatures && preset.premium ? `${preset.name} (Pro)` : preset.name}
-            >
-              {preset.image && (
-                <Image
-                  src={preset.image}
-                  alt={preset.name}
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-cover rounded-lg"
-                />
-              )}
-              {!isPremium && preset.premium && (
-                <span className="absolute inset-0 rounded-lg bg-black/30 flex items-end justify-end p-1">
-                  <HugeiconsIcon icon={CrownIcon} size={12} strokeWidth={2.5} className="text-white/80" />
-                </span>
-              )}
-            </button>
-          )
-        ))}
-      </div>
+            {/* Extra rows: only when expanded */}
+            {showAllBgs && extraImages.length > 0 && (
+              <div className="flex items-center gap-2 justify-center flex-wrap">
+                {extraImages.map(renderImageBg)}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Row 2: Text color + Font + Random */}
       <div className="flex items-center gap-4 flex-wrap">

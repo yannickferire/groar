@@ -242,15 +242,15 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
               }
               return null;
             })()}
-            <div className="flex flex-col items-center" style={{ gap: isBanner ? "0.3cqi" : "0.5cqi" }}>
+            <div className="flex flex-col items-center" style={{ gap: 0 }}>
               {settings.metrics.map((metric, index) => {
                 const hasHeading = !!settings.heading;
                 const primarySize = hasHeading
-                  ? (isBanner ? "3.2cqi" : "4cqi")
-                  : (isBanner ? "4.8cqi" : "6cqi");
+                  ? (isBanner ? "4.6cqi" : "5.7cqi")
+                  : (isBanner ? "6.8cqi" : "8.6cqi");
                 const secondarySize = hasHeading
-                  ? (isBanner ? "2cqi" : "2.5cqi")
-                  : (isBanner ? "2.4cqi" : "3cqi");
+                  ? (isBanner ? "2.6cqi" : "3.2cqi")
+                  : (isBanner ? "3.1cqi" : "3.9cqi");
                 const primaryIcon = hasHeading
                   ? (isBanner ? "3.6cqi" : iconSizes.primaryWithPeriod)
                   : (isBanner ? "5.2cqi" : iconSizes.primaryNoPeriod);
@@ -264,6 +264,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                     style={{
                       fontSize: index === 0 ? primarySize : secondarySize,
                       gap: index === 0 ? (isBanner ? "0.6cqi" : "1cqi") : (isBanner ? "0.7cqi" : "1.2cqi"),
+                      marginTop: index > 0 ? (isBanner ? "-0.3cqi" : "-0.5cqi") : undefined,
                     }}
                   >
                     <HugeiconsIcon
@@ -272,7 +273,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                         width: index === 0 ? primaryIcon : secondaryIcon,
                         height: index === 0 ? primaryIcon : secondaryIcon,
                       }}
-                      strokeWidth={2}
+                      strokeWidth={index === 0 ? 3 : 2}
                       color="currentColor"
                     />
                     {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {METRIC_LABELS[metric.type]}

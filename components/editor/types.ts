@@ -51,6 +51,8 @@ export type BackgroundPreset = {
   color?: string;
   gradient?: string;
   premium?: boolean;
+  category?: string;
+  addedAt?: string;
 };
 
 export type BackgroundSettings = {
