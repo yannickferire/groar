@@ -2,6 +2,8 @@ import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
+const PREFERENCE_FIELDS = ["emailMilestones", "emailTrialReminders", "emailProductUpdates"] as const;
+
 // GET: Fetch user preferences
 export async function GET() {
   const { session, response } = await requireAuth();
@@ -9,13 +11,15 @@ export async function GET() {
 
   try {
     const result = await pool.query(
-      `SELECT "emailMilestones" FROM "user" WHERE id = $1`,
+      `SELECT "emailMilestones", "emailTrialReminders", "emailProductUpdates" FROM "user" WHERE id = $1`,
       [session.user.id]
     );
 
     const row = result.rows[0];
     return NextResponse.json({
       emailMilestones: row?.emailMilestones ?? true,
+      emailTrialReminders: row?.emailTrialReminders ?? true,
+      emailProductUpdates: row?.emailProductUpdates ?? true,
     });
   } catch (error) {
     console.error("Preferences fetch error:", error);
@@ -30,12 +34,24 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { emailMilestones } = body;
 
-    if (typeof emailMilestones === "boolean") {
+    const sets: string[] = [];
+    const values: (boolean | string)[] = [];
+    let paramIndex = 1;
+
+    for (const field of PREFERENCE_FIELDS) {
+      if (typeof body[field] === "boolean") {
+        sets.push(`"${field}" = $${paramIndex}`);
+        values.push(body[field]);
+        paramIndex++;
+      }
+    }
+
+    if (sets.length > 0) {
+      values.push(session.user.id);
       await pool.query(
-        `UPDATE "user" SET "emailMilestones" = $1 WHERE id = $2`,
-        [emailMilestones, session.user.id]
+        `UPDATE "user" SET ${sets.join(", ")} WHERE id = $${paramIndex}`,
+        values
       );
     }
 

@@ -154,11 +154,11 @@ export async function POST(request: NextRequest) {
 
         try {
           const userResult = await pool.query(
-            `SELECT email, name FROM "user" WHERE id = $1`,
+            `SELECT email, name, "emailTrialReminders" FROM "user" WHERE id = $1`,
             [orderUserId]
           );
           const user = userResult.rows[0];
-          if (user?.email) {
+          if (user?.email && user.emailTrialReminders !== false) {
             const email = subscriptionConfirmedEmail(user.name || "there", billingPeriod);
             sendEmail({ to: user.email, ...email }).catch(console.error);
           }
@@ -231,11 +231,11 @@ export async function POST(request: NextRequest) {
             // Send subscription confirmed email
             try {
               const userResult = await pool.query(
-                `SELECT email, name FROM "user" WHERE id = $1`,
+                `SELECT email, name, "emailTrialReminders" FROM "user" WHERE id = $1`,
                 [subUserId]
               );
               const user = userResult.rows[0];
-              if (user?.email) {
+              if (user?.email && user.emailTrialReminders !== false) {
                 const email = subscriptionConfirmedEmail(user.name || "there", billingPeriod);
                 sendEmail({ to: user.email, ...email }).catch(console.error);
               }

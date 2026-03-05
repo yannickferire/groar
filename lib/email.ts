@@ -186,13 +186,14 @@ function layout(body: string) {
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="background:#fff;border-radius:12px;padding:32px;border:1px solid #e5e7eb;">
       <div style="text-align:center;margin-bottom:24px;">
-        <img src="${SITE_URL}/groar-logo.png" alt="GROAR" width="140" style="display:inline-block;" />
+        <img src="${SITE_URL}/groar-logo.png" alt="GROAR" width="140" style="display:inline-block;background:#ffffff;padding:8px 16px;border-radius:8px;" />
       </div>
       ${body}
     </div>
     <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:24px;">
       🐯 GROAR – Turn your metrics into high-signal visuals<br>
-      <a href="${SITE_URL}" style="color:#9ca3af;">groar.app</a> · <a href="https://x.com/yannick_ferire" style="color:#9ca3af;">@yannick_ferire</a>
+      <a href="${SITE_URL}" style="color:#9ca3af;">groar.app</a> · <a href="https://x.com/yannick_ferire" style="color:#9ca3af;">@yannick_ferire</a><br>
+      <a href="${SITE_URL}/dashboard/settings" style="color:#9ca3af;">Email settings</a>
     </p>
   </div>
 </body>

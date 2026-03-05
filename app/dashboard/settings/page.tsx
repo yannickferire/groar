@@ -3,31 +3,57 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserCircleIcon, Mail01Icon, Notification03Icon } from "@hugeicons/core-free-icons";
+import { UserCircleIcon, Mail01Icon, Mail02Icon } from "@hugeicons/core-free-icons";
 import { Switch } from "@/components/ui/switch";
 import Image from "next/image";
 
+type EmailPreferences = {
+  emailMilestones: boolean;
+  emailTrialReminders: boolean;
+  emailProductUpdates: boolean;
+};
+
 function SettingsContent() {
   const { data: session } = authClient.useSession();
-  const [emailMilestones, setEmailMilestones] = useState(true);
+  const [prefs, setPrefs] = useState<EmailPreferences>({
+    emailMilestones: true,
+    emailTrialReminders: true,
+    emailProductUpdates: true,
+  });
   const [loadingPrefs, setLoadingPrefs] = useState(true);
 
   useEffect(() => {
     fetch("/api/user/preferences")
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
-        if (data) setEmailMilestones(data.emailMilestones);
+        if (data) setPrefs(data);
       })
       .catch(() => {})
       .finally(() => setLoadingPrefs(false));
   }, []);
 
-  const toggleEmailMilestones = useCallback(async (checked: boolean) => {
-    setEmailMilestones(checked);
+  const allEmailsOn = prefs.emailMilestones || prefs.emailTrialReminders || prefs.emailProductUpdates;
+
+  const togglePref = useCallback(async (key: keyof EmailPreferences, checked: boolean) => {
+    setPrefs((prev) => ({ ...prev, [key]: checked }));
     await fetch("/api/user/preferences", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ emailMilestones: checked }),
+      body: JSON.stringify({ [key]: checked }),
+    });
+  }, []);
+
+  const toggleAllEmails = useCallback(async (checked: boolean) => {
+    const newPrefs = {
+      emailMilestones: checked,
+      emailTrialReminders: checked,
+      emailProductUpdates: checked,
+    };
+    setPrefs(newPrefs);
+    await fetch("/api/user/preferences", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newPrefs),
     });
   }, []);
 
@@ -77,25 +103,71 @@ function SettingsContent() {
         </div>
       </div>
 
-      {/* Notification preferences */}
+      {/* Email preferences */}
       <div className="rounded-2xl border-fade p-6 space-y-6">
         <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={Notification03Icon} size={20} strokeWidth={2} />
-          <h2 className="text-lg font-heading font-semibold">Notifications</h2>
+          <HugeiconsIcon icon={Mail02Icon} size={20} strokeWidth={2} />
+          <h2 className="text-lg font-heading font-semibold">Email preferences</h2>
         </div>
 
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium">Milestone emails</p>
-            <p className="text-sm text-muted-foreground">
-              Get an email when you hit a follower milestone.
-            </p>
+        <div className="space-y-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">All emails</p>
+              <p className="text-sm text-muted-foreground">
+                Receive all emails from Groar.
+              </p>
+            </div>
+            <Switch
+              checked={allEmailsOn}
+              onCheckedChange={toggleAllEmails}
+              disabled={loadingPrefs}
+            />
           </div>
-          <Switch
-            checked={emailMilestones}
-            onCheckedChange={toggleEmailMilestones}
-            disabled={loadingPrefs}
-          />
+
+          <div className="border-t border-border" />
+
+          <div className={`flex items-center justify-between gap-4 ${!allEmailsOn ? "opacity-50" : ""}`}>
+            <div>
+              <p className="text-sm font-medium">Milestones</p>
+              <p className="text-sm text-muted-foreground">
+                Get notified when you hit a milestone.
+              </p>
+            </div>
+            <Switch
+              checked={prefs.emailMilestones}
+              onCheckedChange={(checked) => togglePref("emailMilestones", checked)}
+              disabled={loadingPrefs || !allEmailsOn}
+            />
+          </div>
+
+          <div className={`flex items-center justify-between gap-4 ${!allEmailsOn ? "opacity-50" : ""}`}>
+            <div>
+              <p className="text-sm font-medium">Trial & billing</p>
+              <p className="text-sm text-muted-foreground">
+                Trial reminders and billing updates.
+              </p>
+            </div>
+            <Switch
+              checked={prefs.emailTrialReminders}
+              onCheckedChange={(checked) => togglePref("emailTrialReminders", checked)}
+              disabled={loadingPrefs || !allEmailsOn}
+            />
+          </div>
+
+          <div className={`flex items-center justify-between gap-4 ${!allEmailsOn ? "opacity-50" : ""}`}>
+            <div>
+              <p className="text-sm font-medium">Product updates</p>
+              <p className="text-sm text-muted-foreground">
+                New features and product updates.
+              </p>
+            </div>
+            <Switch
+              checked={prefs.emailProductUpdates}
+              onCheckedChange={(checked) => togglePref("emailProductUpdates", checked)}
+              disabled={loadingPrefs || !allEmailsOn}
+            />
+          </div>
         </div>
       </div>
     </div>
