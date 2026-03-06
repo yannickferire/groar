@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import VsCta from "@/components/VsCta";
@@ -237,6 +238,19 @@ export default function VsCanvaPage() {
           <section className="mb-12 md:mb-16">
             <h2 className="text-2xl font-bold mb-6">Frequently asked questions</h2>
             <VsFaq faqs={faqs} />
+          </section>
+
+          {/* Cross-link */}
+          <section className="mb-12 md:mb-16">
+            <p className="text-sm text-muted-foreground text-center">
+              See also:{" "}
+              <Link href="/vs/screenshots" className="underline hover:text-foreground transition-colors">
+                GROAR vs Screenshots
+              </Link>{" "}&middot;{" "}
+              <Link href="/vs" className="underline hover:text-foreground transition-colors">
+                Compare
+              </Link>
+            </p>
           </section>
 
           {/* CTA — hidden if logged in */}

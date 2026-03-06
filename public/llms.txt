@@ -52,5 +52,6 @@ Create scroll-stopping visuals from your growth data — followers, MRR, GitHub 
 ## Links
 
 - Website: https://groar.app
-- Comparisons: https://groar.app/vs/canva, https://groar.app/vs/screenshots
+- Compare: https://groar.app/vs
+- Comparisons: https://groar.app/vs/screenshots, https://groar.app/vs/canva, https://groar.app/vs/piktochart, https://groar.app/vs/image-charts, https://groar.app/vs/spreadsheets
 - Creator: Yannick Ferire — https://x.com/yannick_ferire
