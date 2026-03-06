@@ -18,6 +18,11 @@ import {
   RefreshIcon,
   Link01Icon,
   ArrowDown02Icon,
+  DollarCircleIcon,
+  DollarReceive01Icon,
+  ChartIncreaseIcon,
+  UserAdd02Icon,
+  MoneyBag01Icon,
 } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +30,7 @@ import Link from "next/link";
 
 // Simple in-memory cache for analytics data
 let analyticsCache: { data: AnalyticsData | null; timestamp: number } | null = null;
+let trustmrrCache: { data: TrustMRRData | null; timestamp: number } | null = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 type AnalyticsSnapshot = {
@@ -72,8 +78,31 @@ type AnalyticsData = {
   };
 };
 
+type TrustMRRSnapshot = {
+  date: string;
+  mrrCents: number;
+  revenueLast30dCents: number;
+  revenueTotalCents: number;
+  customers: number;
+  activeSubscriptions: number;
+  growth30d: number;
+  mrrGained: number;
+  createdAt: string;
+};
+
+type TrustMRRData = {
+  hasData: boolean;
+  canManualRefresh: boolean;
+  latest?: TrustMRRSnapshot;
+  snapshots?: TrustMRRSnapshot[];
+};
+
 function formatNumber(num: number): string {
   return num.toLocaleString("en-US");
+}
+
+function formatCents(cents: number): string {
+  return "$" + (cents / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 function MetricCard({
@@ -81,12 +110,22 @@ function MetricCard({
   value,
   delta,
   icon,
+  formatValue,
+  formatDelta,
 }: {
   label: string;
   value: number;
   delta?: number;
   icon: React.ReactNode;
+  formatValue?: (v: number) => string;
+  formatDelta?: (v: number) => string;
 }) {
+  const displayValue = formatValue ? formatValue(value) : formatNumber(value);
+  const displayDelta = (d: number) => {
+    if (formatDelta) return formatDelta(d);
+    return `${d > 0 ? "+" : ""}${formatNumber(d)}`;
+  };
+
   return (
     <div className="rounded-2xl border-fade p-4">
       <div className="flex items-center justify-between">
@@ -96,7 +135,7 @@ function MetricCard({
           </div>
           <div>
             <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold">{formatNumber(value)}</p>
+            <p className="text-2xl font-bold">{displayValue}</p>
           </div>
         </div>
         {delta !== undefined && delta !== 0 && (
@@ -109,7 +148,7 @@ function MetricCard({
               icon={delta > 0 ? ArrowUp01Icon : ArrowDown01Icon}
               size={16}
             />
-            <span>{delta > 0 ? "+" : ""}{formatNumber(delta)}</span>
+            <span>{displayDelta(delta)}</span>
           </div>
         )}
       </div>
@@ -136,6 +175,41 @@ export default function AnalyticsPage() {
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [selectedAccountIndex, setSelectedAccountIndex] = useState(0);
+  const [trustmrrData, setTrustmrrData] = useState<TrustMRRData | null>(null);
+  const [expandedDate, setExpandedDate] = useState<string | null>(null);
+
+  const fetchTrustMRR = async (forceRefresh = false) => {
+    if (!forceRefresh && trustmrrCache && Date.now() - trustmrrCache.timestamp < CACHE_DURATION) {
+      setTrustmrrData(trustmrrCache.data);
+      return;
+    }
+    try {
+      const res = await fetch("/api/analytics/trustmrr?days=30");
+      if (!res.ok) return;
+      const tmrrData = await res.json();
+      trustmrrCache = { data: tmrrData, timestamp: Date.now() };
+      setTrustmrrData(tmrrData);
+
+      // Auto-fetch on first visit if no data yet
+      if (!tmrrData.hasData) {
+        const fetchRes = await fetch("/api/analytics/trustmrr/fetch", { method: "POST" });
+        if (fetchRes.ok) {
+          const result = await fetchRes.json();
+          if (result.success) {
+            // Re-fetch stored data
+            const res2 = await fetch("/api/analytics/trustmrr?days=30");
+            if (res2.ok) {
+              const tmrrData2 = await res2.json();
+              trustmrrCache = { data: tmrrData2, timestamp: Date.now() };
+              setTrustmrrData(tmrrData2);
+            }
+          }
+        }
+      }
+    } catch {
+      // Silently fail — TrustMRR section just won't show
+    }
+  };
 
   const fetchAnalytics = async (forceRefresh = false) => {
     // Check cache first (unless forcing refresh)
@@ -175,8 +249,11 @@ export default function AnalyticsPage() {
     setRefreshMessage(null);
     setNeedsReconnect(false);
     try {
-      // First fetch fresh data from X API
-      const fetchRes = await fetch("/api/analytics/fetch", { method: "POST" });
+      // Fetch fresh data from X API and TrustMRR in parallel
+      const [fetchRes] = await Promise.all([
+        fetch("/api/analytics/fetch", { method: "POST" }),
+        fetch("/api/analytics/trustmrr/fetch", { method: "POST" }).catch(() => null),
+      ]);
       const fetchData = await fetchRes.json();
 
       if (!fetchRes.ok) {
@@ -206,7 +283,7 @@ export default function AnalyticsPage() {
       }
 
       // Reload the analytics (force refresh to bypass cache)
-      await fetchAnalytics(true);
+      await Promise.all([fetchAnalytics(true), fetchTrustMRR(true)]);
     } catch (err) {
       setError("Failed to refresh data");
       console.error(err);
@@ -222,6 +299,7 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchAnalytics();
+    fetchTrustMRR();
   }, []);
 
   if (isLoading) {
@@ -327,13 +405,18 @@ export default function AnalyticsPage() {
   }
 
   const visibleSnapshots = showAllHistory ? account.snapshots : account.snapshots.slice(0, 7);
+  const hasTrustMRR = trustmrrData?.hasData && trustmrrData.latest;
+  const trustmrrByDate = new Map(
+    (trustmrrData?.snapshots ?? []).map((s) => [s.date, s])
+  );
+  const historyGridCols = hasTrustMRR ? "grid-cols-3" : "grid-cols-3";
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-10">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-heading font-bold">Analytics</h1>
-          {/* Account selector / username */}
           {accounts.length > 1 ? (
             <div className="flex items-center gap-2 mt-1">
               {accounts.map((acc, i) => (
@@ -381,42 +464,82 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Main metrics - from X API */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <MetricCard
-          label="Followers"
-          value={latest.followersCount}
-          delta={latest.followersGained}
-          icon={<HugeiconsIcon icon={UserLove01Icon} size={24} />}
-        />
-        <MetricCard
-          label="Following"
-          value={latest.followingCount}
-          icon={<HugeiconsIcon icon={UserAdd01Icon} size={24} />}
-        />
-        <MetricCard
-          label="Posts"
-          value={latest.tweetCount}
-          icon={<HugeiconsIcon icon={News01Icon} size={24} />}
-        />
-      </div>
+      {/* X Section */}
+      <div className="space-y-6">
+        <h2 className="text-lg font-heading font-semibold">X metrics</h2>
 
-      {/* Coming soon - engagement metrics */}
-      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <MetricCard
+            label="Followers"
+            value={latest.followersCount}
+            delta={latest.followersGained}
+            icon={<HugeiconsIcon icon={UserLove01Icon} size={24} />}
+          />
+          <MetricCard
+            label="Following"
+            value={latest.followingCount}
+            icon={<HugeiconsIcon icon={UserAdd01Icon} size={24} />}
+          />
+          <MetricCard
+            label="Posts"
+            value={latest.tweetCount}
+            icon={<HugeiconsIcon icon={News01Icon} size={24} />}
+          />
+        </div>
+
+        {/* Engagement - coming soon */}
         <div>
-          <h2 className="text-lg font-heading font-semibold">Engagement</h2>
-          <p className="text-xs text-muted-foreground mt-1">Coming soon with Chrome extension</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <ComingSoonCard label="Impressions" icon={EyeIcon} />
-          <ComingSoonCard label="Likes" icon={FavouriteIcon} />
-          <ComingSoonCard label="Reposts" icon={RepeatIcon} />
-          <ComingSoonCard label="Replies" icon={Comment01Icon} />
-          <ComingSoonCard label="Bookmarks" icon={Bookmark01Icon} />
+          <p className="text-sm text-muted-foreground mb-3">Engagement <span className="text-xs opacity-60">— coming soon with Chrome extension</span></p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <ComingSoonCard label="Impressions" icon={EyeIcon} />
+            <ComingSoonCard label="Likes" icon={FavouriteIcon} />
+            <ComingSoonCard label="Reposts" icon={RepeatIcon} />
+            <ComingSoonCard label="Replies" icon={Comment01Icon} />
+            <ComingSoonCard label="Bookmarks" icon={Bookmark01Icon} />
+          </div>
         </div>
       </div>
 
-      {/* History */}
+      {/* Revenue Section - from TrustMRR */}
+      {hasTrustMRR && trustmrrData.latest && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-lg font-heading font-semibold">Revenue</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Powered by <a href="https://trustmrr.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">TrustMRR</a>
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              label="MRR"
+              value={trustmrrData.latest.mrrCents}
+              delta={trustmrrData.latest.mrrGained}
+              icon={<HugeiconsIcon icon={DollarCircleIcon} size={24} />}
+              formatValue={formatCents}
+              formatDelta={formatCents}
+            />
+            <MetricCard
+              label="Subscriptions"
+              value={trustmrrData.latest.activeSubscriptions}
+              icon={<HugeiconsIcon icon={UserAdd02Icon} size={24} />}
+            />
+            <MetricCard
+              label="Revenue (30d)"
+              value={trustmrrData.latest.revenueLast30dCents}
+              icon={<HugeiconsIcon icon={DollarReceive01Icon} size={24} />}
+              formatValue={formatCents}
+            />
+            <MetricCard
+              label="Total Revenue"
+              value={trustmrrData.latest.revenueTotalCents}
+              icon={<HugeiconsIcon icon={MoneyBag01Icon} size={24} />}
+              formatValue={formatCents}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Unified History */}
       {account.snapshots.length > 1 && (
         <div className="space-y-4">
           <div>
@@ -435,37 +558,120 @@ export default function AnalyticsPage() {
           </div>
           <div className="rounded-2xl border-fade overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-4 gap-4 px-5 py-3 bg-sidebar text-xs text-muted-foreground font-medium uppercase tracking-wide">
+            <div className={`grid ${historyGridCols} gap-4 px-5 py-3 bg-sidebar text-xs text-muted-foreground font-medium uppercase tracking-wide`}>
               <span>Date</span>
               <span className="text-right">Followers</span>
-              <span className="text-right">Following</span>
-              <span className="text-right">Posts</span>
+              {hasTrustMRR ? (
+                <span className="text-right">MRR</span>
+              ) : (
+                <span className="text-right">Posts</span>
+              )}
             </div>
             {/* Rows */}
-            {visibleSnapshots.map((snapshot) => (
-              <div
-                key={snapshot.date}
-                className="grid grid-cols-4 gap-4 px-5 py-3 border-t border-border/50"
-              >
-                <span className="text-sm text-muted-foreground">
-                  {new Date(snapshot.date).toLocaleDateString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-                <div className="text-right text-sm">
-                  <span className="font-medium">{formatNumber(snapshot.followersCount)}</span>
-                  {snapshot.followersGained !== 0 && (
-                    <span className={`ml-1.5 text-xs ${snapshot.followersGained > 0 ? "text-green-600" : "text-red-500"}`}>
-                      {snapshot.followersGained > 0 ? "+" : ""}{snapshot.followersGained}
+            {visibleSnapshots.map((snapshot) => {
+              const tmrr = trustmrrByDate.get(snapshot.date);
+              const isExpanded = expandedDate === snapshot.date;
+              return (
+                <div key={snapshot.date}>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedDate(isExpanded ? null : snapshot.date)}
+                    className={`w-full grid ${historyGridCols} gap-4 px-5 py-3 border-t border-border/50 hover:bg-sidebar/50 transition-colors text-left`}
+                  >
+                    <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                      <HugeiconsIcon
+                        icon={ArrowDown02Icon}
+                        size={14}
+                        strokeWidth={1.5}
+                        className={`transition-transform text-muted-foreground/50 ${isExpanded ? "rotate-180" : ""}`}
+                      />
+                      {new Date(snapshot.date).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </span>
+                    <div className="text-right text-sm">
+                      <span className="font-medium">{formatNumber(snapshot.followersCount)}</span>
+                      {snapshot.followersGained !== 0 && (
+                        <span className={`ml-1.5 text-xs ${snapshot.followersGained > 0 ? "text-green-600" : "text-red-500"}`}>
+                          {snapshot.followersGained > 0 ? "+" : ""}{snapshot.followersGained}
+                        </span>
+                      )}
+                    </div>
+                    {hasTrustMRR ? (
+                      <div className="text-right text-sm">
+                        {tmrr ? (
+                          <>
+                            <span className="font-medium">{formatCents(tmrr.mrrCents)}</span>
+                            {tmrr.mrrGained !== 0 && (
+                              <span className={`ml-1.5 text-xs ${tmrr.mrrGained > 0 ? "text-green-600" : "text-red-500"}`}>
+                                {formatCents(tmrr.mrrGained)}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-right text-sm font-medium">{formatNumber(snapshot.tweetCount)}</span>
+                    )}
+                  </button>
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <div className="px-5 py-3 border-t border-border/30 bg-sidebar/30 space-y-3">
+                      {/* X metrics */}
+                      <div>
+                        <p className="text-xs text-muted-foreground/60 uppercase tracking-wide mb-1.5">X</p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Followers</span>
+                            <span className="font-medium">{formatNumber(snapshot.followersCount)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Following</span>
+                            <span className="font-medium">{formatNumber(snapshot.followingCount)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Posts</span>
+                            <span className="font-medium">{formatNumber(snapshot.tweetCount)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Revenue */}
+                      {tmrr && (
+                        <div>
+                          <p className="text-xs text-muted-foreground/60 uppercase tracking-wide mb-1.5">Revenue</p>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">MRR</span>
+                              <span className="font-medium">{formatCents(tmrr.mrrCents)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Revenue (30d)</span>
+                              <span className="font-medium">{formatCents(tmrr.revenueLast30dCents)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Total revenue</span>
+                              <span className="font-medium">{formatCents(tmrr.revenueTotalCents)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Subscriptions</span>
+                              <span className="font-medium">{tmrr.activeSubscriptions}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Customers</span>
+                              <span className="font-medium">{tmrr.customers}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-                <span className="text-right text-sm font-medium">{formatNumber(snapshot.followingCount)}</span>
-                <span className="text-right text-sm font-medium">{formatNumber(snapshot.tweetCount)}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {account.snapshots.length > 7 && (
             <div className="flex justify-center">

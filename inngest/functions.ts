@@ -1,5 +1,6 @@
 import { inngest } from "@/lib/inngest";
 import { fetchAccountAnalytics, getAllXAccounts } from "@/lib/analytics";
+import { fetchTrustMRRForUser, getUsersWithTrustMRR } from "@/lib/trustmrr-analytics";
 import { pool } from "@/lib/db";
 import { sendEmail, trialEndingEmail, trialExpiredEmail, trialFollowUpEmail } from "@/lib/email";
 import { getPricingTierInfo } from "@/lib/plans-server";
@@ -225,5 +226,82 @@ export const trialFollowUp = inngest.createFunction(
   }
 );
 
+// Daily TrustMRR fetch — runs once per day at 2am UTC
+export const dailyTrustMRRFetch = inngest.createFunction(
+  {
+    id: "daily-trustmrr-fetch",
+    name: "Daily TrustMRR Fetch",
+    retries: 2,
+  },
+  { cron: "0 2 * * *" },
+  async ({ step, logger }) => {
+    const users = await step.run("get-trustmrr-users", async () => {
+      return await getUsersWithTrustMRR();
+    });
+
+    logger.info(`Found ${users.length} users with TrustMRR data`);
+
+    if (users.length === 0) {
+      return { message: "No users with TrustMRR data", users: [] };
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    let skippedCount = 0;
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+
+      // Rate limit: TrustMRR allows 20 req/min, space out requests
+      if (i > 0) {
+        await step.sleep(`wait-${i}`, "4s");
+      }
+
+      const result = await step.run(
+        `fetch-trustmrr-${user.userId}`,
+        async () => {
+          try {
+            return await fetchTrustMRRForUser(
+              user.userId,
+              user.xUsername,
+              "auto"
+            );
+          } catch (error) {
+            return {
+              userId: user.userId,
+              error: error instanceof Error ? error.message : "Unknown error",
+            };
+          }
+        }
+      );
+
+      if ("success" in result && result.success) {
+        successCount++;
+      } else if ("alreadyFetched" in result && result.alreadyFetched) {
+        skippedCount++;
+      } else {
+        errorCount++;
+        if ("error" in result) {
+          logger.error(`TrustMRR error for ${user.userId}: ${result.error}`);
+        }
+      }
+    }
+
+    logger.info(
+      `TrustMRR: ${successCount} success, ${errorCount} errors, ${skippedCount} skipped`
+    );
+
+    return {
+      success: true,
+      summary: {
+        total: users.length,
+        success: successCount,
+        errors: errorCount,
+        skipped: skippedCount,
+      },
+    };
+  }
+);
+
 // Export all functions for the serve handler
-export const functions = [dailyAnalyticsFetch, trialEndingReminder, trialExpiredNotification, trialFollowUp];
+export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, trialEndingReminder, trialExpiredNotification, trialFollowUp];

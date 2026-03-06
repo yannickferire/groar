@@ -81,6 +81,7 @@ type SortableMetricItemProps = {
   onRemove: (type: MetricType) => void;
   canRemove: boolean;
   canDrag: boolean;
+  autoFillValue?: number; // undefined = no auto-fill available
 };
 
 function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
@@ -139,7 +140,7 @@ function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
   );
 }
 
-const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDrag }: SortableMetricItemProps) {
+const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDrag, autoFillValue }: SortableMetricItemProps) {
   const [inputValue, setInputValue] = useState(metric.prefix ? `${metric.prefix}${metric.value}` : metric.value.toString());
 
   // Sync local state when metric value changes (e.g., from localStorage)
@@ -216,8 +217,27 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
         className="w-32 text-center bg-white"
         aria-label={`${METRIC_LABELS[metric.type]} value`}
       />
-      <span className="text-sm text-muted-foreground whitespace-nowrap flex-1" aria-hidden="true">
+      <span className="text-sm text-muted-foreground whitespace-nowrap flex-1 flex items-center gap-1.5" aria-hidden="true">
         {METRIC_LABELS[metric.type]}
+        {autoFillValue !== undefined && (() => {
+          const isMatching = metric.value === autoFillValue;
+          return isMatching ? (
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span className="text-[10px] text-emerald-600">auto</span>
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onValueChange(metric.type, autoFillValue, undefined)}
+              className="flex items-center gap-1 cursor-pointer hover:opacity-80"
+              title="Restore auto-fetched value"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />
+              <span className="text-[10px] text-muted-foreground/40">auto</span>
+            </button>
+          );
+        })()}
       </span>
       <Button
         variant="ghost"
@@ -249,6 +269,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   const [deletingLogoId, setDeletingLogoId] = useState<string | null>(null);
   const [brandingLogos, setBrandingLogos] = useState<BrandingLogo[]>([]);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
+  const [trustmrrLatest, setTrustmrrLatest] = useState<{ mrrCents: number; revenueTotalCents: number } | null>(null);
   const [handleMode, setHandleMode] = useState<"custom" | string>("custom"); // "custom" or account username
   const handleTouchedRef = useRef(settings.handle !== ""); // track if user has interacted with handle
   const settingsRef = useRef(settings);
@@ -337,6 +358,40 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
 
+  // Fetch TrustMRR data for SaaS metric auto-fill
+  useEffect(() => {
+    if (!isPremium) return;
+    fetch("/api/analytics/trustmrr")
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.hasData && data.latest) {
+          const latest = {
+            mrrCents: data.latest.mrrCents ?? 0,
+            revenueTotalCents: data.latest.revenueTotalCents ?? 0,
+          };
+          setTrustmrrLatest(latest);
+
+          // Auto-populate SaaS metrics if present in current settings
+          const current = settingsRef.current;
+          const saasMap: Partial<Record<string, number>> = {
+            mrr: latest.mrrCents / 100,
+            arr: Math.round(latest.mrrCents * 12) / 100,
+            revenue: latest.revenueTotalCents / 100,
+          };
+          const hasSaasMetric = current.metrics.some(m => m.type in saasMap);
+          if (hasSaasMetric) {
+            const updatedMetrics = current.metrics.map(m => {
+              const autoValue = saasMap[m.type];
+              return autoValue !== undefined ? { ...m, value: autoValue } : m;
+            });
+            onSettingsChange({ ...current, metrics: updatedMetrics });
+          }
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremium]);
+
   const handleLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -393,6 +448,21 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     }
   }, [settings, onSettingsChange, brandingLogos]);
 
+  const buildMetricMap = useCallback((account?: ConnectedAccount | null): Partial<Record<MetricType, number>> => {
+    const map: Partial<Record<MetricType, number>> = {};
+    if (account?.latest) {
+      map.followers = account.latest.followersCount;
+      map.followings = account.latest.followingCount;
+      map.posts = account.latest.tweetCount;
+    }
+    if (trustmrrLatest) {
+      map.mrr = trustmrrLatest.mrrCents / 100;
+      map.arr = Math.round(trustmrrLatest.mrrCents * 12) / 100;
+      map.revenue = trustmrrLatest.revenueTotalCents / 100;
+    }
+    return map;
+  }, [trustmrrLatest]);
+
   const handleAccountSelect = useCallback((value: string) => {
     setHandleMode(value);
     if (value === "custom") return;
@@ -404,13 +474,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     const newHandle = `@${account.username}`;
 
     // Auto-populate metrics from analytics data
-    if (account.latest) {
-      const metricMap: Partial<Record<MetricType, number>> = {
-        followers: account.latest.followersCount,
-        followings: account.latest.followingCount,
-        posts: account.latest.tweetCount,
-      };
-
+    const metricMap = buildMetricMap(account);
+    if (Object.keys(metricMap).length > 0) {
       const updatedMetrics = settings.metrics.map(m => {
         const autoValue = metricMap[m.type];
         return autoValue !== undefined ? { ...m, value: autoValue } : m;
@@ -420,7 +485,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     } else {
       onSettingsChange({ ...settings, handle: newHandle });
     }
-  }, [connectedAccounts, settings, onSettingsChange]);
+  }, [connectedAccounts, settings, onSettingsChange, buildMetricMap]);
 
   const updateSetting = useCallback(<K extends keyof EditorSettings>(
     key: K,
@@ -440,16 +505,11 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   }, [settings, onSettingsChange]);
 
   const addMetric = useCallback((type: MetricType) => {
-    // Auto-populate from connected account analytics if available
     const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
-    const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
-      followers: selectedAccount.latest.followersCount,
-      followings: selectedAccount.latest.followingCount,
-      posts: selectedAccount.latest.tweetCount,
-    } : {};
+    const metricMap = buildMetricMap(selectedAccount);
     const newMetric: Metric = { type, value: metricMap[type] ?? 0 };
     updateSetting("metrics", [...settings.metrics, newMetric]);
-  }, [updateSetting, settings.metrics, connectedAccounts, handleMode]);
+  }, [updateSetting, settings.metrics, connectedAccounts, handleMode, buildMetricMap]);
 
   const removeMetric = useCallback((type: MetricType) => {
     updateSetting("metrics", settings.metrics.filter(m => m.type !== type));
@@ -473,6 +533,19 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   const availableMetrics = useMemo(() => ALL_METRICS.filter(
     type => !settings.metrics.some(m => m.type === type)
   ), [settings.metrics]);
+
+  // Metrics that have auto-fill data available (type -> value)
+  const autoFillMap = useMemo(() => {
+    const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
+    return buildMetricMap(selectedAccount);
+  }, [connectedAccounts, handleMode, buildMetricMap]);
+
+  const metricLabel = useCallback((type: MetricType) => (
+    <span className="flex items-center justify-between flex-1">
+      {METRIC_LABELS[type]}
+      {type in autoFillMap && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />}
+    </span>
+  ), [autoFillMap]);
 
   return (
     <aside className="w-full min-[940px]:w-96 flex flex-col gap-6 p-4 border rounded-3xl bg-card min-h-full">
@@ -875,6 +948,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                     onRemove={removeMetric}
                     canRemove={settings.metrics.length > 1}
                     canDrag={settings.metrics.length > 1}
+                    autoFillValue={autoFillMap[metric.type]}
                   />
                 ))}
               </SortableContext>
@@ -908,7 +982,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                             <DropdownMenuLabel className="flex items-center gap-1.5"><HugeiconsIcon icon={group.icon} size={14} strokeWidth={1.5} /> {group.label}</DropdownMenuLabel>
                             {group.metrics.map((type) => (
                               <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
-                                {METRIC_LABELS[type]}
+                                {metricLabel(type)}
                               </DropdownMenuItem>
                             ))}
                           </div>
@@ -922,7 +996,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                             <DropdownMenuSubContent className="bg-white">
                               {availableMetrics.filter(t => X_METRICS_PRIMARY.includes(t)).map((type) => (
                                 <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
-                                  {METRIC_LABELS[type]}
+                                  {metricLabel(type)}
                                 </DropdownMenuItem>
                               ))}
                               {availableMetrics.some(t => X_METRICS_MORE.includes(t)) && (
@@ -931,7 +1005,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                                   <DropdownMenuSubContent className="bg-white">
                                     {availableMetrics.filter(t => X_METRICS_MORE.includes(t)).map((type) => (
                                       <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
-                                        {METRIC_LABELS[type]}
+                                        {metricLabel(type)}
                                       </DropdownMenuItem>
                                     ))}
                                   </DropdownMenuSubContent>
@@ -946,7 +1020,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                             <DropdownMenuSubContent className="bg-white">
                               {availableMetrics.filter(t => GITHUB_METRICS.includes(t)).map((type) => (
                                 <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
-                                  {METRIC_LABELS[type]}
+                                  {metricLabel(type)}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuSubContent>
@@ -958,7 +1032,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                             <DropdownMenuSubContent className="bg-white">
                               {availableMetrics.filter(t => REDDIT_METRICS.includes(t)).map((type) => (
                                 <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
-                                  {METRIC_LABELS[type]}
+                                  {metricLabel(type)}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuSubContent>
@@ -970,7 +1044,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                             <DropdownMenuSubContent className="bg-white">
                               {availableMetrics.filter(t => SAAS_METRICS.includes(t)).map((type) => (
                                 <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
-                                  {METRIC_LABELS[type]}
+                                  {metricLabel(type)}
                                 </DropdownMenuItem>
                               ))}
                             </DropdownMenuSubContent>
@@ -1015,11 +1089,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                       {(() => {
                         const handleSelect = (type: MetricType) => {
                           const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
-                          const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
-                            followers: selectedAccount.latest.followersCount,
-                            followings: selectedAccount.latest.followingCount,
-                            posts: selectedAccount.latest.tweetCount,
-                          } : {};
+                          const metricMap = buildMetricMap(selectedAccount);
                           const autoValue = metricMap[type];
                           updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
                         };
@@ -1034,7 +1104,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                             <DropdownMenuLabel className="flex items-center gap-1.5"><HugeiconsIcon icon={group.icon} size={14} strokeWidth={1.5} /> {group.label}</DropdownMenuLabel>
                             {group.metrics.map((type) => (
                               <DropdownMenuItem key={type} onClick={() => handleSelect(type)}>
-                                {METRIC_LABELS[type]}
+                                {metricLabel(type)}
                               </DropdownMenuItem>
                             ))}
                           </div>
@@ -1049,17 +1119,13 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                           {X_METRICS_PRIMARY.filter(type => type !== "engagementRate").map((type) => {
                             const handleClick = () => {
                               const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
-                              const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
-                                followers: selectedAccount.latest.followersCount,
-                                followings: selectedAccount.latest.followingCount,
-                                posts: selectedAccount.latest.tweetCount,
-                              } : {};
+                              const metricMap = buildMetricMap(selectedAccount);
                               const autoValue = metricMap[type];
                               updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
                             };
                             return (
                               <DropdownMenuItem key={type} onClick={handleClick}>
-                                {METRIC_LABELS[type]}
+                                {metricLabel(type)}
                               </DropdownMenuItem>
                             );
                           })}
@@ -1069,17 +1135,13 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                               {X_METRICS_MORE.filter(type => type !== "engagementRate").map((type) => {
                                 const handleClick = () => {
                                   const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
-                                  const metricMap: Partial<Record<MetricType, number>> = selectedAccount?.latest ? {
-                                    followers: selectedAccount.latest.followersCount,
-                                    followings: selectedAccount.latest.followingCount,
-                                    posts: selectedAccount.latest.tweetCount,
-                                  } : {};
+                                  const metricMap = buildMetricMap(selectedAccount);
                                   const autoValue = metricMap[type];
                                   updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
                                 };
                                 return (
                                   <DropdownMenuItem key={type} onClick={handleClick}>
-                                    {METRIC_LABELS[type]}
+                                    {metricLabel(type)}
                                   </DropdownMenuItem>
                                 );
                               })}
@@ -1097,7 +1159,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                                 updateSetting("metrics", [{ type, value: settings.metrics[0]?.value ?? 0 }]);
                               }}
                             >
-                              {METRIC_LABELS[type]}
+                              {metricLabel(type)}
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuSubContent>
@@ -1112,7 +1174,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                                 updateSetting("metrics", [{ type, value: settings.metrics[0]?.value ?? 0 }]);
                               }}
                             >
-                              {METRIC_LABELS[type]}
+                              {metricLabel(type)}
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuSubContent>
@@ -1120,16 +1182,20 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger><HugeiconsIcon icon={BrowserIcon} size={14} strokeWidth={1.5} /> SaaS</DropdownMenuSubTrigger>
                         <DropdownMenuSubContent className="bg-white">
-                          {SAAS_METRICS.filter(type => type !== "churnRate").map((type) => (
+                          {SAAS_METRICS.filter(type => type !== "churnRate").map((type) => {
+                            const metricMap = buildMetricMap();
+                            return (
                             <DropdownMenuItem
                               key={type}
                               onClick={() => {
-                                updateSetting("metrics", [{ type, value: settings.metrics[0]?.value ?? 0 }]);
+                                const autoValue = metricMap[type];
+                                updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
                               }}
                             >
-                              {METRIC_LABELS[type]}
+                              {metricLabel(type)}
                             </DropdownMenuItem>
-                          ))}
+                            );
+                          })}
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
                     </>
