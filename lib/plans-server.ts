@@ -9,7 +9,7 @@ import { getStartOfWeek } from "./week";
 export async function getUserPlanFromDB(userId: string): Promise<PlanType> {
   try {
     const result = await pool.query(
-      `SELECT plan, status, "trialEnd" FROM subscription WHERE "userId" = $1`,
+      `SELECT plan, status, "trialEnd", "currentPeriodEnd", "billingPeriod" FROM subscription WHERE "userId" = $1`,
       [userId]
     );
 
@@ -20,6 +20,11 @@ export async function getUserPlanFromDB(userId: string): Promise<PlanType> {
 
     // Trial expired → treat as free
     if (row.status === "trialing" && row.trialEnd && new Date(row.trialEnd) <= new Date()) {
+      return "free";
+    }
+
+    // Canceled subscription with expired period → treat as free
+    if (row.status === "canceled" && row.billingPeriod !== "lifetime" && row.currentPeriodEnd && new Date(row.currentPeriodEnd) <= new Date()) {
       return "free";
     }
 
