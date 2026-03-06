@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Open Stats",
+  title: "Open Startup Stats — Revenue, Users & Growth",
   description:
-    "Groar is an open startup. Live metrics, revenue, growth and stack — full transparency.",
+    "Groar builds in public. See live revenue, user count, MRR, growth metrics and the full tech stack — updated daily.",
   alternates: { canonical: "/open" },
   openGraph: {
-    title: "Open Stats — Groar",
+    title: "Open Startup Stats — Groar",
     description:
-      "Groar is an open startup. Live metrics, revenue, growth and stack — full transparency.",
+      "Groar builds in public. See live revenue, user count, MRR, growth metrics and the full tech stack — updated daily.",
   },
 };
 

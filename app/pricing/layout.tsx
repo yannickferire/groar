@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Pricing",
-  description: "Simple, transparent pricing for Groar. Choose Free or Pro plans to turn your social metrics into shareable visuals.",
+  title: "Pricing — Free & Pro Plans",
+  description:
+    "Simple, transparent pricing. Create stunning growth visuals for free or unlock unlimited exports, analytics dashboard & custom branding with Pro — from $5/mo or $19 lifetime.",
   alternates: { canonical: "/pricing" },
+  openGraph: {
+    title: "Groar Pricing — Free & Pro Plans",
+    description:
+      "Create stunning growth visuals for free or unlock unlimited exports, analytics dashboard & custom branding with Pro — from $5/mo or $19 lifetime.",
+  },
 };
 
 const pricingJsonLd = {
