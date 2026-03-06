@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Logo from "./Logo";
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/ui/motion";
@@ -9,7 +9,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { SparklesIcon, DashboardSquare02Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
 
-function smoothScrollTo(id: string, offset: number) {
+function scrollToElement(id: string, offset: number) {
   const el = document.getElementById(id);
   if (el) {
     const y = el.getBoundingClientRect().top + window.scrollY - offset;
@@ -19,7 +19,18 @@ function smoothScrollTo(id: string, offset: number) {
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session } = authClient.useSession();
+
+  const isHome = pathname === "/";
+
+  function navigateTo(id: string) {
+    if (isHome) {
+      scrollToElement(id, 72);
+    } else {
+      router.push(`/#${id}`);
+    }
+  }
 
   return (
     <div className="md:sticky md:top-0 z-50 md:bg-background/80 md:backdrop-blur-lg">
@@ -28,13 +39,19 @@ export default function Header() {
           <Logo />
           <nav className="hidden md:flex items-center gap-6">
             <button
-              onClick={() => smoothScrollTo("editor", 72)}
+              onClick={() => navigateTo("editor")}
               className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Playground
             </button>
             <button
-              onClick={() => smoothScrollTo("pricing", 72)}
+              onClick={() => navigateTo("how-it-works")}
+              className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              How it works
+            </button>
+            <button
+              onClick={() => navigateTo("pricing")}
               className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Pricing

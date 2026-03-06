@@ -11,7 +11,7 @@ const templates = [
 
 export default function ProofSection() {
   return (
-    <section className="w-full max-w-6xl mx-auto py-4">
+    <section id="how-it-works" className="w-full max-w-6xl mx-auto py-4">
       <FadeInView>
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
