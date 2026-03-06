@@ -179,7 +179,6 @@ function ProCard({
                 <span className="text-2xl leading-none text-muted-foreground line-through ml-1.5">${LIFETIME_FINAL_PRICE}</span>
               )}
               <span className="text-background/60 text-sm ml-0.5">{isLifetime ? "one-time" : "/month"}</span>
-              <span className="text-xs text-background/40 ml-1">(+ applicable tax)</span>
             </div>
           </div>
 
