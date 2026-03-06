@@ -70,22 +70,26 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        <div className="pb-8 flex items-center justify-start gap-4">
-          <a href="https://launch.cab/product/groar" target="_blank" rel="noopener noreferrer">
-            <img src="https://launch.cab/api/badges/img/218fb417-54b1-4dab-a291-fa86e793bb74.svg?t=218fb417-54b1-4dab-a291-fa86e793bb74.1772116152241.d4789835032b82a6.96cc9b948c18afbe&tagline=TOP+%23%7Brank%7D&logoPosition=left" alt="Featured on launch.cab" />
-          </a>
-          <a href="https://twelve.tools" target="_blank" rel="noopener noreferrer">
-            <img src="https://twelve.tools/badge0-white.svg" alt="Featured on Twelve Tools" className="h-12" />
-          </a>
-          <a href="https://wired.business" target="_blank" rel="noopener noreferrer">
-            <img src="https://wired.business/badge0-white.svg" alt="Featured on Wired Business" className="max-h-12" />
-          </a>
-          <a href="https://neeed.directory/products/groar?utm_source=groar" target="_blank" rel="noopener">
-            <img src="https://neeed.directory/badges/neeed-badge-light.svg" alt="Featured on neeed.directory" width="139" className="h-12" />
-          </a>
-          <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer" className="-ml-3 -mr-3">
-            <img src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" className="h-14 -my-1" />
-          </a>
+        <div className="pb-8 pt-4 flex flex-col gap-3">
+          <div className="flex items-center justify-start gap-4">
+            <a href="https://launch.cab/product/groar" target="_blank" rel="noopener noreferrer">
+              <img src="https://launch.cab/api/badges/img/218fb417-54b1-4dab-a291-fa86e793bb74.svg?t=218fb417-54b1-4dab-a291-fa86e793bb74.1772116152241.d4789835032b82a6.96cc9b948c18afbe&tagline=TOP+%23%7Brank%7D&logoPosition=left" alt="Featured on launch.cab" />
+            </a>
+          </div>
+          <div className="flex items-center justify-start gap-4">
+            <a href="https://twelve.tools" target="_blank" rel="noopener noreferrer">
+              <img src="https://twelve.tools/badge0-white.svg" alt="Featured on Twelve Tools" className="h-12" />
+            </a>
+            <a href="https://wired.business" target="_blank" rel="noopener noreferrer">
+              <img src="https://wired.business/badge0-white.svg" alt="Featured on Wired Business" className="max-h-12" />
+            </a>
+            <a href="https://neeed.directory/products/groar?utm_source=groar" target="_blank" rel="noopener">
+              <img src="https://neeed.directory/badges/neeed-badge-light.svg" alt="Featured on neeed.directory" width="139" className="h-12" />
+            </a>
+            <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer" className="-ml-3 -mr-3">
+              <img src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" className="h-14 -my-1" />
+            </a>
+          </div>
         </div>
       </footer>
     </FadeInView>
