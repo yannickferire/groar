@@ -1,0 +1,286 @@
+# Groar — Full Documentation
+
+> Turn your metrics into shareable visuals in 10 seconds
+
+Groar is a web application that transforms social media analytics and business metrics into beautiful, shareable images. It's built for creators, founders, indie hackers, and makers who build in public and want to showcase their growth without design skills.
+
+## Core Product
+
+Groar solves a simple problem: turning raw analytics data into visual content that drives engagement on social media. Users select a template, enter or auto-fill their metrics, customize the appearance, and export a high-quality image ready to share.
+
+The entire flow takes about 10 seconds. No Canva. No design skills. No complicated tools.
+
+---
+
+## Visual Editor
+
+### Templates
+
+Groar offers 4 templates:
+
+1. **Metrics** (free) — The core template. Display 1-5 key performance indicators with values, optional deltas (gain/loss), and a customizable heading. Perfect for weekly or monthly growth recaps.
+
+2. **Milestone** (Pro) — Celebrate achievements like hitting 10K followers or $1K MRR. Features large centered number with emoji decorations above and below. Customizable emoji selection.
+
+3. **Progress** (Pro) — Show progress toward a goal with a visual progress bar. Set current value, target, and watch the bar fill. Great for fundraising, follower goals, or revenue targets.
+
+4. **List** (Pro) — Announce features, updates, or achievements as a bullet-point list. Supports 1-10 items with custom text.
+
+### Supported Metrics (34+ types)
+
+**X (Twitter)**:
+- followers, verified followers, followings
+- posts, impressions
+- replies, likes, reposts, bookmarks
+- engagement rate, engagement (total interactions)
+- profile visits
+
+**SaaS / Business**:
+- MRR (Monthly Recurring Revenue)
+- ARR (Annual Recurring Revenue)
+- revenue (total)
+- valuation
+- churn rate, LTV (lifetime value)
+- new customers, total customers
+- sales, visitors
+- domain rating
+
+**GitHub**:
+- stars, commits, forks
+- contributors
+- PRs closed, issues resolved
+
+**Reddit**:
+- karma, upvotes, upvote ratio
+
+**Other**:
+- builders (community metric)
+
+Each metric has a dedicated icon and supports custom prefixes (e.g., "+", "$"). Currency metrics (MRR, ARR, revenue, LTV) are automatically formatted with "$" prefix. Metrics can be reordered via drag-and-drop.
+
+### Auto-Fill
+
+When a user connects their X account, metrics like followers, followings, and posts are automatically populated in the editor. If the user has TrustMRR data, MRR, ARR (calculated as MRR x 12), and total revenue are also auto-filled.
+
+Auto-filled metrics show a green dot indicator. If the user manually changes the value, the indicator turns grey and becomes clickable to restore the auto-fetched value.
+
+### Headings & Date Formatting
+
+- **Period mode**: "Week 1", "Week 1-4", "Month 3", etc.
+- **Last N**: "Last 7 days", "Last 4 weeks", "Last 3 months"
+- **Custom date range**: calendar picker for specific date ranges
+- **Quote/headline**: free-text heading for announcements
+- Auto-formatted labels based on selected period
+
+### Visual Customization
+
+**Backgrounds**:
+- 25+ curated backgrounds across categories: dark, noisy, premium, nature, urban
+- Solid color option with full color picker
+- Free users: 5 backgrounds
+- Pro users: all backgrounds
+
+**Fonts** (6 families):
+- Free: DM Mono, Bricolage Grotesque
+- Pro: Inter, Space Grotesk, Averia Serif Libre, DM Serif Display
+
+**Other**:
+- Custom text color picker
+- Custom branding with logo upload (Pro, max 5 logos)
+- Logo positioning: left, center, or right
+- Logo size adjustment (20-60px)
+
+### Aspect Ratios
+
+- **Post** (16:9, 1200x675px) — free, optimized for X/Twitter posts
+- **Square** (1:1, 1200x1200px) — Pro, for Instagram or general use
+- **Banner** (3:1, 1500x500px) — Pro, for X/Twitter headers or profile banners
+
+### Export & Sharing
+
+- High-quality PNG export (3x pixel ratio)
+- Automatic download + auto-copy to clipboard
+- Direct "Share to X" button with pre-filled tweet intent
+- Export history with ability to re-import and edit past exports (Pro)
+- Watermark on free exports, removed for Pro
+- 5-second cooldown between exports
+- Keyboard shortcut: Cmd+S to export, Cmd+Z / Cmd+Shift+Z for undo/redo
+
+---
+
+## Dashboard
+
+### Main Dashboard
+- Current plan status and billing period
+- Total exports counter
+- Connected accounts (X, Google)
+- Weekly export limit tracker (free users)
+- Login streak counter (Pro users)
+- Recent exports gallery (last 4)
+
+### Analytics Dashboard (Pro)
+**X Analytics**:
+- Daily snapshots of followers, following, tweet count
+- 30-day trends with deltas
+- Impressions, likes, reposts, replies, bookmarks
+- Average engagement rate calculation
+- Multi-account support (up to 3 connected X accounts)
+- Manual refresh (3x/day) + automatic daily cron fetch (4x/day)
+
+**Revenue Analytics (via TrustMRR)**:
+- MRR with daily delta tracking
+- Active subscriptions count
+- Revenue last 30 days
+- Total revenue
+- Growth rate (30d)
+- Expandable history rows grouped by source (X metrics / Revenue)
+- Automatic daily fetch for all Pro users
+- Data synced from TrustMRR API using the user's X handle
+
+### Export History
+- Browse all past exports with infinite scroll
+- Re-import any export to edit and re-export
+- 12 exports loaded per batch
+
+### Connections
+- Connect X (Twitter) account for analytics auto-fetch
+- Multi-account support: up to 3 accounts per platform (Pro)
+- Account management and disconnection
+- Provider-based organization
+
+### Leaderboard
+Community gamification system:
+
+**Point System**:
+- +20 points for daily login
+- +10 points per export (max 5/day = 50 points)
+- +50 points for using a new template
+- +20 points for using a new background
+
+**Badges** (11 total):
+- First Roar — first export
+- Template Explorer — use all templates
+- Background Hunter — use 10+ backgrounds
+- Week Warrior — 7-day login streak
+- Month Master — 30-day login streak
+- Legend — 100-day login streak
+- Rising Star — reach top 10
+- GROAR Elite — reach top 3
+- Night Owl — export between 12am-5am
+- Early Bird — export between 5am-8am
+- King of the Jungle — reach rank #1
+
+**Display**: medals (gold, silver, bronze) for top 3, ranking, avatar, username, total score
+
+### Notifications
+- Milestone achievement alerts (e.g., "You hit 10,000 followers!")
+- Badge earned notifications
+- System announcements
+- Direct links to create milestone visuals from notifications
+
+### Settings
+- Profile information display
+- Email preferences: milestone emails, trial reminders, product updates
+
+### Plan Management
+- Current plan display with status
+- Upgrade paths (free → Pro monthly, monthly → lifetime)
+- Early adopter spot tracking with tier progress
+- Billing portal access (Creem or Polar)
+
+---
+
+## Pricing
+
+### Free Tier
+- Full editor access (metrics template only)
+- 3 exports per week
+- 5 backgrounds
+- Watermark on exports
+- Post aspect ratio (16:9) only
+- 2 font families
+- No account connections
+- No analytics dashboard
+
+### Pro Monthly — $5/month
+- Unlimited exports
+- All 25+ backgrounds
+- No watermark
+- All 4 templates
+- All 3 aspect ratios
+- All 6 font families
+- Custom branding with logo
+- Up to 3 account connections per platform
+- Full analytics dashboard
+- Export history with re-import
+
+### Pro Lifetime — Early Adopter Pricing
+Same features as Pro Monthly, forever. Price increases as spots fill:
+- Tier 1: $9 (15 spots)
+- Tier 2: $12 (20 spots)
+- Tier 3: $15 (35 spots)
+- Tier 4: $19 (50 spots)
+- Tier 5: $24 (80 spots)
+- Final: $29 (unlimited)
+
+Monthly pricing also increases with lifetime tiers: $5 → $6 → $7 → $8 → $9.
+
+### Trial
+- 3-day free Pro trial
+- No credit card required
+- Full Pro access during trial
+- Email reminders before expiration
+
+---
+
+## Integrations
+
+### X (Twitter)
+- OAuth authentication
+- Automated analytics fetch (followers, tweets, impressions, engagement)
+- Cron job: 4 fetches/day (1am, 7am, 1pm, 7pm UTC)
+- Manual refresh: up to 3x/day
+- Multi-account support
+
+### TrustMRR
+- Revenue data integration via API
+- Fetches MRR, revenue, customers, subscriptions, growth rate
+- Auto-fill MRR, ARR, and Revenue in the editor
+- Daily automated fetch for all Pro users (2am UTC)
+- Rate-limited: 4-second delay between users (respects 20 req/min API limit)
+
+### Google
+- OAuth authentication (sign-in only)
+
+### Payments
+- **Creem** (primary): checkout, subscriptions, webhooks, customer portal
+- **Polar** (legacy): maintained for existing subscribers, fallback billing portal
+
+### PostHog
+- Event tracking: exports, checkouts, subscription changes
+- User identification and properties
+
+---
+
+## Technical Stack
+
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **Auth**: Better Auth (Google + Twitter OAuth)
+- **Database**: PostgreSQL (Neon)
+- **Payments**: Creem SDK + Polar SDK
+- **Background Jobs**: Inngest (cron functions for analytics, trial reminders, TrustMRR)
+- **Analytics**: PostHog
+- **Image Export**: html-to-image with SVG foreignObject
+- **UI**: Tailwind CSS, Radix UI, shadcn/ui components
+- **Icons**: Hugeicons
+- **Drag & Drop**: dnd-kit
+- **Hosting**: Vercel
+
+---
+
+## Links
+
+- Website: https://groar.app
+- Creator: Yannick Ferire
+- X: https://x.com/yannick_ferire

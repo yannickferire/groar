@@ -1,35 +1,55 @@
 # Groar
 
-> Turn your social media metrics into shareable visuals
+> Turn your metrics into shareable visuals in 10 seconds
 
-Groar is a web application that transforms social media analytics into beautiful, shareable images. Users can create visual representations of their growth metrics to share on social platforms.
+Groar is a web app that transforms social media analytics and business metrics into beautiful, shareable images. Built for creators, founders, and makers who build in public.
 
-## Features
+## What It Does
 
-- Create shareable visuals from social media metrics
-- Support for followers, impressions, replies, and engagement rate
-- Customizable backgrounds and text colors
-- Export as high-quality PNG images
-- Currently supports X (formerly Twitter)
+Create scroll-stopping visuals from your growth data — followers, MRR, GitHub stars, revenue, and 30+ other metrics. Pick a template, customize the look, export, and share.
+
+## Supported Metrics
+
+- **X (Twitter)**: followers, impressions, replies, likes, reposts, bookmarks, engagement rate, and more
+- **SaaS/Business**: MRR, ARR, revenue, customers, subscriptions, churn rate, LTV, sales, visitors
+- **GitHub**: stars, commits, forks, contributors, PRs closed, issues resolved
+- **Reddit**: karma, upvotes
+
+## Templates
+
+- **Metrics**: display key performance indicators
+- **Milestone**: celebrate achievements (e.g. "10K followers!")
+- **Progress**: show progress toward a goal
+- **List**: announce features or updates
+
+## Key Features
+
+- 25+ curated backgrounds + solid color option
+- Multiple aspect ratios: post (16:9), square (1:1), banner (3:1)
+- 6 font families, custom text colors
+- Custom branding with logo upload
+- Auto-fill metrics from connected X account and TrustMRR
+- Analytics dashboard with daily tracking
+- Undo/redo, keyboard shortcuts (Cmd+S to export)
+- Export as high-quality PNG, auto-copy to clipboard
+- Direct share to X with pre-filled tweet
+- Community leaderboard with badges and streaks
 
 ## Pricing
 
-- Free: Full editor access, 3 exports/week, 5 backgrounds (with watermark)
-- Pro Monthly: $5/month — unlimited exports, all backgrounds, no watermark, connect up to 3 accounts per platform
-- Pro Lifetime: one-time payment (early adopter pricing from $9) — same as Pro Monthly, forever
+- **Free**: full editor, 3 exports/week, 5 backgrounds, watermark
+- **Pro Monthly**: $5/mo — unlimited exports, all backgrounds, no watermark, branding, analytics
+- **Pro Lifetime**: from $9 one-time (early adopter pricing, increases as spots fill)
+- **3-day free trial** of Pro, no credit card required
 
-## Target Users
+## Tech
 
-- Content creators
-- Social media managers
-- Influencers
-- Anyone wanting to showcase their social media growth
-
-## Creator
-
-Built by Yannick Ferire (@yannick_ferire on X)
+- Next.js App Router, TypeScript
+- Auth: Google + X (Twitter) OAuth via Better Auth
+- Payments: Creem (primary), Polar (legacy)
+- Analytics: PostHog
 
 ## Links
 
 - Website: https://groar.app
-- Creator: https://x.com/yannick_ferire
+- Creator: Yannick Ferire — https://x.com/yannick_ferire
