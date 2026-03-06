@@ -53,7 +53,7 @@ const STACK_GROUPS = [
     label: "Infrastructure",
     items: [
       { name: "Hostinger", role: "Domain", cost: 1.91, logo: "/logos/stack/hostinger.svg" },
-      { name: "Vercel", role: "Hosting", cost: 20, logo: "/logos/stack/vercel.svg", darkInvert: true },
+      { name: "Vercel", role: "Hosting", cost: 0, logo: "/logos/stack/vercel.svg", darkInvert: true },
       { name: "Supabase", role: "PostgreSQL", cost: 0, logo: "/logos/stack/supabase.svg" },
     ],
   },
@@ -70,7 +70,7 @@ const STACK_GROUPS = [
     items: [
       { name: "Inngest", role: "Cron jobs", cost: 0, logo: "/logos/stack/inngest.svg", darkInvert: true },
       { name: "Resend", role: "Emails", cost: 0, logo: "/logos/stack/resend.svg", darkInvert: true },
-      { name: "Polar", role: "Payments", cost: 0, logo: "/logos/stack/polar.svg" },
+      { name: "Creem", role: "Payments", cost: 0, logo: "/logos/stack/creem.svg", darkInvert: true },
     ],
   },
   {
@@ -284,6 +284,11 @@ export default function OpenPage() {
   const totalCost = ALL_STACK_ITEMS.reduce((sum, s) => sum + s.cost, 0);
   const trendDays = stats?.trendDays ?? 7;
 
+  // Hide all trends if more than one is negative
+  const trendValues = stats ? [stats.trends.users, stats.trends.exports, stats.trends.pro, stats.trends.trials] : [];
+  const negativeCount = trendValues.filter((v) => v !== null && v < 0).length;
+  const showTrends = negativeCount <= 1;
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -315,7 +320,7 @@ export default function OpenPage() {
                 label="Registered users"
                 value={stats?.totalUsers ?? 0}
                 loaded={loaded}
-                trend={stats?.trends.users}
+                trend={showTrends ? stats?.trends.users : undefined}
                 trendDays={trendDays}
               />
             </StaggerItem>
@@ -325,7 +330,7 @@ export default function OpenPage() {
                 label="Active trials"
                 value={stats?.activeTrials ?? 0}
                 loaded={loaded}
-                trend={stats?.trends.trials}
+                trend={showTrends ? stats?.trends.trials : undefined}
                 trendDays={trendDays}
               />
             </StaggerItem>
@@ -335,7 +340,7 @@ export default function OpenPage() {
                 label="Pro accounts"
                 value={stats?.proAccounts ?? 0}
                 loaded={loaded}
-                trend={stats?.trends.pro}
+                trend={showTrends ? stats?.trends.pro : undefined}
                 trendDays={trendDays}
               />
             </StaggerItem>
@@ -345,7 +350,7 @@ export default function OpenPage() {
                 label="Visuals exported"
                 value={stats?.totalExports ?? 0}
                 loaded={loaded}
-                trend={stats?.trends.exports}
+                trend={showTrends ? stats?.trends.exports : undefined}
                 trendDays={trendDays}
               />
             </StaggerItem>
