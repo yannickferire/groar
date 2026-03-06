@@ -128,12 +128,18 @@ export function winBackEmail(name: string, pricing?: { monthlyPrice: number; lif
 
 export function milestoneEmail(name: string, milestone: string, metric: string) {
   const firstName = name.split(" ")[0] || name;
-  const metricLabel = metric === "followers" ? "followers" : "posts";
+  const metricLabel =
+    metric === "followers" ? "followers"
+    : metric === "posts" ? "posts"
+    : metric === "mrr" ? "MRR"
+    : metric === "revenue" ? "in revenue"
+    : metric === "customers" ? "customers"
+    : metric;
   return {
     subject: `You just hit ${milestone} ${metricLabel}! 🎉`,
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Congrats ${firstName}!</h1>
-      <p>You just reached <strong>${milestone} ${metricLabel}</strong> on X. That's a big deal — you should share it with your audience.</p>
+      <p>You just reached <strong>${milestone} ${metricLabel}</strong>. That's a big deal — share it with your audience.</p>
       <p>We've got a milestone template ready for you:</p>
       ${cta("Share the milestone", `${SITE_URL}/dashboard/editor?template=milestone&metric=${metric}&value=${milestone}`)}
       <p style="color:#6b7280;font-size:14px;">Keep growing! 🐯</p>

@@ -2,6 +2,7 @@ import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserPlanFromDB } from "@/lib/plans-server";
+import { fetchStartupByXHandle } from "@/lib/trustmrr";
 
 // Get stored TrustMRR analytics for the current user
 export async function GET(request: NextRequest) {
@@ -41,6 +42,8 @@ export async function GET(request: NextRequest) {
         "activeSubscriptions",
         "growth30d",
         "mrrGained",
+        "startupName",
+        website,
         "createdAt"
        FROM trustmrr_snapshot
        WHERE "userId" = $1
@@ -57,6 +60,29 @@ export async function GET(request: NextRequest) {
     }
 
     const latest = snapshotsResult.rows[0];
+
+    // Backfill startup info if missing on latest snapshot
+    if (!latest.startupName) {
+      try {
+        const userResult = await pool.query(
+          `SELECT "xUsername" FROM "user" WHERE id = $1`,
+          [session.user.id]
+        );
+        const xHandle = userResult.rows[0]?.xUsername;
+        if (xHandle) {
+          const tmrrResult = await fetchStartupByXHandle(xHandle);
+          if ("startup" in tmrrResult && (tmrrResult.startup.name || tmrrResult.startup.website)) {
+            await pool.query(
+              `UPDATE trustmrr_snapshot SET "startupName" = $2, website = $3
+               WHERE "userId" = $1 AND "startupName" IS NULL`,
+              [session.user.id, tmrrResult.startup.name, tmrrResult.startup.website]
+            );
+            latest.startupName = tmrrResult.startup.name;
+            latest.website = tmrrResult.startup.website;
+          }
+        }
+      } catch {}
+    }
 
     return NextResponse.json({
       hasData: true,

@@ -90,7 +90,7 @@ async function handleLogin(userId: string): Promise<StatsResult> {
     const result = await client.query(
       `SELECT "totalLoginDays", "currentStreak", "longestStreak",
               "creditedExportsCount", "uniqueTemplatesCount", "uniqueBackgroundsCount",
-              "exportsCount", "score", "pointsToday",
+              "exportsCount", "score", "pointsToday", "weeklyScore",
               ("lastLoginDate" = CURRENT_DATE) AS "loginToday",
               (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE) AS "hadActivityToday",
               (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE - 1) AS "hadActivityYesterday"
@@ -144,6 +144,8 @@ async function handleLogin(userId: string): Promise<StatsResult> {
     const pointsEarned = newScore - oldScore;
     const newPointsToday = (isFirstActivityToday ? 0 : stats.pointsToday) + pointsEarned;
 
+    const newWeeklyScore = (stats.weeklyScore || 0) + pointsEarned;
+
     await client.query(
       `UPDATE user_stats SET
         "totalLoginDays" = $2,
@@ -152,10 +154,19 @@ async function handleLogin(userId: string): Promise<StatsResult> {
         "lastLoginDate" = CURRENT_DATE,
         "score" = $5,
         "pointsToday" = $6,
+        "weeklyScore" = $7,
         "updatedAt" = NOW()
       WHERE "userId" = $1`,
-      [userId, newLoginDays, newStreak, newLongest, newScore, newPointsToday]
+      [userId, newLoginDays, newStreak, newLongest, newScore, newPointsToday, newWeeklyScore]
     );
+
+    if (pointsEarned > 0) {
+      await client.query(
+        `INSERT INTO daily_points ("userId", date, points) VALUES ($1, CURRENT_DATE, $2)
+         ON CONFLICT ("userId", date) DO UPDATE SET points = daily_points.points + $2`,
+        [userId, pointsEarned]
+      );
+    }
 
     await client.query("COMMIT");
 
@@ -187,7 +198,7 @@ async function handleExport(userId: string, template?: string, backgroundId?: st
       `SELECT "totalLoginDays", "exportsCount", "creditedExportsCount",
               "uniqueTemplatesCount", "uniqueBackgroundsCount",
               "usedTemplates", "usedBackgrounds", "currentStreak", "longestStreak",
-              "exportsToday", "score", "pointsToday",
+              "exportsToday", "score", "pointsToday", "weeklyScore", "weeklyExports",
               ("lastExportDate" = CURRENT_DATE) AS "exportToday",
               (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE) AS "hadActivityToday",
               (GREATEST("lastLoginDate", "lastExportDate") = CURRENT_DATE - 1) AS "hadActivityYesterday"
@@ -248,6 +259,9 @@ async function handleExport(userId: string, template?: string, backgroundId?: st
     const pointsEarned = newScore - oldScore;
     const newPointsToday = (isFirstActivityToday ? 0 : stats.pointsToday) + pointsEarned;
 
+    const newWeeklyScore = (stats.weeklyScore || 0) + pointsEarned;
+    const newWeeklyExports = (stats.weeklyExports || 0) + 1;
+
     await client.query(
       `UPDATE user_stats SET
         "exportsCount" = $2,
@@ -262,10 +276,20 @@ async function handleExport(userId: string, template?: string, backgroundId?: st
         "longestStreak" = $10,
         "score" = $11,
         "pointsToday" = $12,
+        "weeklyScore" = $13,
+        "weeklyExports" = $14,
         "updatedAt" = NOW()
       WHERE "userId" = $1`,
-      [userId, newExports, newCredited, newExportsToday, newTemplateCount, newBgCount, usedTemplates, usedBackgrounds, newStreak, newLongest, newScore, newPointsToday]
+      [userId, newExports, newCredited, newExportsToday, newTemplateCount, newBgCount, usedTemplates, usedBackgrounds, newStreak, newLongest, newScore, newPointsToday, newWeeklyScore, newWeeklyExports]
     );
+
+    if (pointsEarned > 0) {
+      await client.query(
+        `INSERT INTO daily_points ("userId", date, points) VALUES ($1, CURRENT_DATE, $2)
+         ON CONFLICT ("userId", date) DO UPDATE SET points = daily_points.points + $2`,
+        [userId, pointsEarned]
+      );
+    }
 
     await client.query("COMMIT");
 

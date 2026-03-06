@@ -46,6 +46,8 @@ function ConnectionsContent() {
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [trustmrrConnected, setTrustmrrConnected] = useState(false);
+  const [trustmrrStartup, setTrustmrrStartup] = useState<{ names: string[]; websites: string[] }>({ names: [], websites: [] });
 
   const maxPerProvider = PLAN_LIMITS[plan].maxConnectionsPerProvider;
 
@@ -64,6 +66,25 @@ function ConnectionsContent() {
       const planData = await planRes.json();
       setAccounts(connectionsData.accounts || []);
       setPlan(planData.plan || "free");
+
+      // Check TrustMRR connection (Pro only)
+      if (planData.plan && planData.plan !== "free") {
+        try {
+          const tmrrRes = await fetch("/api/analytics/trustmrr?days=1");
+          if (tmrrRes.ok) {
+            const tmrrData = await tmrrRes.json();
+            setTrustmrrConnected(tmrrData.hasData === true);
+            if (tmrrData.hasData && tmrrData.latest) {
+              const rawNames = tmrrData.latest.startupName || "";
+              const rawWebsites = tmrrData.latest.website || "";
+              setTrustmrrStartup({
+                names: rawNames.split(", ").filter(Boolean),
+                websites: rawWebsites.split(", ").filter(Boolean),
+              });
+            }
+          }
+        } catch {}
+      }
     } finally {
       setLoading(false);
     }
@@ -260,6 +281,40 @@ function ConnectionsContent() {
           </div>
         );
       })}
+
+      {/* TrustMRR — auto-detected via X handle */}
+      {!loading && trustmrrConnected && (
+        <div className="rounded-2xl border-fade p-6 flex items-center gap-4">
+          <span className="inline-flex items-center justify-center w-10 h-10 bg-white border border-border rounded-xl shrink-0">
+            <Image src="/logos/stack/trustmrr.png" alt="TrustMRR" width={20} height={20} className="w-5 h-5 object-contain" />
+          </span>
+          <div className="flex-1">
+            <p className="font-medium font-heading">
+              TrustMRR{trustmrrStartup.names.length > 0 ? ` · ${trustmrrStartup.names.join(", ")}` : ""}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {trustmrrStartup.websites.length > 0 ? (
+                <>Revenue metrics auto-imported from{" "}
+                  {trustmrrStartup.websites.map((url, i) => (
+                    <span key={url}>
+                      {i > 0 && ", "}
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">
+                        {url.replace(/^https?:\/\//, "")}
+                      </a>
+                    </span>
+                  ))}
+                </>
+              ) : (
+                "Revenue metrics auto-imported via your X handle"
+              )}
+            </p>
+          </div>
+          <Badge variant="outline" className="border-emerald-500/30 text-emerald-500 bg-emerald-500/10">
+            <HugeiconsIcon icon={Link01Icon} size={12} strokeWidth={2} />
+            Connected
+          </Badge>
+        </div>
+      )}
 
       {/* Coming soon */}
       <div className="rounded-2xl border border-dashed border-border p-6 flex items-center gap-4 text-muted-foreground">

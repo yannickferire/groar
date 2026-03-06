@@ -5,6 +5,7 @@ export type TrustMRRStartup = {
   slug: string;
   name: string;
   xHandle: string;
+  website: string | null;
   revenue: {
     mrrCents: number;
     last30DaysCents: number;
@@ -16,7 +17,7 @@ export type TrustMRRStartup = {
 };
 
 export type TrustMRRResult =
-  | { startup: TrustMRRStartup }
+  | { startup: TrustMRRStartup; startups: TrustMRRStartup[] }
   | { notFound: true }
   | { error: string };
 
@@ -60,25 +61,44 @@ export async function fetchStartupByXHandle(
       return { notFound: true };
     }
 
-    const s = startups[0];
-    const revenue = s.revenue ?? {};
-
-    // API returns dollars — convert to cents for consistent DB storage
-    return {
-      startup: {
-        slug: s.slug ?? "",
-        name: s.name ?? "",
-        xHandle: s.xHandle ?? handle,
+    // Parse all startups
+    const parsed: TrustMRRStartup[] = startups.map((s: Record<string, unknown>) => {
+      const revenue = (s.revenue ?? {}) as Record<string, number>;
+      return {
+        slug: (s.slug as string) ?? "",
+        name: (s.name as string) ?? "",
+        xHandle: (s.xHandle as string) ?? handle,
+        website: (s.website as string) ?? null,
         revenue: {
           mrrCents: Math.round((revenue.mrr ?? 0) * 100),
           last30DaysCents: Math.round((revenue.last30Days ?? 0) * 100),
           totalCents: Math.round((revenue.total ?? 0) * 100),
         },
-        customers: s.customers ?? 0,
-        activeSubscriptions: s.activeSubscriptions ?? 0,
-        growth30d: s.growth30d ?? 0,
+        customers: (s.customers as number) ?? 0,
+        activeSubscriptions: (s.activeSubscriptions as number) ?? 0,
+        growth30d: (s.growth30d as number) ?? 0,
+      };
+    });
+
+    // Aggregate all startups into a combined view
+    const aggregated: TrustMRRStartup = {
+      slug: parsed.map((s) => s.slug).filter(Boolean).join(","),
+      name: parsed.map((s) => s.name).filter(Boolean).join(", "),
+      xHandle: handle,
+      website: parsed.map((s) => s.website).filter(Boolean).join(", "),
+      revenue: {
+        mrrCents: parsed.reduce((sum, s) => sum + s.revenue.mrrCents, 0),
+        last30DaysCents: parsed.reduce((sum, s) => sum + s.revenue.last30DaysCents, 0),
+        totalCents: parsed.reduce((sum, s) => sum + s.revenue.totalCents, 0),
       },
+      customers: parsed.reduce((sum, s) => sum + s.customers, 0),
+      activeSubscriptions: parsed.reduce((sum, s) => sum + s.activeSubscriptions, 0),
+      growth30d: parsed.length === 1
+        ? parsed[0].growth30d
+        : parsed.reduce((sum, s) => sum + s.growth30d, 0) / parsed.length,
     };
+
+    return { startup: aggregated, startups: parsed };
   } catch (err) {
     console.error("TrustMRR fetch error:", err);
     return { error: err instanceof Error ? err.message : "Unknown error" };

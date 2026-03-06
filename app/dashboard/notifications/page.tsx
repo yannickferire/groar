@@ -10,6 +10,8 @@ import {
   News01Icon,
   Download04Icon,
   Settings01Icon,
+  Money01Icon,
+  UserMultipleIcon,
 } from "@hugeicons/core-free-icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
@@ -20,7 +22,7 @@ type Notification = {
   title: string;
   body: string | null;
   metadata: {
-    metric?: "followers" | "posts" | "exports";
+    metric?: "followers" | "posts" | "exports" | "mrr" | "revenue" | "customers";
     value?: number;
     milestone?: number;
     handle?: string;
@@ -49,10 +51,14 @@ function timeAgo(dateStr: string): string {
 
 function buildEditorUrl(metadata: Notification["metadata"]): string {
   if (!metadata.milestone) return "/dashboard/editor";
+  const metric = metadata.metric || "followers";
+  const isRevenue = metric === "mrr" || metric === "revenue";
   const params = new URLSearchParams({
     template: "milestone",
-    metric: metadata.metric || "followers",
-    value: metadata.milestone.toString(),
+    metric: metric === "mrr" ? "mrr" : metric === "revenue" ? "revenue" : metric === "customers" ? "customers" : metric,
+    value: isRevenue
+      ? metadata.milestone.toString()
+      : metadata.milestone.toString(),
   });
   return `/dashboard/editor?${params.toString()}`;
 }
@@ -68,6 +74,8 @@ function NotificationCard({
   const isBadge = notification.type === "badge";
   const isFollowers = notification.metadata.metric === "followers";
   const isExports = notification.metadata.metric === "exports";
+  const isRevenue = notification.metadata.metric === "mrr" || notification.metadata.metric === "revenue";
+  const isCustomers = notification.metadata.metric === "customers";
 
   return (
     <div
@@ -92,7 +100,7 @@ function NotificationCard({
             <span className="text-xl leading-none">{notification.metadata.badgeEmoji}</span>
           ) : (
             <HugeiconsIcon
-              icon={isExports ? Download04Icon : isFollowers ? UserLove01Icon : News01Icon}
+              icon={isRevenue ? Money01Icon : isCustomers ? UserMultipleIcon : isExports ? Download04Icon : isFollowers ? UserLove01Icon : News01Icon}
               size={22}
               strokeWidth={2}
             />

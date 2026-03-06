@@ -7,9 +7,10 @@ export async function GET() {
   if (response) return response;
 
   const isAdmin = session.user.id === ADMIN_USER_ID;
+  const excludeId = ADMIN_USER_ID;
 
   try {
-    // Top 10 leaderboard (excluding admin)
+    // Top 10 leaderboard — score = SUM of daily_points over last 30 days
     const result = await pool.query(
       `SELECT
         u.id,
@@ -17,50 +18,66 @@ export async function GET() {
         u.image,
         u."xUsername",
         s."exportsCount",
-        s."totalLoginDays",
         s."currentStreak",
-        s."longestStreak",
-        s."uniqueTemplatesCount",
-        s."uniqueBackgroundsCount",
-        s.score,
-        CASE WHEN GREATEST(s."lastLoginDate", s."lastExportDate") = CURRENT_DATE THEN s."pointsToday" ELSE 0 END AS "pointsToday"
+        COALESCE(dp.score, 0) AS "score",
+        CASE WHEN GREATEST(s."lastLoginDate", s."lastExportDate") = CURRENT_DATE THEN s."pointsToday" ELSE 0 END AS "pointsToday",
+        tmrr."startupName",
+        tmrr.website AS "startupWebsite"
       FROM "user" u
       INNER JOIN user_stats s ON s."userId" = u.id
-      WHERE s.score > 0 AND u.id != $1
-      ORDER BY s.score DESC, s."updatedAt" ASC
+      LEFT JOIN LATERAL (
+        SELECT SUM(points) AS score FROM daily_points
+        WHERE "userId" = u.id AND date > CURRENT_DATE - 30
+      ) dp ON true
+      LEFT JOIN LATERAL (
+        SELECT "startupName", website FROM trustmrr_snapshot
+        WHERE "userId" = u.id AND "startupName" IS NOT NULL
+        ORDER BY date DESC, "createdAt" DESC LIMIT 1
+      ) tmrr ON true
+      WHERE COALESCE(dp.score, 0) > 0 AND u.id != $1
+      ORDER BY dp.score DESC, s."updatedAt" ASC
       LIMIT 10`,
-      [ADMIN_USER_ID]
+      [excludeId]
     );
 
-    // Current user's rank + stats (exclude admin from ranking)
+    // Current user's rank + stats (based on 30-day score)
     const rankResult = await pool.query(
       `SELECT rank::INTEGER, score, "exportsCount", "currentStreak", "pointsToday",
               "loggedInToday", "exportsToday" FROM (
         SELECT
           u.id,
-          s.score,
+          COALESCE(dp.score, 0) AS score,
           s."exportsCount",
           s."currentStreak",
           s."pointsToday",
           (s."lastLoginDate" = CURRENT_DATE) AS "loggedInToday",
           CASE WHEN s."lastExportDate" = CURRENT_DATE THEN s."exportsToday" ELSE 0 END AS "exportsToday",
-          RANK() OVER (ORDER BY s.score DESC, s."updatedAt" ASC) as rank
+          RANK() OVER (ORDER BY COALESCE(dp.score, 0) DESC, s."updatedAt" ASC) as rank
         FROM "user" u
         INNER JOIN user_stats s ON s."userId" = u.id
-        WHERE s.score > 0 AND u.id != $2
+        LEFT JOIN LATERAL (
+          SELECT SUM(points) AS score FROM daily_points
+          WHERE "userId" = u.id AND date > CURRENT_DATE - 30
+        ) dp ON true
+        WHERE COALESCE(dp.score, 0) > 0 AND u.id != $2
       ) ranked
       WHERE id = $1`,
-      [session.user.id, ADMIN_USER_ID]
+      [session.user.id, excludeId]
     );
 
     // If admin, fetch their stats separately (not ranked)
     let adminStats = null;
     if (isAdmin) {
       const adminResult = await pool.query(
-        `SELECT s.score, s."exportsCount", s."currentStreak", s."pointsToday",
+        `SELECT COALESCE(dp.score, 0) AS score, s."exportsCount", s."currentStreak", s."pointsToday",
                 (s."lastLoginDate" = CURRENT_DATE) AS "loggedInToday",
                 CASE WHEN s."lastExportDate" = CURRENT_DATE THEN s."exportsToday" ELSE 0 END AS "exportsToday"
-         FROM user_stats s WHERE s."userId" = $1`,
+         FROM user_stats s
+         LEFT JOIN LATERAL (
+           SELECT SUM(points) AS score FROM daily_points
+           WHERE "userId" = s."userId" AND date > CURRENT_DATE - 30
+         ) dp ON true
+         WHERE s."userId" = $1`,
         [session.user.id]
       );
       adminStats = adminResult.rows[0];

@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
       { hostname: "lh3.googleusercontent.com" },
       { hostname: "pbs.twimg.com" },
       { hostname: "erhsgruqexbtmxbtkapc.supabase.co" },
+      { hostname: "www.google.com" },
     ],
   },
   async headers() {

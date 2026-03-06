@@ -305,5 +305,22 @@ export const dailyTrustMRRFetch = inngest.createFunction(
   }
 );
 
+// Cleanup old daily_points rows (older than 60 days) — runs 1st of each month
+export const dailyPointsCleanup = inngest.createFunction(
+  {
+    id: "daily-points-cleanup",
+    name: "Daily Points Cleanup",
+    retries: 2,
+  },
+  { cron: "0 2 1 * *" },
+  async ({ logger }) => {
+    const result = await pool.query(
+      `DELETE FROM daily_points WHERE date < CURRENT_DATE - 60`
+    );
+    logger.info(`Daily points cleanup: ${result.rowCount} old rows deleted`);
+    return { success: true, rowsDeleted: result.rowCount };
+  }
+);
+
 // Export all functions for the serve handler
-export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, trialEndingReminder, trialExpiredNotification, trialFollowUp];
+export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, dailyPointsCleanup, trialEndingReminder, trialExpiredNotification, trialFollowUp];
