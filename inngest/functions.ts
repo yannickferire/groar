@@ -1,6 +1,6 @@
 import { inngest } from "@/lib/inngest";
 import { fetchAccountAnalytics, getAllXAccounts } from "@/lib/analytics";
-import { fetchTrustMRRForUser, getUsersWithTrustMRR } from "@/lib/trustmrr-analytics";
+import { fetchTrustMRRForUser, getUsersForTrustMRR } from "@/lib/trustmrr-analytics";
 import { pool } from "@/lib/db";
 import { sendEmail, trialEndingEmail, trialExpiredEmail, trialFollowUpEmail } from "@/lib/email";
 import { getPricingTierInfo } from "@/lib/plans-server";
@@ -236,7 +236,7 @@ export const dailyTrustMRRFetch = inngest.createFunction(
   { cron: "0 2 * * *" },
   async ({ step, logger }) => {
     const users = await step.run("get-trustmrr-users", async () => {
-      return await getUsersWithTrustMRR();
+      return await getUsersForTrustMRR();
     });
 
     logger.info(`Found ${users.length} users with TrustMRR data`);
@@ -278,6 +278,8 @@ export const dailyTrustMRRFetch = inngest.createFunction(
       if ("success" in result && result.success) {
         successCount++;
       } else if ("alreadyFetched" in result && result.alreadyFetched) {
+        skippedCount++;
+      } else if ("notFound" in result && result.notFound) {
         skippedCount++;
       } else {
         errorCount++;

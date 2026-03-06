@@ -176,6 +176,7 @@ export default function AnalyticsPage() {
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [selectedAccountIndex, setSelectedAccountIndex] = useState(0);
   const [trustmrrData, setTrustmrrData] = useState<TrustMRRData | null>(null);
+  const [trustmrrNotFound, setTrustmrrNotFound] = useState(false);
   const [expandedDate, setExpandedDate] = useState<string | null>(null);
 
   const fetchTrustMRR = async (forceRefresh = false) => {
@@ -195,7 +196,10 @@ export default function AnalyticsPage() {
         const fetchRes = await fetch("/api/analytics/trustmrr/fetch", { method: "POST" });
         if (fetchRes.ok) {
           const result = await fetchRes.json();
-          if (result.success) {
+          if (result.notFound) {
+            setTrustmrrNotFound(true);
+          } else if (result.success) {
+            setTrustmrrNotFound(false);
             // Re-fetch stored data
             const res2 = await fetch("/api/analytics/trustmrr?days=30");
             if (res2.ok) {
@@ -538,6 +542,8 @@ export default function AnalyticsPage() {
           </div>
         </div>
       )}
+
+
 
       {/* Unified History */}
       {account.snapshots.length > 1 && (

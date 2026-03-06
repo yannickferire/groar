@@ -131,13 +131,15 @@ export async function fetchTrustMRRForUser(
   };
 }
 
-// Get all users who have at least one TrustMRR snapshot (for cron auto-fetch)
-export async function getUsersWithTrustMRR() {
+// Get all Pro users with an X handle (for cron auto-fetch)
+export async function getUsersForTrustMRR() {
   const result = await pool.query(
-    `SELECT DISTINCT t."userId", u."xUsername"
-     FROM trustmrr_snapshot t
-     JOIN "user" u ON u.id = t."userId"
-     WHERE u."xUsername" IS NOT NULL`
+    `SELECT u.id as "userId", u."xUsername"
+     FROM "user" u
+     JOIN subscription s ON s."userId" = u.id
+     WHERE u."xUsername" IS NOT NULL
+       AND s.plan IN ('pro', 'friend')
+       AND (s.status = 'active' OR (s.status = 'trialing' AND s."trialEnd" > NOW()))`
   );
   return result.rows as { userId: string; xUsername: string }[];
 }
