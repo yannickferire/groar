@@ -119,6 +119,9 @@ export default function Home() {
             Want to see how GROAR compares to other tools? Check out{" "}
             <Link href="/vs/canva" className="underline hover:text-foreground transition-colors">
               GROAR vs Canva
+            </Link>{" "}and{" "}
+            <Link href="/vs/screenshots" className="underline hover:text-foreground transition-colors">
+              GROAR vs Screenshots
             </Link>.
           </p>
         </section>

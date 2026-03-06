@@ -112,7 +112,7 @@ export default function VsCanvaPage() {
         <article className="max-w-3xl mx-auto">
           {/* Hero */}
           <header className="text-center mb-12 md:mb-16">
-            <h1 className="flex items-center justify-center gap-3 sm:gap-4 mb-4">
+            <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4">
               <Image
                 src="/groar-logo.png"
                 alt="Groar"
@@ -130,7 +130,8 @@ export default function VsCanvaPage() {
                 sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
                 className="h-auto w-20 sm:w-24 md:w-28"
               />
-            </h1>
+            </div>
+            <h1 className="sr-only">GROAR vs Canva — Best Tool for Growth Metrics Visuals</h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
               GROAR gives you ready-to-use templates to turn your metrics into shareable visuals — in under 10 seconds, zero design skills required.
               <br /><br />

@@ -38,6 +38,9 @@ export default function Footer() {
             <div className="flex flex-col gap-1.5">
               <h4 className="text-sm font-medium">Compare</h4>
               <div className="flex flex-col gap-1 text-sm text-foreground/60">
+                <Link href="/vs/screenshots" className="hover:text-foreground transition-colors">
+                  vs Screenshots
+                </Link>
                 <Link href="/vs/canva" className="hover:text-foreground transition-colors">
                   vs Canva
                 </Link>
