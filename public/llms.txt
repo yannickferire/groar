@@ -33,7 +33,7 @@ Create scroll-stopping visuals from your growth data — followers, MRR, GitHub 
 - Undo/redo, keyboard shortcuts (Cmd+S to export)
 - Export as high-quality PNG, auto-copy to clipboard
 - Direct share to X with pre-filled tweet
-- Community leaderboard with badges and streaks
+- Community leaderboard with badges and streaks: https://groar.app/public
 
 ## Pricing
 
@@ -54,4 +54,5 @@ Create scroll-stopping visuals from your growth data — followers, MRR, GitHub 
 - Website: https://groar.app
 - Compare: https://groar.app/vs
 - Comparisons: https://groar.app/vs/screenshots, https://groar.app/vs/canva, https://groar.app/vs/piktochart, https://groar.app/vs/image-charts, https://groar.app/vs/spreadsheets
+- Leaderboard: https://groar.app/public
 - Creator: Yannick Ferire — https://x.com/yannick_ferire

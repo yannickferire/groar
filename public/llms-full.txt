@@ -148,7 +148,7 @@ Auto-filled metrics show a green dot indicator. If the user manually changes the
 - Account management and disconnection
 - Provider-based organization
 
-### Leaderboard
+### Leaderboard (https://groar.app/public)
 Community gamification system:
 
 **Point System**:
@@ -282,5 +282,6 @@ Monthly pricing also increases with lifetime tiers: $5 → $6 → $7 → $8 → 
 ## Links
 
 - Website: https://groar.app
+- Leaderboard: https://groar.app/public
 - Creator: Yannick Ferire
 - X: https://x.com/yannick_ferire

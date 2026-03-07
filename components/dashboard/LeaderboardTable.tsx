@@ -62,13 +62,14 @@ function Avatar({ image, name, size = 40 }: { image: string | null; name: string
 type LeaderboardTableProps = {
   apiUrl?: string;
   currentUserId?: string | null;
+  initialData?: LeaderboardEntry[];
 };
 
 const gridCols = "grid-cols-[2.5rem_1fr_auto] md:grid-cols-[3rem_1fr_5rem_5rem_4.5rem_4.5rem]";
 
-export default function LeaderboardTable({ apiUrl = "/api/leaderboard", currentUserId }: LeaderboardTableProps) {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function LeaderboardTable({ apiUrl = "/api/leaderboard", currentUserId, initialData }: LeaderboardTableProps) {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
 
   const fetchLeaderboard = useCallback(() => {
     setLoading(true);
@@ -82,8 +83,10 @@ export default function LeaderboardTable({ apiUrl = "/api/leaderboard", currentU
   }, [apiUrl]);
 
   useEffect(() => {
-    fetchLeaderboard();
-  }, [fetchLeaderboard]);
+    if (!initialData) {
+      fetchLeaderboard();
+    }
+  }, [fetchLeaderboard, initialData]);
 
   return (
     <div>
