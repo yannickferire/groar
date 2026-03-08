@@ -8,7 +8,7 @@ export default function RankInPublicBanner() {
       href={VOTE_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer mb-4"
+      className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer mb-1"
     >
       <span className="text-sm text-muted-foreground">
         &#x1F44B; Hey RankInPublic fam! It's the final, <span className="font-semibold highlighted">vote for us</span>
