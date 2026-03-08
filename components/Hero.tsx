@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { SparklesIcon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
+import RankInPublicBanner from "@/components/layout/RankInPublicBanner";
 
 const logoContainerClass = "w-8! h-8! sm:w-9! sm:h-9! md:w-14! md:h-14! rounded-lg! md:rounded-xl!";
 const xSvgClass = "[&>svg]:w-4! [&>svg]:h-4! sm:[&>svg]:w-4.5! sm:[&>svg]:h-4.5! md:[&>svg]:w-7! md:[&>svg]:h-7!";
@@ -29,6 +30,9 @@ export default function Hero() {
 
   return (
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto">
+      <FadeIn delay={0.15} duration={0.6}>
+        <RankInPublicBanner />
+      </FadeIn>
       <FadeIn delay={0.25} duration={0.6}>
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight leading-[1.3] md:leading-[1.15]">
           Turn your{" "}
