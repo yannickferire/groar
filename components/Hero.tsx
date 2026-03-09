@@ -80,6 +80,7 @@ export default function Hero() {
                 size="lg"
                 className="md:hidden"
                 onClick={() => {
+                  window?.datafast?.("hero_cta_clicked", { type: "mobile" });
                   localStorage.setItem("groar-trial-intent", "true");
                   router.push("/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart");
                 }}
@@ -93,6 +94,7 @@ export default function Hero() {
                 size="lg"
                 className="hidden md:inline-flex"
                 onClick={() => {
+                  window?.datafast?.("hero_cta_clicked", { type: "desktop" });
                   import("posthog-js").then(({ default: posthog }) => {
                     posthog.capture("hero_cta_clicked");
                   }).catch(() => {});
