@@ -79,8 +79,9 @@ export default function Hero() {
                 variant="default"
                 size="lg"
                 className="md:hidden"
+                data-fast-goal="hero_cta_clicked"
+                data-fast-goal-type="mobile"
                 onClick={() => {
-                  window?.datafast?.("hero_cta_clicked", { type: "mobile" });
                   localStorage.setItem("groar-trial-intent", "true");
                   router.push("/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart");
                 }}
@@ -93,8 +94,9 @@ export default function Hero() {
                 variant="default"
                 size="lg"
                 className="hidden md:inline-flex"
+                data-fast-goal="hero_cta_clicked"
+                data-fast-goal-type="desktop"
                 onClick={() => {
-                  window?.datafast?.("hero_cta_clicked", { type: "desktop" });
                   import("posthog-js").then(({ default: posthog }) => {
                     posthog.capture("hero_cta_clicked");
                   }).catch(() => {});

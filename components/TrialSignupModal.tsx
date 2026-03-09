@@ -52,12 +52,14 @@ export default function TrialSignupModal({
 
   const handleTwitter = () => {
     setLoading("twitter");
+    window?.datafast?.("click_start_free_trial", { provider: "twitter" });
     try { localStorage.setItem("groar-pending-export", "true"); } catch {}
     authClient.signIn.social({ provider: "twitter", callbackURL });
   };
 
   const handleGoogle = () => {
     setLoading("google");
+    window?.datafast?.("click_start_free_trial", { provider: "google" });
     try { localStorage.setItem("groar-pending-export", "true"); } catch {}
     authClient.signIn.social({ provider: "google", callbackURL });
   };
@@ -211,6 +213,8 @@ export default function TrialSignupModal({
                             size="lg"
                             className="w-full"
                             disabled={loading !== null}
+                            data-fast-goal="click_start_free_trial"
+                            data-fast-goal-provider="twitter"
                           >
                             {loading === "twitter" ? (
                               <HugeiconsIcon icon={Loading03Icon} size={20} strokeWidth={2} className="animate-spin" />
@@ -226,6 +230,8 @@ export default function TrialSignupModal({
                             size="lg"
                             className="w-full bg-background/10 border-background/20 text-background hover:bg-background/20"
                             disabled={loading !== null}
+                            data-fast-goal="click_start_free_trial"
+                            data-fast-goal-provider="google"
                           >
                             {loading === "google" ? (
                               <HugeiconsIcon icon={Loading03Icon} size={20} strokeWidth={2} className="animate-spin" />
