@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon, Notification03Icon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon, Notification03Icon, GiftIcon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import UserMenu from "./UserMenu";
@@ -296,29 +296,7 @@ export default function DashboardSidebar() {
               </Button>
             </div>
           </div>
-        ) : userPlan && (
-          <div className="mx-2 mb-2 p-4 rounded-2xl bg-foreground text-background relative overflow-hidden">
-            {/* Gradient effect */}
-            <div className="absolute -bottom-10 -right-20 w-40 h-30 bg-linear-to-tl from-primary/40 via-primary/20 to-transparent blur-2xl rotate-[-25deg]" />
-
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center justify-center w-6 h-6 rounded-md bg-background/20">
-                  <HugeiconsIcon icon={ChromeIcon} size={14} strokeWidth={2} />
-                </div>
-                <span className="font-heading font-bold text-sm">Chrome Extension</span>
-              </div>
-
-              <p className="text-xs text-background/70 mb-3">
-                Export your visuals and access all your analytics while scrolling X.
-              </p>
-
-              <Button variant="outline" size="sm" className="w-full bg-background/10 border-background/20 text-background hover:bg-background/20" disabled>
-                Coming soon
-              </Button>
-            </div>
-          </div>
-        )}
+        ) : null}
         <SidebarSeparator />
         <UserMenu isAdmin={isAdmin} />
       </SidebarFooter>
