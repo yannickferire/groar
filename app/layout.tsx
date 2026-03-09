@@ -144,6 +144,7 @@ export default function RootLayout({
         {children}
         <Toaster />
         <Analytics />
+        <Script id="datafast-queue" strategy="beforeInteractive">{`window.datafast=window.datafast||function(){window.datafast.q=window.datafast.q||[];window.datafast.q.push(arguments)};`}</Script>
         <Script
           src="https://datafa.st/js/script.js"
           data-website-id="dfid_KCoXqvjnSG1gNXFzbmksp"

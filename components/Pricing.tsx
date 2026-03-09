@@ -59,7 +59,7 @@ export default function Pricing() {
         window.location.href = `/login?callbackUrl=${encodeURIComponent("/dashboard?trial=start")}`;
       } else {
         fetch("/api/user/trial", { method: "POST" })
-          .then(() => { window.location.href = "/dashboard/editor"; })
+          .then(() => { window?.datafast?.("trial_started"); window.location.href = "/dashboard/editor"; })
           .catch(() => { window.location.href = "/dashboard?trial=start"; });
       }
       return;
@@ -77,6 +77,7 @@ export default function Pricing() {
           });
           const data = await response.json();
           if (data.checkoutUrl) {
+            window?.datafast?.("checkout_initiated", { plan: planKey, billing: "lifetime" });
             window.location.href = data.checkoutUrl;
           }
         } catch {

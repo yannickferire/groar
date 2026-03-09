@@ -75,6 +75,7 @@ function OnboardingContent() {
         const data = await response.json();
 
         if (data.checkoutUrl) {
+          window?.datafast?.("checkout_initiated", { plan: planKey, billing: billingPeriod || "monthly" });
           window.location.href = data.checkoutUrl;
         } else {
           console.error("No checkout URL returned:", data);

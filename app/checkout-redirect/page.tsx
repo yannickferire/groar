@@ -26,6 +26,7 @@ function CheckoutRedirectContent() {
       .then((res) => res.json())
       .then((data) => {
         if (data.checkoutUrl) {
+          window?.datafast?.("checkout_initiated", { plan: plan!, billing });
           window.location.href = data.checkoutUrl;
         } else {
           // Fallback to onboarding if checkout fails

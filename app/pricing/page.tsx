@@ -67,6 +67,7 @@ function PricingContent() {
         // Logged in but hasn't used trial → start trial directly
         try {
           await fetch("/api/user/trial", { method: "POST" });
+          window?.datafast?.("trial_started");
           window.location.href = "/dashboard/editor";
         } catch {
           // Fallback to checkout
@@ -92,6 +93,7 @@ function PricingContent() {
       });
       const data = await response.json();
       if (data.checkoutUrl) {
+        window?.datafast?.("checkout_initiated", { plan: planKey, billing: billingPeriod || "monthly" });
         window.location.href = data.checkoutUrl;
       }
     } catch (error) {

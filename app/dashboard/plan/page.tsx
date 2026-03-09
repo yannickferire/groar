@@ -78,6 +78,7 @@ export default function PlanPage() {
       });
       const data = await response.json();
       if (data.checkoutUrl) {
+        window?.datafast?.("checkout_initiated", { plan: planKey, billing: billingPeriod || "monthly" });
         window.location.href = data.checkoutUrl;
       }
     } catch (error) {

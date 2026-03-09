@@ -78,6 +78,7 @@ function LoginContent() {
       plan: planParam,
       is_trial: callbackUrlParam?.includes("trial=start") ?? false,
     });
+    window?.datafast?.("signup", { provider: "google" });
     authClient.signIn.social({ provider: "google", callbackURL: getCallbackURL() });
   };
 
@@ -89,6 +90,7 @@ function LoginContent() {
       plan: planParam,
       is_trial: callbackUrlParam?.includes("trial=start") ?? false,
     });
+    window?.datafast?.("signup", { provider: "twitter" });
     authClient.signIn.social({ provider: "twitter", callbackURL: getCallbackURL() });
   };
 

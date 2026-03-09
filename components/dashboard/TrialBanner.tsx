@@ -29,6 +29,7 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, l
       try {
         const res = await fetch("/api/user/trial", { method: "POST" });
         if (res.ok) {
+          window?.datafast?.("trial_started");
           // Redirect to editor so the user can start creating immediately
           router.push("/dashboard/editor");
         }

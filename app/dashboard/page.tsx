@@ -109,6 +109,7 @@ function DashboardContent() {
     fetch("/api/user/trial", { method: "POST" })
       .then((res) => {
         if (res.ok) {
+          window?.datafast?.("trial_started");
           window.dispatchEvent(new Event("groar:plan-updated"));
         }
       })

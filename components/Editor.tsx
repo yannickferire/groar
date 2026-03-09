@@ -103,6 +103,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     if (settingsChangeCountRef.current <= 2) return;
     editorInteractedRef.current = true;
     posthog.capture("editor_interacted", { source: "landing" });
+    window?.datafast?.("editor_interacted", { source: "landing" });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
 
@@ -507,6 +508,11 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         handle: settings.handle,
         source: isDashboard ? "dashboard" : "landing",
       });
+      if (!isDashboard) {
+        window?.datafast?.("image_exported", {
+          type: isPremium ? "premium" : "free",
+        });
+      }
 
       // Track for leaderboard (dashboard users only)
       if (isDashboard) {
