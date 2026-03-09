@@ -105,6 +105,21 @@ const comparisons = [
     ] as ComparisonPoint[],
     otherLabel: "Spreadsheets",
   },
+  {
+    href: "/vs/build-in-public",
+    title: "Build in Public Tools",
+    summary:
+      "Building in public means sharing milestones, MRR, and growth regularly. GROAR is the visual toolkit built for that.",
+    highlights: ["Auto-import from X, GitHub, Stripe", "Milestone templates", "10 seconds to share"],
+    points: [
+      { feature: "Purpose-built for growth metrics", groar: true, other: false },
+      { feature: "Auto-import your metrics", groar: true, other: false },
+      { feature: "Ready-to-use milestone templates", groar: true, other: false },
+      { feature: "Consistent visual identity", groar: true, other: false },
+      { feature: "Free to start", groar: true, other: true },
+    ] as ComparisonPoint[],
+    otherLabel: "Manual",
+  },
 ];
 
 export default function VsIndexPage() {

@@ -282,6 +282,8 @@ Monthly pricing also increases with lifetime tiers: $5 → $6 → $7 → $8 → 
 ## Links
 
 - Website: https://groar.app
+- Compare: https://groar.app/vs
+- Comparisons: https://groar.app/vs/screenshots, https://groar.app/vs/canva, https://groar.app/vs/piktochart, https://groar.app/vs/image-charts, https://groar.app/vs/spreadsheets, https://groar.app/vs/build-in-public
 - Leaderboard: https://groar.app/public
 - Creator: Yannick Ferire
 - X: https://x.com/yannick_ferire

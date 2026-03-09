@@ -849,7 +849,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   ref={(el) => {
                     if (el && !el.dataset.initialized) {
                       el.dataset.initialized = "true";
-                      el.focus();
+                      el.focus({ preventScroll: true });
                       el.select();
                     }
                   }}

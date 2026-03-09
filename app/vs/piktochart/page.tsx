@@ -4,6 +4,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import VsCta from "@/components/VsCta";
 import VsFaq from "@/components/VsFaq";
+import Testimonials from "@/components/Testimonials";
+import VsBeforeAfter from "@/components/VsBeforeAfter";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 
@@ -120,6 +122,8 @@ export default function VsPiktochartPage() {
             </p>
           </header>
 
+          <VsBeforeAfter competitor="Piktochart" />
+
           {/* TL;DR */}
           <section className="rounded-2xl border-fade p-6 md:p-8 mb-12 md:mb-16">
             <h2 className="text-lg font-semibold mb-3">TL;DR</h2>
@@ -211,6 +215,10 @@ export default function VsPiktochartPage() {
               GROAR doesn&apos;t try to replace it — it&apos;s built for the specific moment when you want to share your metrics on social media and make people stop scrolling.
             </p>
           </section>
+
+          <div className="mb-12 md:mb-16 -mx-4 md:mx-0">
+            <Testimonials />
+          </div>
 
           {/* FAQ */}
           <section className="mb-12 md:mb-16">

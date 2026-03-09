@@ -59,6 +59,9 @@ export default function Footer() {
                 <Link href="/vs/spreadsheets" className="hover:text-foreground transition-colors">
                   vs Spreadsheets
                 </Link>
+                <Link href="/vs/build-in-public" className="hover:text-foreground transition-colors">
+                  Build in Public
+                </Link>
               </div>
             </div>
             <div className="flex flex-col gap-1.5">

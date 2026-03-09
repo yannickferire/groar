@@ -232,16 +232,24 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     return () => clearTimeout(timeout);
   }, [settings]);
 
-  // Smooth scroll to re-center editor when aspect ratio changes
+  // Smooth scroll to re-center editor when aspect ratio changes (skip initial load from localStorage)
   const prevAspectRatio = useRef(settings.aspectRatio);
+  const initialLoadDone = useRef(false);
   useEffect(() => {
     if (settings.aspectRatio !== prevAspectRatio.current) {
       prevAspectRatio.current = settings.aspectRatio;
+      if (!initialLoadDone.current) return;
       requestAnimationFrame(() => {
         previewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       });
     }
   }, [settings.aspectRatio]);
+
+  // Mark initial load as done after a short delay (after localStorage + import loads)
+  useEffect(() => {
+    const timer = setTimeout(() => { initialLoadDone.current = true; }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleExport = useCallback(async () => {
     if (!previewRef.current || cooldown > 0) return;

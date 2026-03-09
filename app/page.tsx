@@ -116,12 +116,21 @@ export default function Home() {
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>
           <VsFaq faqs={faqs} />
           <p className="text-sm text-muted-foreground mt-4 text-center">
-            Want to see how GROAR compares to other tools? Check out{" "}
+            See how GROAR compares:{" "}
             <Link href="/vs/canva" className="underline hover:text-foreground transition-colors">
-              GROAR vs Canva
-            </Link>{" "}and{" "}
+              vs Canva
+            </Link>{", "}
             <Link href="/vs/screenshots" className="underline hover:text-foreground transition-colors">
-              GROAR vs Screenshots
+              vs Screenshots
+            </Link>{", "}
+            <Link href="/vs/spreadsheets" className="underline hover:text-foreground transition-colors">
+              vs Spreadsheets
+            </Link>{", "}
+            <Link href="/vs/build-in-public" className="underline hover:text-foreground transition-colors">
+              Build in Public Tools
+            </Link>{", or "}
+            <Link href="/vs" className="underline hover:text-foreground transition-colors">
+              all comparisons
             </Link>.
           </p>
         </section>

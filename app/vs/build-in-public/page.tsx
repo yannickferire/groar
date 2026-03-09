@@ -5,19 +5,18 @@ import Footer from "@/components/layout/Footer";
 import VsCta from "@/components/VsCta";
 import VsFaq from "@/components/VsFaq";
 import Testimonials from "@/components/Testimonials";
-import VsBeforeAfter from "@/components/VsBeforeAfter";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 
 export const metadata: Metadata = {
-  title: "GROAR vs Spreadsheet Charts — Share Metrics Without Ugly Excel Exports",
+  title: "Best Build in Public Tools for Sharing Growth Metrics",
   description:
-    "Stop exporting ugly charts from Google Sheets or Excel. GROAR turns your metrics into clean, branded visuals designed for social media — in 10 seconds.",
-  alternates: { canonical: "/vs/spreadsheets" },
+    "Build in public? GROAR turns your growth metrics into eye-catching visuals for X and social media. Share milestones, MRR, followers, and more in 10 seconds.",
+  alternates: { canonical: "/vs/build-in-public" },
   openGraph: {
-    title: "GROAR vs Spreadsheet Charts — Share Metrics Without Ugly Excel Exports",
+    title: "Best Build in Public Tools for Sharing Growth Metrics",
     description:
-      "Stop exporting ugly charts from Google Sheets or Excel. GROAR turns your metrics into clean, branded visuals designed for social media — in 10 seconds.",
+      "Build in public? GROAR turns your growth metrics into eye-catching visuals for X and social media. Share milestones, MRR, followers, and more in 10 seconds.",
   },
 };
 
@@ -28,38 +27,38 @@ type Feature = {
 };
 
 const features: Feature[] = [
-  { name: "Designed for social media sharing", groar: true, competitor: false },
-  { name: "Auto-import metrics from accounts", groar: true, competitor: false },
+  { name: "Purpose-built for growth metrics", groar: true, competitor: false },
+  { name: "Auto-import from X, GitHub, Reddit", groar: true, competitor: false },
+  { name: "MRR & revenue from Stripe (via TrustMRR)", groar: true, competitor: false },
+  { name: "Ready-to-use milestone templates", groar: true, competitor: false },
+  { name: "Optimized for social media feeds", groar: true, competitor: false },
   { name: "Custom backgrounds & branding", groar: true, competitor: false },
-  { name: "Multiple social-optimized aspect ratios", groar: true, competitor: false },
+  { name: "Consistent visual identity", groar: true, competitor: false },
   { name: "Ready in 10 seconds", groar: true, competitor: false },
-  { name: "Data analysis & formulas", groar: false, competitor: true },
-  { name: "Complex charts & graphs", groar: false, competitor: true },
-  { name: "Team collaboration on data", groar: false, competitor: true },
   { name: "Free to start", groar: true, competitor: true },
-  { name: "Design skills needed", groar: "None", competitor: "Formatting effort" },
+  { name: "Design skills needed", groar: "None", competitor: "Canva/Figma/etc." },
 ];
 
 const faqs = [
   {
-    question: "Why not just export a chart from Google Sheets?",
-    answer: "Spreadsheet charts are designed for data analysis, not social media. They come with axis labels, gridlines, default colors, and no branding. They look functional, not shareable. GROAR creates visuals specifically designed to stop the scroll and get engagement.",
+    question: "What is build in public?",
+    answer: "Build in public is a movement where founders, indie hackers, and creators share their journey transparently: revenue, users, lessons, failures. It builds trust, attracts customers, and creates a community around your product.",
   },
   {
-    question: "Can I use my spreadsheet data in GROAR?",
-    answer: "GROAR auto-fills metrics from connected accounts (X, Stripe via TrustMRR). For other metrics, you enter values directly in the editor — it's faster than formatting a spreadsheet chart. Pick a template, type your numbers, export.",
+    question: "How does GROAR help with building in public?",
+    answer: "GROAR auto-imports your metrics from X, GitHub, Reddit, and Stripe, and gives you ready-to-use templates for milestone posts, metric updates, and progress shares. You create professional visuals in 10 seconds instead of spending time in design tools.",
   },
   {
-    question: "Is GROAR better than Excel for tracking metrics?",
-    answer: "No — they do different things. Spreadsheets are great for tracking and analyzing data over time. GROAR is for the moment you want to share those metrics publicly. Track in your spreadsheet, share with GROAR.",
+    question: "What metrics can I share with GROAR?",
+    answer: "Followers, posts, engagement (from X), stars, repos (from GitHub), karma, posts (from Reddit), MRR, revenue, customers (from Stripe via TrustMRR). Plus you can enter any custom metric manually.",
   },
   {
-    question: "Do I need design skills to make metrics look good?",
-    answer: "Not with GROAR. Every template is pre-designed and optimized for social sharing. Pick a background, enter your numbers, export. With spreadsheets, you'd need to customize colors, fonts, sizing, and export settings to get anything close to shareable.",
+    question: "Is GROAR free for build in public creators?",
+    answer: "Yes. The free plan includes full editor access, 3 exports per week, and 5 backgrounds. Pro starts at $5/month (or a one-time lifetime payment) for unlimited exports, all backgrounds, and no watermark.",
   },
   {
-    question: "Is GROAR free?",
-    answer: "Yes, GROAR has a free plan with full editor access, 3 exports per week, and 5 backgrounds. Pro starts at $5/month (or a one-time lifetime payment) for unlimited exports, all backgrounds, and no watermark.",
+    question: "Do I need design skills?",
+    answer: "No. Every template is pre-designed and optimized for social media. Pick a template, enter your numbers (or let them auto-fill), choose a background, export. If you can tweet, you can use GROAR.",
   },
 ];
 
@@ -81,7 +80,7 @@ const breadcrumbJsonLd = {
   "@type": "BreadcrumbList",
   itemListElement: [
     { "@type": "ListItem", position: 1, name: "Home", item: "https://groar.app" },
-    { "@type": "ListItem", position: 2, name: "GROAR vs Spreadsheets", item: "https://groar.app/vs/spreadsheets" },
+    { "@type": "ListItem", position: 2, name: "Build in Public Tools", item: "https://groar.app/vs/build-in-public" },
   ],
 };
 
@@ -96,7 +95,7 @@ function FeatureCell({ value }: { value: boolean | string }) {
   );
 }
 
-export default function VsSpreadsheetsPage() {
+export default function VsBuildInPublicPage() {
   return (
     <div className="flex flex-col min-h-screen px-4">
       <script
@@ -113,24 +112,20 @@ export default function VsSpreadsheetsPage() {
           {/* Hero */}
           <header className="text-center mb-12 md:mb-16">
             <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight leading-[1.3] md:leading-[1.15] mb-4 text-balance">
-              Stop sharing ugly spreadsheet charts
+              The build in public visual toolkit
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto text-balance">
-              Google Sheets and Excel charts are built for data analysis, not social media.
+              Building in public means sharing your journey. But screenshots of dashboards don&apos;t cut it anymore.
               <br /><br />
-              GROAR turns your metrics into clean, branded visuals that actually get engagement — in 10 seconds.
+              GROAR turns your metrics into shareable visuals that get engagement and grow your audience.
             </p>
           </header>
-
-          <VsBeforeAfter competitor="Spreadsheet chart" />
 
           {/* TL;DR */}
           <section className="rounded-2xl border-fade p-6 md:p-8 mb-12 md:mb-16">
             <h2 className="text-lg font-semibold mb-3">TL;DR</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Spreadsheets are great for tracking your data. But when it&apos;s time to share your metrics publicly, <strong className="text-foreground">a chart export from Sheets looks like a chart export from Sheets</strong>.
-              <br className="hidden sm:block" /><br className="hidden sm:block" />
-              <strong className="text-foreground">GROAR gives you designed, branded visuals</strong> — pick a template, enter your numbers, export. Your metrics deserve better than a default bar chart.
+              Building in public? You need to share milestones, revenue updates, and follower growth regularly. <strong className="text-foreground">GROAR auto-imports your metrics from X, GitHub, Reddit, and Stripe (via TrustMRR)</strong> and gives you ready-to-use templates — export in 10 seconds, zero design skills needed.
             </p>
           </section>
 
@@ -143,7 +138,7 @@ export default function VsSpreadsheetsPage() {
                   <tr className="border-b border-border bg-muted/30">
                     <th className="px-4 py-3 text-sm font-medium text-muted-foreground">Feature</th>
                     <th className="px-4 py-3 text-sm font-bold text-center w-28">GROAR</th>
-                    <th className="px-4 py-3 text-sm font-medium text-muted-foreground text-center w-32">Spreadsheets</th>
+                    <th className="px-4 py-3 text-sm font-medium text-muted-foreground text-center w-32">Manual sharing</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -169,50 +164,48 @@ export default function VsSpreadsheetsPage() {
 
           {/* Key differences */}
           <section className="mb-12 md:mb-16 space-y-8">
-            <h2 className="text-2xl font-bold">Why spreadsheet charts don&apos;t work on social media</h2>
+            <h2 className="text-2xl font-bold">Why builders choose GROAR</h2>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">They look like data, not content</h3>
+              <h3 className="text-lg font-semibold mb-2">Share milestones that stop the scroll</h3>
               <p className="text-muted-foreground leading-relaxed">
-                A Google Sheets chart has axis labels, gridlines, a legend, default colors, and a white background. It looks like something from a board meeting, not something that gets likes and retweets.
+                When you hit 1K followers, $1K MRR, or 100 GitHub stars, you want to celebrate. A plain text tweet gets lost. A branded visual with your metrics front and center gets 3-5x more engagement.
                 <br /><br />
-                GROAR visuals are designed for the feed — bold typography, curated backgrounds, clean layouts. Your metrics look like content worth engaging with.
+                GROAR templates are designed specifically for milestone posts.
               </p>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">No branding, no personality</h3>
+              <h3 className="text-lg font-semibold mb-2">Your metrics, auto-imported</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Spreadsheet exports have zero personality. They all look the same — generic chart, white background, Arial font. There&apos;s no way to add your logo, match your brand colors, or stand out.
+                Connect your X account and Stripe (via TrustMRR), and your followers, MRR, revenue, customers are automatically filled in. No screenshots, no manual typing, no spreadsheets.
                 <br /><br />
-                With GROAR, you choose your background, font, and can add your logo. Every post is recognizably yours.
+                Your data flows directly into designed templates.
               </p>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">Wrong aspect ratio, wrong format</h3>
+              <h3 className="text-lg font-semibold mb-2">Consistent brand, zero effort</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Spreadsheet chart exports come in whatever size the chart happens to be. They&apos;re not optimized for any social platform — they get cropped weirdly or displayed too small.
+                Build in public is a long game. When your posts have a consistent, recognizable visual style, people start associating your brand with growth.
                 <br /><br />
-                GROAR exports in social-optimized aspect ratios: 16:9 for posts, 1:1 for Instagram, 3:1 for banners. High-quality PNG at 3x resolution, auto-copied to clipboard.
+                GROAR ensures every metric post looks professional and on-brand, automatically.
               </p>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">Too much data, not enough story</h3>
+              <h3 className="text-lg font-semibold mb-2">10 seconds, not 10 minutes</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Charts show trends over time. But on social media, what performs is a clear, bold metric: &ldquo;$5K MRR&rdquo;, &ldquo;10,000 followers&rdquo;, &ldquo;+42% growth&rdquo;. That&apos;s what GROAR is built for — highlighting the numbers that matter, not drowning people in data.
+                No Canva. No Figma. No &ldquo;let me just quickly design something.&rdquo; Pick a template, choose a background, export. Your visual is ready before you finish writing the tweet.
               </p>
             </div>
           </section>
 
-          {/* When spreadsheets are fine */}
+          {/* When other tools are better */}
           <section className="mb-12 md:mb-16">
-            <h2 className="text-2xl font-bold mb-4">When spreadsheets are the right tool</h2>
+            <h2 className="text-2xl font-bold mb-4">When other tools are better</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Spreadsheets are unbeatable for tracking, analyzing, and visualizing data internally. Use Google Sheets or Excel for your KPI dashboards, revenue tracking, and data analysis.
-              <br /><br />
-              But when you want to share those metrics publicly — on X, LinkedIn, or with your community — switch to GROAR for a visual that matches the quality of your work.
+              If you need detailed infographics, presentations, or custom designs, tools like Canva or Figma are better suited. If you need chart APIs for automated reports, Image-Charts works. GROAR is specifically built for the moment you want to share your growth on social media and get engagement.
             </p>
           </section>
 

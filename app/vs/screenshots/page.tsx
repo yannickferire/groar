@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import VsCta from "@/components/VsCta";
 import VsFaq from "@/components/VsFaq";
+import Testimonials from "@/components/Testimonials";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle02Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 
@@ -239,6 +240,10 @@ export default function VsScreenshotsPage() {
               But when you&apos;re posting publicly — on X, LinkedIn, or your community — and you want people to notice, engage, and follow your journey, a designed visual wins every time.
             </p>
           </section>
+
+          <div className="mb-12 md:mb-16 -mx-4 md:mx-0">
+            <Testimonials />
+          </div>
 
           {/* FAQ */}
           <section className="mb-12 md:mb-16">

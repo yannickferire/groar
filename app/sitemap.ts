@@ -59,6 +59,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
+      url: `${siteUrl}/vs/build-in-public`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
       url: `${siteUrl}/public`,
       lastModified: new Date(),
       changeFrequency: "daily",
