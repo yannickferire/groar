@@ -138,13 +138,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          id="datafast-queue"
+          dangerouslySetInnerHTML={{
+            __html: `window.datafast=window.datafast||function(){window.datafast.q=window.datafast.q||[];window.datafast.q.push(arguments)};`,
+          }}
+        />
+      </head>
       <body
         className={`${bricolage.variable} ${dmMono.variable} ${inter.variable} ${playfair.variable} ${spaceGrotesk.variable} ${averiaSerifLibre.variable} ${dmSerifDisplay.variable} antialiased max-w-[100vw] overflow-x-hidden`}
       >
         {children}
         <Toaster />
         <Analytics />
-        <Script id="datafast-queue" strategy="beforeInteractive">{`window.datafast=window.datafast||function(){window.datafast.q=window.datafast.q||[];window.datafast.q.push(arguments)};`}</Script>
         <Script
           src="https://datafa.st/js/script.js"
           data-website-id="dfid_KCoXqvjnSG1gNXFzbmksp"
