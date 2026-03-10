@@ -302,8 +302,9 @@ export default function AnalyticsPage() {
   };
 
   useEffect(() => {
-    fetchAnalytics();
-    fetchTrustMRR();
+    // Always bypass cache on mount to pick up fresh data from other pages
+    fetchAnalytics(true);
+    fetchTrustMRR(true);
   }, []);
 
   if (isLoading) {

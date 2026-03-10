@@ -274,7 +274,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                           width: index === 0 ? primaryIcon : secondaryIcon,
                           height: index === 0 ? primaryIcon : secondaryIcon,
                         }}
-                        strokeWidth={index === 0 ? 3 : 2}
+                        strokeWidth={2}
                         color="currentColor"
                       />
                     )}

@@ -74,6 +74,11 @@ const GITHUB_METRICS: MetricType[] = ["githubStars", "githubCommits", "githubFor
 const REDDIT_METRICS: MetricType[] = ["redditKarma", "redditUpvotes", "redditUpvoteRatio"];
 const ALL_METRICS: MetricType[] = [...X_METRICS, ...SAAS_METRICS, ...GITHUB_METRICS, ...REDDIT_METRICS, "custom"];
 const MAX_METRICS = 5;
+const FRESH_FETCH_COOLDOWN = 15 * 60 * 1000; // 15 minutes
+let lastFreshFetchXTime = 0;
+let lastFreshFetchTrustmrrTime = 0;
+const AUTO_FILL_X: MetricType[] = ["followers", "followings", "posts"];
+const AUTO_FILL_SAAS: MetricType[] = ["mrr", "arr", "revenue"];
 
 type SortableMetricItemProps = {
   metric: Metric;
@@ -83,6 +88,7 @@ type SortableMetricItemProps = {
   canRemove: boolean;
   canDrag: boolean;
   autoFillValue?: number; // undefined = no auto-fill available
+  autoFillLoading?: boolean;
 };
 
 function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
@@ -141,7 +147,7 @@ function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
   );
 }
 
-const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, onCustomLabelChange, canRemove, canDrag, autoFillValue }: SortableMetricItemProps) {
+const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, onCustomLabelChange, canRemove, canDrag, autoFillValue, autoFillLoading }: SortableMetricItemProps) {
   const [inputValue, setInputValue] = useState(metric.prefix ? `${metric.prefix}${metric.value}` : metric.value.toString());
 
   // Sync local state when metric value changes (e.g., from localStorage)
@@ -229,7 +235,12 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
             maxLength={24}
           />
         ) : METRIC_LABELS[metric.type]}
-        {autoFillValue !== undefined && (() => {
+        {autoFillLoading ? (
+          <span className="flex items-center gap-1">
+            <HugeiconsIcon icon={Loading03Icon} size={10} strokeWidth={2} className="animate-spin text-muted-foreground/60" />
+            <span className="text-[10px] text-muted-foreground/60">loading</span>
+          </span>
+        ) : autoFillValue !== undefined && (() => {
           const isMatching = metric.value === autoFillValue;
           return isMatching ? (
             <span className="flex items-center gap-1">
@@ -280,6 +291,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   const [brandingLogos, setBrandingLogos] = useState<BrandingLogo[]>([]);
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [trustmrrLatest, setTrustmrrLatest] = useState<{ mrrCents: number; revenueTotalCents: number } | null>(null);
+  const [loadingX, setLoadingX] = useState(false);
+  const [loadingTrustmrr, setLoadingTrustmrr] = useState(false);
   const [handleMode, setHandleMode] = useState<"custom" | string>("custom"); // "custom" or account username
   const handleTouchedRef = useRef(settings.handle !== ""); // track if user has interacted with handle
   const settingsRef = useRef(settings);
@@ -318,10 +331,17 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   }, [isPremium]);
 
   // Fetch connected X accounts and analytics
-  useEffect(() => {
+  const fetchXAnalytics = useCallback((triggerFresh = false) => {
     if (!isPremium) return;
-    fetch("/api/analytics?days=1")
-      .then((res) => res.ok ? res.json() : null)
+    const now = Date.now();
+    const shouldFresh = triggerFresh && now - lastFreshFetchXTime > FRESH_FETCH_COOLDOWN;
+    if (shouldFresh) lastFreshFetchXTime = now;
+    if (shouldFresh) setLoadingX(true);
+    const load = () => fetch("/api/analytics?days=1").then((res) => res.ok ? res.json() : null);
+    (shouldFresh
+      ? fetch("/api/analytics/fetch", { method: "POST" }).then(load)
+      : load()
+    )
       .then((data) => {
         if (!data) return;
         if (data.accounts && data.accounts.length > 0) {
@@ -343,36 +363,45 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           const selected = match || accounts[0];
           if (selected?.username) {
             setHandleMode(selected.username);
-            // Auto-populate handle and metrics if not already matching
-            if (!match) {
-              const newHandle = `@${selected.username}`;
-              if (selected.latest) {
-                const metricMap: Partial<Record<string, number>> = {
-                  followers: selected.latest.followersCount,
-                  followings: selected.latest.followingCount,
-                  posts: selected.latest.tweetCount,
-                };
-                const updatedMetrics = current.metrics.map(m => {
-                  const autoValue = metricMap[m.type];
-                  return autoValue !== undefined ? { ...m, value: autoValue } : m;
-                });
-                onSettingsChange({ ...current, handle: newHandle, metrics: updatedMetrics });
-              } else {
-                onSettingsChange({ ...current, handle: newHandle });
-              }
+            if (selected.latest) {
+              const metricMap: Partial<Record<string, number>> = {
+                followers: selected.latest.followersCount,
+                followings: selected.latest.followingCount,
+                posts: selected.latest.tweetCount,
+              };
+              const updatedMetrics = current.metrics.map(m => {
+                const autoValue = metricMap[m.type];
+                return autoValue !== undefined ? { ...m, value: autoValue } : m;
+              });
+              const newHandle = match ? current.handle : `@${selected.username}`;
+              onSettingsChange({ ...current, handle: newHandle, metrics: updatedMetrics });
+            } else if (!match) {
+              onSettingsChange({ ...current, handle: `@${selected.username}` });
             }
           }
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingX(false));
+  }, [isPremium, onSettingsChange]);
+
+  useEffect(() => {
+    fetchXAnalytics();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
 
   // Fetch TrustMRR data for SaaS metric auto-fill
-  useEffect(() => {
+  const fetchTrustMRR = useCallback((triggerFresh = false) => {
     if (!isPremium) return;
-    fetch("/api/analytics/trustmrr")
-      .then((res) => res.ok ? res.json() : null)
+    const now = Date.now();
+    const shouldFresh = triggerFresh && now - lastFreshFetchTrustmrrTime > FRESH_FETCH_COOLDOWN;
+    if (shouldFresh) lastFreshFetchTrustmrrTime = now;
+    if (shouldFresh) setLoadingTrustmrr(true);
+    const load = () => fetch("/api/analytics/trustmrr").then((res) => res.ok ? res.json() : null);
+    (shouldFresh
+      ? fetch("/api/analytics/trustmrr/fetch", { method: "POST" }).then(load)
+      : load()
+    )
       .then((data) => {
         if (data?.hasData && data.latest) {
           const latest = {
@@ -398,7 +427,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           }
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoadingTrustmrr(false));
+  }, [isPremium, onSettingsChange]);
+
+  useEffect(() => {
+    fetchTrustMRR();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
 
@@ -519,7 +553,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     const metricMap = buildMetricMap(selectedAccount);
     const newMetric: Metric = { type, value: metricMap[type] ?? 0 };
     updateSetting("metrics", [...settings.metrics, newMetric]);
-  }, [updateSetting, settings.metrics, connectedAccounts, handleMode, buildMetricMap]);
+    // Trigger a fresh data fetch when adding a metric that supports auto-fill
+    if (AUTO_FILL_X.includes(type)) fetchXAnalytics(true);
+    if (AUTO_FILL_SAAS.includes(type)) fetchTrustMRR(true);
+  }, [updateSetting, settings.metrics, connectedAccounts, handleMode, buildMetricMap, fetchXAnalytics, fetchTrustMRR]);
 
   const removeMetric = useCallback((type: MetricType) => {
     updateSetting("metrics", settings.metrics.filter(m => m.type !== type));
@@ -964,6 +1001,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                     canRemove={settings.metrics.length > 1}
                     canDrag={settings.metrics.length > 1}
                     autoFillValue={autoFillMap[metric.type]}
+                    autoFillLoading={
+                      (AUTO_FILL_X.includes(metric.type) && loadingX) ||
+                      (AUTO_FILL_SAAS.includes(metric.type) && loadingTrustmrr)
+                    }
                   />
                 ))}
               </SortableContext>
