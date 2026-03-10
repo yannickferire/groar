@@ -1,5 +1,5 @@
 import { MetricType } from "@/components/Editor";
-import { UserLove01Icon, CheckmarkBadge02Icon, UserAdd01Icon, UserAdd02Icon, News01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon, DollarCircleIcon, DollarReceive01Icon, ChartLineData01Icon, ChartIncreaseIcon, SaleTag01Icon, ChartDecreaseIcon, MoneyBag01Icon, UserGroupIcon, DashboardSpeed01Icon, StarIcon, GitCommitIcon, GitForkIcon, UserMultipleIcon, GitPullRequestClosedIcon, CheckmarkCircle01Icon, UploadSquare01Icon, ThumbsUpIcon, ThumbsUpDownIcon, AccountSetting03Icon, Globe02Icon } from "@hugeicons/core-free-icons";
+import { UserLove01Icon, CheckmarkBadge02Icon, UserAdd01Icon, UserAdd02Icon, News01Icon, EyeIcon, Comment01Icon, Activity01Icon, Tap01Icon, UserCircleIcon, FavouriteIcon, RepeatIcon, Bookmark01Icon, DollarCircleIcon, DollarReceive01Icon, ChartLineData01Icon, ChartIncreaseIcon, SaleTag01Icon, ChartDecreaseIcon, MoneyBag01Icon, UserGroupIcon, DashboardSpeed01Icon, StarIcon, GitCommitIcon, GitForkIcon, UserMultipleIcon, GitPullRequestClosedIcon, CheckmarkCircle01Icon, UploadSquare01Icon, ThumbsUpIcon, ThumbsUpDownIcon, AccountSetting03Icon, Globe02Icon, Tag01Icon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 
 export const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
@@ -36,4 +36,5 @@ export const METRIC_ICONS: Record<MetricType, IconSvgElement> = {
   redditKarma: UploadSquare01Icon,
   redditUpvotes: ThumbsUpIcon,
   redditUpvoteRatio: ThumbsUpDownIcon,
+  custom: Tag01Icon,
 };

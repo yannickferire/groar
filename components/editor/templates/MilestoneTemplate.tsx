@@ -83,7 +83,7 @@ export default function MilestoneTemplate({ settings }: MilestoneTemplateProps) 
   // Use the first metric (usually followers) for the milestone
   const primaryMetric = settings.metrics[0];
   const value = primaryMetric?.value || 0;
-  const metricLabel = METRIC_LABELS[primaryMetric?.type || "followers"];
+  const metricLabel = primaryMetric?.type === "custom" && primaryMetric.customLabel ? primaryMetric.customLabel : METRIC_LABELS[primaryMetric?.type || "followers"];
 
   const step = getStepSize(value);
   const previousMilestone = value - step;
@@ -135,12 +135,14 @@ export default function MilestoneTemplate({ settings }: MilestoneTemplateProps) 
           className="font-semibold opacity-80 flex items-center"
           style={{ fontSize: isBanner ? "2.8cqi" : "3.6cqi", marginTop: isBanner ? "0.4cqi" : "0.5cqi", marginBottom: isBanner ? "0.75cqi" : "1cqi", gap: isBanner ? "0.75cqi" : "1cqi" }}
         >
-          <HugeiconsIcon
-            icon={METRIC_ICONS[primaryMetric?.type || "followers"]}
-            style={{ width: isBanner ? "2.8cqi" : "3.6cqi", height: isBanner ? "2.8cqi" : "3.6cqi" }}
-            strokeWidth={2}
-            color="currentColor"
-          />
+          {primaryMetric?.type !== "custom" && (
+            <HugeiconsIcon
+              icon={METRIC_ICONS[primaryMetric?.type || "followers"]}
+              style={{ width: isBanner ? "2.8cqi" : "3.6cqi", height: isBanner ? "2.8cqi" : "3.6cqi" }}
+              strokeWidth={2}
+              color="currentColor"
+            />
+          )}
           {metricLabel}
         </p>
       </div>

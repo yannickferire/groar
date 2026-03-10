@@ -597,7 +597,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     let metricLine = "";
 
     if (mainMetric) {
-      const metricLabel = METRIC_LABELS[mainMetric.type].toLowerCase();
+      const metricLabel = (mainMetric.type === "custom" && mainMetric.customLabel ? mainMetric.customLabel : METRIC_LABELS[mainMetric.type]).toLowerCase();
       const value = mainMetric.value ?? 0;
 
       if (template === "milestone") {

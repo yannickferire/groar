@@ -72,13 +72,14 @@ const X_METRICS: MetricType[] = [...X_METRICS_PRIMARY, ...X_METRICS_MORE];
 const SAAS_METRICS: MetricType[] = ["mrr", "arr", "valuation", "revenue", "churnRate", "ltv", "visitors", "newCustomers", "totalCustomers", "sales", "domainRating"];
 const GITHUB_METRICS: MetricType[] = ["githubStars", "githubCommits", "githubForks", "githubContributors", "githubPRsClosed", "githubIssuesResolved"];
 const REDDIT_METRICS: MetricType[] = ["redditKarma", "redditUpvotes", "redditUpvoteRatio"];
-const ALL_METRICS: MetricType[] = [...X_METRICS, ...SAAS_METRICS, ...GITHUB_METRICS, ...REDDIT_METRICS];
+const ALL_METRICS: MetricType[] = [...X_METRICS, ...SAAS_METRICS, ...GITHUB_METRICS, ...REDDIT_METRICS, "custom"];
 const MAX_METRICS = 5;
 
 type SortableMetricItemProps = {
   metric: Metric;
   onValueChange: (type: MetricType, value: number, prefix?: string) => void;
   onRemove: (type: MetricType) => void;
+  onCustomLabelChange?: (label: string) => void;
   canRemove: boolean;
   canDrag: boolean;
   autoFillValue?: number; // undefined = no auto-fill available
@@ -140,7 +141,7 @@ function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
   );
 }
 
-const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, canRemove, canDrag, autoFillValue }: SortableMetricItemProps) {
+const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, onCustomLabelChange, canRemove, canDrag, autoFillValue }: SortableMetricItemProps) {
   const [inputValue, setInputValue] = useState(metric.prefix ? `${metric.prefix}${metric.value}` : metric.value.toString());
 
   // Sync local state when metric value changes (e.g., from localStorage)
@@ -218,7 +219,16 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
         aria-label={`${METRIC_LABELS[metric.type]} value`}
       />
       <span className="text-sm text-muted-foreground whitespace-nowrap flex-1 flex items-center gap-1.5" aria-hidden="true">
-        {METRIC_LABELS[metric.type]}
+        {metric.type === "custom" ? (
+          <input
+            type="text"
+            value={metric.customLabel || ""}
+            onChange={(e) => onCustomLabelChange?.(e.target.value)}
+            placeholder="Label"
+            className="bg-transparent border-b border-dashed border-muted-foreground/40 focus:border-foreground outline-none w-full text-sm text-muted-foreground"
+            maxLength={24}
+          />
+        ) : METRIC_LABELS[metric.type]}
         {autoFillValue !== undefined && (() => {
           const isMatching = metric.value === autoFillValue;
           return isMatching ? (
@@ -946,6 +956,11 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                     metric={metric}
                     onValueChange={updateMetricValue}
                     onRemove={removeMetric}
+                    onCustomLabelChange={metric.type === "custom" ? (label) => {
+                      updateSetting("metrics", settings.metrics.map(m =>
+                        m.type === "custom" ? { ...m, customLabel: label } : m
+                      ));
+                    } : undefined}
                     canRemove={settings.metrics.length > 1}
                     canDrag={settings.metrics.length > 1}
                     autoFillValue={autoFillMap[metric.type]}
@@ -987,6 +1002,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                             ))}
                           </div>
                         ))}
+                        {availableMetrics.includes("custom") && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => addMetric("custom")}>
+                              Custom
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </>
                     ) : (
                       <>
@@ -1050,6 +1073,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
                         )}
+                        {availableMetrics.includes("custom") && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => addMetric("custom")}>
+                              Custom
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </>
                     )}
                   </DropdownMenuContent>
@@ -1110,6 +1141,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                           </div>
                         ));
                       })()}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => {
+                        updateSetting("metrics", [{ type: "custom" as MetricType, value: settings.metrics[0]?.value ?? 0 }]);
+                      }}>
+                        Custom
+                      </DropdownMenuItem>
                     </>
                   ) : (
                     <>
@@ -1198,11 +1235,30 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                           })}
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => {
+                        updateSetting("metrics", [{ type: "custom" as MetricType, value: settings.metrics[0]?.value ?? 0 }]);
+                      }}>
+                        Custom
+                      </DropdownMenuItem>
                     </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            {settings.metrics[0]?.type === "custom" && (
+              <Input
+                type="text"
+                placeholder="Label (e.g. Products)"
+                value={settings.metrics[0]?.customLabel || ""}
+                onChange={(e) => {
+                  updateSetting("metrics", [{ ...settings.metrics[0], customLabel: e.target.value }]);
+                }}
+                className="bg-white"
+                maxLength={24}
+                aria-label="Custom metric label"
+              />
+            )}
           </div>
         )}
 

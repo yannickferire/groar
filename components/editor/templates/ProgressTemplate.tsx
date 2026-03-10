@@ -74,7 +74,7 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
         className="uppercase tracking-widest opacity-60"
         style={{ fontSize: isBanner ? "1.6cqi" : "2cqi" }}
       >
-        Goal: {formatMetricValue(primaryMetric?.type || "followers", goal, settings.abbreviateNumbers !== false)} {METRIC_LABELS[primaryMetric?.type || "followers"]}
+        Goal: {formatMetricValue(primaryMetric?.type || "followers", goal, settings.abbreviateNumbers !== false)} {primaryMetric?.type === "custom" && primaryMetric.customLabel ? primaryMetric.customLabel : METRIC_LABELS[primaryMetric?.type || "followers"]}
       </p>
 
       {/* Current value - big */}
@@ -82,12 +82,14 @@ export default function ProgressTemplate({ settings }: ProgressTemplateProps) {
         className="font-bold tracking-tight flex items-center"
         style={{ fontSize: isBanner ? "9cqi" : "12cqi", gap: isBanner ? "1.5cqi" : "2cqi" }}
       >
-        <HugeiconsIcon
-          icon={METRIC_ICONS[primaryMetric?.type || "followers"]}
-          style={{ width: isBanner ? "7.5cqi" : "10cqi", height: isBanner ? "7.5cqi" : "10cqi" }}
-          strokeWidth={1.5}
-          color="currentColor"
-        />
+        {primaryMetric?.type !== "custom" && (
+          <HugeiconsIcon
+            icon={METRIC_ICONS[primaryMetric?.type || "followers"]}
+            style={{ width: isBanner ? "7.5cqi" : "10cqi", height: isBanner ? "7.5cqi" : "10cqi" }}
+            strokeWidth={1.5}
+            color="currentColor"
+          />
+        )}
         {formatMetricValue(primaryMetric?.type || "followers", currentValue, settings.abbreviateNumbers !== false)}
       </p>
 

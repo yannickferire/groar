@@ -267,16 +267,18 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                       marginTop: index > 0 ? (isBanner ? "-0.3cqi" : "-0.5cqi") : undefined,
                     }}
                   >
-                    <HugeiconsIcon
-                      icon={METRIC_ICONS[metric.type]}
-                      style={{
-                        width: index === 0 ? primaryIcon : secondaryIcon,
-                        height: index === 0 ? primaryIcon : secondaryIcon,
-                      }}
-                      strokeWidth={index === 0 ? 3 : 2}
-                      color="currentColor"
-                    />
-                    {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {METRIC_LABELS[metric.type]}
+                    {metric.type !== "custom" && (
+                      <HugeiconsIcon
+                        icon={METRIC_ICONS[metric.type]}
+                        style={{
+                          width: index === 0 ? primaryIcon : secondaryIcon,
+                          height: index === 0 ? primaryIcon : secondaryIcon,
+                        }}
+                        strokeWidth={index === 0 ? 3 : 2}
+                        color="currentColor"
+                      />
+                    )}
+                    {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
                   </p>
                 );
               })}

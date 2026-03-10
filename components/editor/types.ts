@@ -1,11 +1,12 @@
 export type PeriodType = "day" | "week" | "month" | "year";
 
-export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "valuation" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "visitors" | "redditUpvoteRatio";
+export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "valuation" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "visitors" | "redditUpvoteRatio" | "custom";
 
 export type Metric = {
   type: MetricType;
   value: number;
   prefix?: string;
+  customLabel?: string;
 };
 
 export const METRIC_LABELS: Record<MetricType, string> = {
@@ -42,6 +43,7 @@ export const METRIC_LABELS: Record<MetricType, string> = {
   redditKarma: "Karma",
   redditUpvotes: "Upvotes",
   redditUpvoteRatio: "Upvote Ratio",
+  custom: "Custom",
 };
 
 export type BackgroundPreset = {
