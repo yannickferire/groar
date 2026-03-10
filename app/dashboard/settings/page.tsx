@@ -134,7 +134,12 @@ function SettingsContent() {
 
         {/* Avatar */}
         <div className="flex items-center gap-4">
-          <div className="relative group">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingImage}
+            className="relative group cursor-pointer"
+          >
             {avatarUrl ? (
               <Image
                 src={avatarUrl}
@@ -149,18 +154,13 @@ function SettingsContent() {
                 <HugeiconsIcon icon={UserCircleIcon} size={32} strokeWidth={1.5} className="text-muted-foreground" />
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingImage}
-              className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-            >
+            <span className="absolute -top-0.5 -right-0.5 w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center shadow-sm opacity-70 group-hover:opacity-100 transition-opacity">
               {uploadingImage ? (
-                <HugeiconsIcon icon={Loading03Icon} size={20} strokeWidth={2} className="text-white animate-spin" />
+                <HugeiconsIcon icon={Loading03Icon} size={12} strokeWidth={2} className="animate-spin" />
               ) : (
-                <HugeiconsIcon icon={PencilEdit01Icon} size={20} strokeWidth={2} className="text-white" />
+                <HugeiconsIcon icon={PencilEdit01Icon} size={12} strokeWidth={2} />
               )}
-            </button>
+            </span>
             <input
               ref={fileInputRef}
               type="file"
@@ -168,7 +168,7 @@ function SettingsContent() {
               onChange={handleImageUpload}
               className="hidden"
             />
-          </div>
+          </button>
           <div className="flex-1">
             <p className="text-xs text-muted-foreground mb-1">Display name</p>
             {editingName ? (
@@ -201,7 +201,7 @@ function SettingsContent() {
                 className="flex items-center gap-1.5 group/name cursor-pointer"
               >
                 <p className="font-medium">{session?.user?.name || "—"}</p>
-                <HugeiconsIcon icon={PencilEdit01Icon} size={14} strokeWidth={2} className="text-muted-foreground opacity-0 group-hover/name:opacity-100 transition-opacity" />
+                <HugeiconsIcon icon={PencilEdit01Icon} size={14} strokeWidth={2} className="text-muted-foreground opacity-50 group-hover/name:opacity-100 transition-opacity" />
               </button>
             )}
           </div>
