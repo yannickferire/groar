@@ -1,12 +1,16 @@
-"use client";
-
 import Image from "next/image";
 import { FadeInView } from "@/components/ui/motion";
 
 const templates = [
-  { src: "/proof-backgrounds/metrics.jpg", alt: "Metrics template — monthly growth recap", rotate: "-14deg", x: "-35%", y: "50px", width: "80%", delay: 0.4 },
-  { src: "/proof-backgrounds/milestone.jpg", alt: "Milestone template — 2,000 followers celebration", rotate: "-2deg", x: "0%", y: "-65px", width: "92%", delay: 0.6 },
-  { src: "/proof-backgrounds/progress.jpg", alt: "Progress template — 1M impressions goal tracker", rotate: "12deg", x: "35%", y: "80px", width: "75%", delay: 0.9 },
+  { src: "/proof-backgrounds/metrics.jpg", alt: "Metrics template — monthly growth recap" },
+  { src: "/proof-backgrounds/milestone.jpg", alt: "Milestone template — 2,000 followers celebration" },
+  { src: "/proof-backgrounds/progress.jpg", alt: "Progress template — 1M impressions goal tracker" },
+];
+
+const positions = [
+  { rotate: "-14deg", x: "-35%", y: "50px", width: "80%", delay: 0.4 },
+  { rotate: "-2deg", x: "0%", y: "-65px", width: "92%", delay: 0.6 },
+  { rotate: "12deg", x: "35%", y: "80px", width: "75%", delay: 0.9 },
 ];
 
 export default function ProofSection() {
@@ -66,10 +70,10 @@ export default function ProofSection() {
 
         {/* Stacked templates with rotation */}
         <div className="w-full max-w-sm mx-auto md:max-w-none md:mx-0 md:flex-1 relative h-64 md:h-100">
-          {templates.map((template, index) => (
+          {templates.map((img, index) => (
             <FadeInView
               key={index}
-              delay={template.delay}
+              delay={positions[index].delay}
               direction="up"
               className="absolute inset-0 flex items-center justify-center"
               style={{
@@ -79,13 +83,13 @@ export default function ProofSection() {
               <div
                 className="rounded-2xl overflow-hidden shadow-xl border border-white/10"
                 style={{
-                  width: template.width,
-                  transform: `rotate(${template.rotate}) translateX(${template.x}) translateY(${template.y})`,
+                  width: positions[index].width,
+                  transform: `rotate(${positions[index].rotate}) translateX(${positions[index].x}) translateY(${positions[index].y})`,
                 }}
               >
                 <Image
-                  src={template.src}
-                  alt={template.alt}
+                  src={img.src}
+                  alt={img.alt}
                   width={1200}
                   height={675}
                   sizes="(max-width: 768px) 80vw, 30vw"

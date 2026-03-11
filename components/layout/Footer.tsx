@@ -93,6 +93,9 @@ export default function Footer() {
             <a href="https://rankinpublic.xyz/products/groar.app" target="_blank" rel="noopener noreferrer">
               <img src="https://rankinpublic.xyz/api/badges/badge2.png?site=groar.app" alt="Featured on RankInPublic" width="250" height="80" className="h-12 w-auto" />
             </a>
+            <a href="https://everfeatured.com/products/groar-1773139535336" target="_blank" rel="noopener noreferrer">
+              <img src="https://everfeatured.com/badge/groar-1773139535336?theme=light" alt="Featured on EverFeatured" width="380" height="72" className="h-12 w-auto" />
+            </a>
             <a href="https://launch.cab/product/groar" target="_blank" rel="noopener noreferrer">
               <img src="https://launch.cab/api/badges/img/218fb417-54b1-4dab-a291-fa86e793bb74.svg?t=218fb417-54b1-4dab-a291-fa86e793bb74.1772116152241.d4789835032b82a6.96cc9b948c18afbe&tagline=TOP+%23%7Brank%7D&logoPosition=left" alt="Featured on launch.cab" />
             </a>

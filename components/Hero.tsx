@@ -86,7 +86,7 @@ export default function Hero() {
               }}
             >
               <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-              Start for free
+              Create your first visual
             </Button>
           )}
         </div>

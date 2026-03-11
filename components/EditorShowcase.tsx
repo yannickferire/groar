@@ -291,7 +291,7 @@ export default function EditorShowcase() {
               <Tilt3D className="relative rounded-lg overflow-hidden pointer-events-auto shadow-[0_8px_40px_rgba(0,0,0,0.25)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)]" maxTilt={6} scale={1.01} glare>
                 <AnimatePresence initial={false}>
                   <motion.div
-                    key={current.name}
+                    key={current.image}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0, position: "absolute", inset: 0 }}
@@ -303,7 +303,7 @@ export default function EditorShowcase() {
                       width={1016}
                       height={605}
                       sizes="500px"
-                      className="w-full h-auto"
+                                            className="w-full h-auto"
                     />
                     </motion.div>
                   </AnimatePresence>
