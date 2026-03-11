@@ -58,11 +58,11 @@ export default function TemplatesShowcase() {
         {templates.map((template) => (
           <StaggerItem
             key={template.name}
-            className="group relative rounded-3xl border-fade overflow-hidden"
+            className="group relative rounded-3xl border-fade shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
           >
             {/* Image */}
             {template.image ? (
-              <div className="relative aspect-[16/9] overflow-hidden">
+              <div className="relative aspect-[16/9] overflow-hidden rounded-t-3xl">
                 <Image
                   src={template.image}
                   alt={template.alt}
