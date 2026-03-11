@@ -5,6 +5,49 @@ import { getPostHogClient } from "@/lib/posthog-server";
 import { pool } from "@/lib/db";
 import { sendEmail, subscriptionConfirmedEmail } from "@/lib/email";
 
+// Report payment to DataFast for revenue attribution
+async function reportToDataFast({
+  amount,
+  currency,
+  transactionId,
+  datafastVisitorId,
+  email,
+  customerId,
+  renewal,
+}: {
+  amount: number;
+  currency: string;
+  transactionId: string;
+  datafastVisitorId?: string;
+  email?: string;
+  customerId?: string;
+  renewal?: boolean;
+}) {
+  const apiKey = process.env.DATAFAST_API_KEY;
+  if (!apiKey) return;
+
+  try {
+    await fetch("https://datafa.st/api/v1/payments", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount,
+        currency,
+        transaction_id: transactionId,
+        ...(datafastVisitorId && { datafast_visitor_id: datafastVisitorId }),
+        ...(email && { email }),
+        ...(customerId && { customer_id: customerId }),
+        ...(renewal && { renewal: true }),
+      }),
+    });
+  } catch (err) {
+    console.error("DataFast payment report failed:", err);
+  }
+}
+
 // Map Creem product IDs to plan keys
 function getPlanFromProductId(productId: string): "pro" | null {
   if (
@@ -89,6 +132,19 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // DataFast revenue attribution
+        if (amountCents > 0) {
+          const orderCurrency = ((order?.currency ?? "USD") as string).toUpperCase();
+          reportToDataFast({
+            amount: amountCents / 100,
+            currency: orderCurrency,
+            transactionId: externalId,
+            datafastVisitorId: metadata.datafast_visitor_id,
+            email: customerEmail,
+            customerId,
+          });
+        }
+
         // PostHog
         const posthog = getPostHogClient();
         posthog.capture({
@@ -145,6 +201,20 @@ export async function POST(request: NextRequest) {
             : undefined,
         });
         console.log(`Creem subscription.paid: updated plan ${plan} for user ${userId}`);
+
+        // DataFast renewal attribution
+        const paidAmountCents = (data.amount ?? 0) as number;
+        if (paidAmountCents > 0) {
+          const paidCurrency = ((data.currency ?? "USD") as string).toUpperCase();
+          reportToDataFast({
+            amount: paidAmountCents / 100,
+            currency: paidCurrency,
+            transactionId: data.id as string,
+            email: customerEmail,
+            customerId: (customer?.id ?? "") as string,
+            renewal: true,
+          });
+        }
 
         if (isNewActivation) {
           const posthog = getPostHogClient();
