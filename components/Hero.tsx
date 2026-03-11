@@ -27,7 +27,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto">
+    <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto px-4">
       <FadeIn delay={0.25} duration={0.6}>
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight leading-[1.3] md:leading-[1.15]">
           Turn your{" "}
@@ -73,40 +73,21 @@ export default function Hero() {
               </Link>
             </Button>
           ) : (
-            <>
-              {/* Mobile: Start for free (same as header CTA) */}
-              <Button
-                variant="default"
-                size="lg"
-                className="md:hidden"
-                data-fast-goal="hero_cta_clicked"
-                data-fast-goal-type="mobile"
-                onClick={() => {
-                  localStorage.setItem("groar-trial-intent", "true");
-                  router.push("/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart");
-                }}
-              >
-                <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                Start for free
-              </Button>
-              {/* Desktop: scroll to editor */}
-              <Button
-                variant="default"
-                size="lg"
-                className="hidden md:inline-flex"
-                data-fast-goal="hero_cta_clicked"
-                data-fast-goal-type="desktop"
-                onClick={() => {
-                  import("posthog-js").then(({ default: posthog }) => {
-                    posthog.capture("hero_cta_clicked");
-                  }).catch(() => {});
-                  document.getElementById("editor")?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                Create your first visual
-              </Button>
-            </>
+            <Button
+              variant="default"
+              size="lg"
+              data-fast-goal="hero_cta_clicked"
+              onClick={() => {
+                import("posthog-js").then(({ default: posthog }) => {
+                  posthog.capture("hero_cta_clicked");
+                }).catch(() => {});
+                localStorage.setItem("groar-trial-intent", "true");
+                router.push("/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart");
+              }}
+            >
+              <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
+              Start for free
+            </Button>
           )}
         </div>
       </FadeIn>

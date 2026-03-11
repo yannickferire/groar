@@ -53,14 +53,12 @@ export default function TrialSignupModal({
   const handleTwitter = () => {
     setLoading("twitter");
     window?.datafast?.("click_start_free_trial", { provider: "twitter" });
-    try { localStorage.setItem("groar-pending-export", "true"); } catch {}
     authClient.signIn.social({ provider: "twitter", callbackURL });
   };
 
   const handleGoogle = () => {
     setLoading("google");
     window?.datafast?.("click_start_free_trial", { provider: "google" });
-    try { localStorage.setItem("groar-pending-export", "true"); } catch {}
     authClient.signIn.social({ provider: "google", callbackURL });
   };
 

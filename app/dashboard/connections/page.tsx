@@ -142,7 +142,7 @@ function ConnectionsContent() {
             Only the king of the jungle can access this.
           </p>
           <Button asChild size="lg">
-            <Link href="/pricing">Upgrade to Pro</Link>
+            <Link href="/dashboard/plan#plans">Upgrade to Pro</Link>
           </Button>
         </div>
       </div>
@@ -270,7 +270,7 @@ function ConnectionsContent() {
                 </Button>
               ) : (
                 <Link
-                  href="/pricing"
+                  href="/dashboard/plan#plans"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
                   Upgrade your plan to connect more accounts

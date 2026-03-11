@@ -1,13 +1,15 @@
-import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/Hero";
 
-import Editor from "@/components/Editor";
+import EditorShowcase from "@/components/EditorShowcase";
+import MetricsUniverse from "@/components/MetricsUniverse";
+import WhoItsFor from "@/components/WhoItsFor";
 import HowItWorks from "@/components/HowItWorks";
 import ProofSection from "@/components/ProofSection";
+import MadeBy from "@/components/MadeBy";
 import DataFastFunnel from "@/components/DataFastFunnel";
 import { faqs } from "@/lib/faqs";
 
@@ -94,7 +96,7 @@ const jsonLd = {
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen px-4">
+    <div className="flex flex-col min-h-screen">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -105,16 +107,20 @@ export default function Home() {
       />
       <Header />
       <DataFastFunnel />
-      <main className="flex-1 flex flex-col gap-10 md:gap-24 mt-6 md:mt-16 overflow-x-hidden">
+      <main className="flex-1 flex flex-col gap-10 md:gap-16 mt-6 md:mt-10 overflow-x-hidden">
         <Hero />
-        <Suspense fallback={null}>
-          <Editor />
-        </Suspense>
+        <EditorShowcase />
+        <div className="relative z-50 flex flex-col">
+        <div className="hidden [@media(min-width:1024px)_and_(min-height:600px)]:block h-72 bg-gradient-to-b from-transparent via-background/50 to-background [mask-image:radial-gradient(ellipse_90%_100%_at_50%_100%,black_50%,transparent_100%)]" />
+        <div className="bg-background flex flex-col gap-10 md:gap-24 pt-8 md:pt-20">
+        <MetricsUniverse />
         <ProofSection />
         <HowItWorks />
+        <WhoItsFor />
+        <MadeBy />
         <Testimonials />
         <Pricing />
-        <section className="max-w-3xl mx-auto w-full mt-4">
+        <section className="max-w-3xl mx-auto w-full mt-4 px-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>
           <VsFaq faqs={faqs} />
           <p className="text-sm text-muted-foreground mt-4 text-center">
@@ -136,8 +142,10 @@ export default function Home() {
             </Link>.
           </p>
         </section>
+        <Footer />
+        </div>
+        </div>
       </main>
-      <Footer />
     </div>
   );
 }

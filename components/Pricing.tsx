@@ -9,6 +9,7 @@ import { authClient } from "@/lib/auth-client";
 export default function Pricing() {
   const { data: session } = authClient.useSession();
   const [userPlan, setUserPlan] = useState<PlanType | null>(null);
+  const [userBillingPeriod, setUserBillingPeriod] = useState<BillingPeriod | null>(null);
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
   const [lifetimeTierInfo, setLifetimeTierInfo] = useState<LifetimeTierInfo | null>(null);
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
@@ -32,7 +33,8 @@ export default function Pricing() {
       .then((data) => {
         if (cancelled) return;
         setUserPlan(data.plan || "free");
-        if (data.trialEnd) setHasUsedTrial(true);
+        if (data.billingPeriod) setUserBillingPeriod(data.billingPeriod);
+        if (data.hasUsedTrial) setHasUsedTrial(true);
         setTrialChecked(true);
       })
       .catch(() => { if (!cancelled) { setUserPlan("free"); setTrialChecked(true); } });
@@ -41,13 +43,14 @@ export default function Pricing() {
   }, [session]);
 
   const canTrial = trialChecked && !hasUsedTrial;
+  const isUserLifetime = userPlan === "pro" && userBillingPeriod === "lifetime";
 
   const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") {
-      const editor = document.getElementById("editor");
-      if (editor) {
-        const y = editor.getBoundingClientRect().top + window.scrollY - 50;
-        window.scrollTo({ top: y, behavior: "smooth" });
+      if (session) {
+        window.location.href = "/dashboard/editor";
+      } else {
+        window.location.href = "/login";
       }
       return;
     }
@@ -55,7 +58,6 @@ export default function Pricing() {
     // Trial flow for Pro (only for free/non-logged-in users)
     if (canTrial && planKey === "pro" && (!userPlan || userPlan === "free")) {
       if (!session) {
-        try { localStorage.setItem("groar-pending-export", "true"); } catch {}
         window.location.href = `/login?callbackUrl=${encodeURIComponent("/dashboard?trial=start")}`;
       } else {
         fetch("/api/user/trial", { method: "POST" })
@@ -67,8 +69,8 @@ export default function Pricing() {
 
     // Already logged in with a paid plan
     if (session && userPlan && userPlan !== "free") {
-      // Pro monthly user clicking lifetime → go directly to checkout
-      if (planKey === "pro" && billingPeriod === "lifetime" && userPlan === "pro") {
+      // Pro monthly user clicking lifetime → go directly to checkout (not lifetime users)
+      if (planKey === "pro" && billingPeriod === "lifetime" && userPlan === "pro" && !isUserLifetime) {
         try {
           const response = await fetch("/api/checkout", {
             method: "POST",
@@ -85,12 +87,8 @@ export default function Pricing() {
         }
         return;
       }
-      if (userPlan === planKey || (planKey === "pro" && userPlan === "friend")) {
-        window.location.href = "/dashboard";
-        return;
-      }
-      // Upgrade or downgrade: go to plan management page
-      window.location.href = "/dashboard/plan";
+      // Current plan or lifetime user → go to dashboard
+      window.location.href = "/dashboard/plan#plans";
       return;
     }
 
@@ -100,7 +98,7 @@ export default function Pricing() {
   };
 
   const getCtaLabel = (planKey: PlanType, billingPeriod?: BillingPeriod): string => {
-    if (planKey === "free") return "Try for free";
+    if (planKey === "free") return "Get started";
 
     // Not logged in OR free plan: same CTAs
     if (!userPlan || userPlan === "free") {
@@ -110,11 +108,17 @@ export default function Pricing() {
       return "Get started";
     }
 
-    // Current plan → "Dashboard" (but pro monthly user can upgrade to lifetime)
-    if (userPlan === planKey || (planKey === "pro" && userPlan === "friend")) {
-      if (planKey === "pro" && billingPeriod === "lifetime") return "Get lifetime access";
-      return "Dashboard";
+    // Lifetime user → always "Current plan" on pro card
+    if (isUserLifetime && planKey === "pro") return "Current plan";
+
+    // Pro monthly user
+    if (userPlan === "pro" && planKey === "pro") {
+      if (billingPeriod === "lifetime") return "Get lifetime access";
+      return "Current plan";
     }
+
+    // Friend plan
+    if (planKey === "pro" && userPlan === "friend") return "Current plan";
 
     const currentIndex = PLAN_ORDER.indexOf(userPlan === "friend" ? "pro" : userPlan);
     const targetIndex = PLAN_ORDER.indexOf(planKey);
@@ -129,22 +133,24 @@ export default function Pricing() {
 
   return (
     <FadeInView direction="up" distance={32} amount={0.1}>
-      <section id="pricing" className="w-full max-w-5xl mx-auto py-4 scroll-mt-18">
+      <section id="pricing" className="w-full max-w-5xl mx-auto py-4 px-4 scroll-mt-18">
         <div className="text-center mb-8 md:mb-18">
           <h2 className="text-2xl md:text-4xl font-heading font-bold tracking-tight mb-3">
             Simple pricing
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
-            Try for free.<br />Upgrade to pro when ready to level up your growth!
+            Start for free.<br />Upgrade to Pro when ready to level up your growth!
           </p>
         </div>
 
         <PricingCards
           onSelectPlan={handleSelectPlan}
           currentPlan={displayCurrentPlan}
+          disabledPlans={userPlan && userPlan !== "free" ? ["free"] as PlanType[] : []}
           animated={true}
           showProFeatures={true}
           proHighlighted={true}
+          showBillingToggle={!isUserLifetime}
           proTierInfo={proTierInfo}
           lifetimeTierInfo={lifetimeTierInfo}
           canTrial={canTrial}

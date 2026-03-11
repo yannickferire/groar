@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Calendar03Icon, CreditCardIcon, Loading03Icon, RepeatIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo, LifetimeTierInfo, fetchProTierInfo, fetchLifetimeTierInfo } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, BillingPeriod, ProTierInfo, LifetimeTierInfo, TRIAL_DURATION_DAYS, fetchProTierInfo, fetchLifetimeTierInfo } from "@/lib/plans";
 import PricingCards from "@/components/PricingCards";
 import TrialBanner from "@/components/dashboard/TrialBanner";
 import { toast } from "sonner";
@@ -56,12 +56,36 @@ export default function PlanPage() {
     fetchPlan();
   }, [fetchPlan]);
 
+  // Scroll to #plans anchor after data loads (Next.js client nav doesn't auto-scroll to hash)
+  useEffect(() => {
+    if (!loading && planData && window.location.hash === "#plans") {
+      document.getElementById("plans")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [loading, planData]);
+
   const isPaidPlan = planData && planData.plan !== "free" && planData.plan !== "friend";
   const isFriend = planData?.plan === "friend";
-  const isLifetime = planData?.billingPeriod === "lifetime";
+  const isLifetime = planData?.billingPeriod === "lifetime" && planData?.plan === "pro";
+  const canTrial = !!(planData && !planData.hasUsedTrial && planData.plan === "free" && !planData.isTrialing);
 
   const handleUpgrade = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") return;
+
+    // Trial flow for free users who haven't used their trial
+    if (canTrial) {
+      setUpgrading(planKey);
+      try {
+        await fetch("/api/user/trial", { method: "POST" });
+        window?.datafast?.("trial_started");
+        toast.success("Free trial started!");
+        await fetchPlan();
+      } catch {
+        toast.error("Failed to start trial");
+      } finally {
+        setUpgrading(null);
+      }
+      return;
+    }
 
     // If downgrading (paid user selecting a lower plan), open billing portal
     if (isPaidPlan && PLAN_ORDER.indexOf(planKey) < PLAN_ORDER.indexOf(planData.plan)) {
@@ -227,10 +251,10 @@ export default function PlanPage() {
         )}
       </div>
 
-      {/* All Plans */}
+      {/* Plans */}
       {!loading && planData && (
-        <div id="plans">
-          <h3 className="text-lg font-heading font-semibold mb-4">All plans</h3>
+        <div id="plans" className="scroll-mt-8">
+          <h3 className="text-lg font-heading font-semibold mb-4">Plans</h3>
           <PricingCards
             onSelectPlan={handleUpgrade}
             currentPlan={(() => {
@@ -241,8 +265,11 @@ export default function PlanPage() {
               return planData.plan;
             })()}
             disabledPlans={(() => {
-              if (planData.isTrialing) return [];
               if (isLifetime || isFriend) return ["free", "pro"] as PlanType[];
+              // Free card is always disabled (downgrade goes through Manage subscription)
+              if (planData.plan === "pro") return ["free"] as PlanType[];
+              if (planData.isTrialing) return ["free"] as PlanType[];
+              if (planData.plan === "free") return ["free"] as PlanType[];
               return [];
             })()}
             loadingPlan={upgrading}
@@ -251,23 +278,27 @@ export default function PlanPage() {
             showBillingToggle={!isLifetime && !isFriend}
             proTierInfo={proTierInfo}
             lifetimeTierInfo={lifetimeTierInfo}
+            canTrial={canTrial}
             ctaLabel={(planKey, billingPeriod) => {
-              if (planData.isTrialing && planKey === "pro") return "Claim your spot";
-              // Friend or lifetime user: show "Current plan" on pro
-              if ((isLifetime || isFriend) && planKey === "pro") return "Current plan";
-              // Pro monthly user
-              if (planData.plan === "pro" && !isLifetime && !planData.isTrialing) {
-                if (planKey === "pro" && billingPeriod === "monthly") return "Current plan";
-                if (planKey === "pro" && billingPeriod === "lifetime") return "Get lifetime access";
+              // FREE CARD
+              if (planKey === "free") return "Get started";
+              // PRO CARD — currently trialing
+              if (planData.isTrialing) {
+                return billingPeriod === "lifetime" ? "Get lifetime access" : "Subscribe now";
               }
-              if (planData.plan === planKey && !planData.isTrialing) return "Current plan";
-              const planIndex = PLAN_ORDER.indexOf(planKey);
-              if (planIndex > currentPlanIndex) {
-                if (planKey === "pro" && billingPeriod === "lifetime") return "Get lifetime access";
-                return `Upgrade to ${PLANS[planKey].name}`;
+              // PRO CARD — lifetime or friend user
+              if (isLifetime || isFriend) return "Current plan";
+              // PRO CARD — pro monthly user
+              if (planData.plan === "pro") {
+                if (billingPeriod === "monthly") return "Current plan";
+                return "Get lifetime access";
               }
-              if (planIndex < currentPlanIndex && isPaidPlan && !planData.isTrialing) return "Switch plan";
-              return `Choose ${PLANS[planKey].name}`;
+              // PRO CARD — free user, never trialed
+              if (planData.plan === "free" && !planData.hasUsedTrial) {
+                return `Start ${TRIAL_DURATION_DAYS}-day free trial`;
+              }
+              // PRO CARD — free user, trial expired
+              return billingPeriod === "lifetime" ? "Get lifetime access" : "Upgrade to Pro";
             }}
           />
         </div>

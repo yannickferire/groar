@@ -52,7 +52,7 @@ export function FadeInView({
   direction = "up",
   distance = 24,
   once = true,
-  amount = 0.5,
+  amount = 0.3,
   ...props
 }: FadeInViewProps) {
   const directions = {
@@ -67,7 +67,7 @@ export function FadeInView({
     <motion.div
       initial={{ opacity: 0, ...directions[direction] }}
       whileInView={{ opacity: 1, translateX: 0, translateY: 0 }}
-      viewport={{ once, amount }}
+      viewport={{ once, amount, margin: "-80px 0px" }}
       transition={{ duration, delay, ease: "easeOut" }}
       style={{ willChange: "opacity, transform" }}
       {...props}
@@ -99,7 +99,7 @@ export function StaggerContainer({
     <Component
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount }}
+      viewport={{ once: true, amount, margin: "-80px 0px" }}
       variants={{
         hidden: {},
         visible: {

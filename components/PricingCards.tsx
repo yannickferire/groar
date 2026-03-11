@@ -1,7 +1,7 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon, DashboardSquare02Icon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, LIFETIME_FINAL_PRICE, LIFETIME_PRICING_TIERS, ProTierInfo, LifetimeTierInfo } from "@/lib/plans";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
@@ -215,17 +215,13 @@ function ProCard({
             variant="defaultReverse"
             className="w-full"
             onClick={onSelect}
-            disabled={disabled}
+            disabled={disabled || ctaLabel === "Current plan"}
           >
             {isLoading ? (
               <HugeiconsIcon icon={Loading03Icon} size={18} strokeWidth={2} className="animate-spin" />
             ) : (
               <>
-                {ctaLabel === "Dashboard" ? (
-                  <HugeiconsIcon icon={DashboardSquare02Icon} size={18} strokeWidth={2} aria-hidden="true" />
-                ) : (
-                  <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                )}
+                <HugeiconsIcon icon={SparklesIcon} size={18} strokeWidth={2} aria-hidden="true" />
                 {ctaLabel}
               </>
             )}

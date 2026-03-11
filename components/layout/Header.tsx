@@ -33,28 +33,34 @@ export default function Header() {
   }
 
   return (
-    <div className="md:sticky md:top-0 z-50 md:bg-background/80 md:backdrop-blur-lg">
+    <div className="md:sticky md:top-0 z-[100] md:bg-background/80 md:backdrop-blur-lg">
       <FadeIn delay={0} duration={0.6} direction="none">
-        <header className="w-full max-w-5xl mx-auto flex items-center justify-center md:justify-between py-4">
+        <header className="w-full max-w-5xl mx-auto flex items-center justify-center md:justify-between py-4 px-4">
           <Logo />
           <nav className="hidden md:flex items-center gap-6">
             <button
-              onClick={() => navigateTo("editor")}
+              onClick={() => navigateTo("what")}
               className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              Playground
+              What?
             </button>
             <button
-              onClick={() => navigateTo("how-it-works")}
+              onClick={() => navigateTo("how")}
               className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              How it works
+              How?
+            </button>
+            <button
+              onClick={() => navigateTo("who")}
+              className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              Who?
             </button>
             <button
               onClick={() => navigateTo("pricing")}
               className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
-              Pricing
+              Pricing!
             </button>
             <div className="hidden md:block">
               {session ? (

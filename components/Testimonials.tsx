@@ -66,6 +66,14 @@ const TWEETS: Tweet[] = [
     url: "https://x.com/jimdin79",
     avatar: "/testimonials/jimdin79.jpg",
   },
+  {
+    author: "Ardent_dev",
+    handle: "ardent__dev",
+    verified: true,
+    text: "Huge shoutout to @yannick_ferire for the amazing visual tool (GROAR) **the visuals are awesome** and somehow they even **boost reach**. No idea how, but it works.",
+    url: "https://x.com/ardent__dev/status/2031345006703947937",
+    avatar: "/testimonials/ardent__dev.jpg",
+  },
 ];
 
 

@@ -8,7 +8,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Login form - centered */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
+      <div className="flex-1 flex items-center justify-center px-4 py-20 md:py-28">
         <LoginForm />
       </div>
 

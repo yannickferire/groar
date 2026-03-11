@@ -110,18 +110,27 @@ function LoginFormInner() {
 
       <div className="w-full rounded-3xl border-fade p-8 flex flex-col gap-6">
         <div className="text-center">
-          <h1 className="text-xl font-heading font-bold">
+          <h1 className={`font-heading font-bold ${callbackUrlParam?.includes("trial=start") ? "text-2xl" : "text-xl"}`}>
             {callbackUrlParam?.includes("trial=start")
               ? "Start your free trial"
               : planParam
                 ? `Get started with ${planParam === "free" ? "Free" : "Pro"}`
                 : "Welcome back"}
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {callbackUrlParam?.includes("trial=start")
-              ? `${TRIAL_DURATION_DAYS} days of Pro, free — no credit card required`
-              : "Sign in to access your dashboard"}
-          </p>
+          {callbackUrlParam?.includes("trial=start") ? (
+            <div className="mt-2 space-y-1">
+              <p className="text-base font-medium text-foreground">
+                {TRIAL_DURATION_DAYS} days of Pro, completely free
+              </p>
+              <p className="text-xs text-muted-foreground">
+                No credit card needed
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground mt-1">
+              Sign in to access your dashboard
+            </p>
+          )}
         </div>
 
         {error && (
@@ -170,19 +179,12 @@ function LoginFormInner() {
         </div>
       </div>
 
-      <div className="text-xs text-muted-foreground text-center space-y-2">
-        <p className="text-balance">
-          By signing in, you agree to our{" "}
-          <Link href="/terms" className="underline hover:text-foreground">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="underline hover:text-foreground">
-            Privacy Policy
-          </Link>
-          .
-        </p>
-      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        By signing in, you agree to our{" "}
+        <Link href="/terms" className="underline hover:text-foreground">Terms</Link>
+        {" "}and{" "}
+        <Link href="/privacy" className="underline hover:text-foreground">Privacy</Link>.
+      </p>
     </div>
   );
 }

@@ -44,6 +44,7 @@ export default function DashboardSidebar() {
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
   const [isTrialing, setIsTrialing] = useState(false);
   const [trialEnd, setTrialEnd] = useState<string | null>(null);
+  const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [pointsToday, setPointsToday] = useState<number | null>(null);
@@ -58,6 +59,7 @@ export default function DashboardSidebar() {
         setUserPlan(data.plan);
         setIsTrialing(!!data.isTrialing);
         setTrialEnd(data.trialEnd || null);
+        setHasUsedTrial(!!data.hasUsedTrial);
         setIsAdmin(!!data.isAdmin);
       })
       .catch(() => setUserPlan("free"));
@@ -263,7 +265,7 @@ export default function DashboardSidebar() {
               </span>
             </div>
             <Button asChild variant="default" size="sm" className="w-full mt-1">
-              <Link href="/pricing">
+              <Link href="/dashboard/plan#plans">
                 <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />
                 Claim your spot
               </Link>
@@ -284,16 +286,39 @@ export default function DashboardSidebar() {
                 <span className="font-heading font-bold text-sm">Level up your growth</span>
               </div>
 
-              <p className="text-xs text-background/70 mb-3">
-                Unlock unlimited exports, analytics, and more — from ${proTierInfo?.price ?? PLANS.pro.price}/mo.
-              </p>
-
-              <Button asChild variant="defaultReverse" size="sm" className="w-full">
-                <Link href="/pricing">
-                  <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />
-                  Upgrade to Pro
-                </Link>
-              </Button>
+              {!hasUsedTrial ? (
+                <>
+                  <p className="text-xs text-background/70 mb-3">
+                    Unlock unlimited exports, analytics, and more.
+                  </p>
+                  <Button
+                    variant="defaultReverse"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      fetch("/api/user/trial", { method: "POST" })
+                        .then(() => { window?.datafast?.("trial_started"); window.location.reload(); })
+                        .catch(() => { window.location.href = "/dashboard/plan#plans"; });
+                    }}
+                  >
+                    <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />
+                    Start free trial
+                  </Button>
+                  <p className="text-[11px] text-background/50 text-center mt-1.5">No credit card required</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-background/70 mb-3">
+                    Unlock unlimited exports, analytics, and more.
+                  </p>
+                  <Button asChild variant="defaultReverse" size="sm" className="w-full">
+                    <Link href="/dashboard/plan#plans">
+                      <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />
+                      Upgrade to Pro
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         ) : null}

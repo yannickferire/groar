@@ -19,6 +19,7 @@ function PricingContent() {
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [trialChecked, setTrialChecked] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<PlanType | null>(null);
+  const [userBillingPeriod, setUserBillingPeriod] = useState<BillingPeriod | null>(null);
 
   useEffect(() => {
     fetchProTierInfo().then(setProTierInfo).catch(() => {});
@@ -31,8 +32,9 @@ function PricingContent() {
         return res.json();
       })
       .then((data) => {
-        if (data?.trialEnd) setHasUsedTrial(true);
+        if (data?.hasUsedTrial) setHasUsedTrial(true);
         if (data?.plan) setCurrentPlan(data.plan);
+        if (data?.billingPeriod) setUserBillingPeriod(data.billingPeriod);
         setTrialChecked(true);
       })
       .catch(() => setTrialChecked(true));
@@ -40,10 +42,21 @@ function PricingContent() {
 
   const canTrial = trialChecked && !hasUsedTrial;
   const isProUser = currentPlan === "pro" || currentPlan === "friend";
+  const isUserLifetime = currentPlan === "pro" && userBillingPeriod === "lifetime";
 
   const handleSelectPlan = async (planKey: PlanType, billingPeriod?: BillingPeriod) => {
     if (planKey === "free") {
-      window.location.href = "/#editor";
+      if (session) {
+        window.location.href = "/dashboard/editor";
+      } else {
+        window.location.href = "/login";
+      }
+      return;
+    }
+
+    // Lifetime user clicking pro → go to dashboard
+    if (isUserLifetime && planKey === "pro") {
+      window.location.href = "/dashboard/plan#plans";
       return;
     }
 
@@ -52,7 +65,7 @@ function PricingContent() {
       if (planKey === "pro" && billingPeriod === "lifetime") {
         // Pro monthly user wants lifetime → proceed to checkout below
       } else {
-        window.location.href = "/dashboard";
+        window.location.href = "/dashboard/plan#plans";
         return;
       }
     }
@@ -60,17 +73,13 @@ function PricingContent() {
     // Trial flow for Pro (only for free/non-logged-in users)
     if (canTrial && planKey === "pro" && !isProUser) {
       if (!session) {
-        // Not logged in → sign up with trial callback
-        try { localStorage.setItem("groar-pending-export", "true"); } catch {}
         window.location.href = `/login?callbackUrl=${encodeURIComponent("/dashboard?trial=start")}`;
       } else {
-        // Logged in but hasn't used trial → start trial directly
         try {
           await fetch("/api/user/trial", { method: "POST" });
           window?.datafast?.("trial_started");
           window.location.href = "/dashboard/editor";
         } catch {
-          // Fallback to checkout
           window.location.href = "/dashboard?trial=start";
         }
       }
@@ -121,19 +130,27 @@ function PricingContent() {
           <PricingCards
             onSelectPlan={handleSelectPlan}
             currentPlan={isProUser ? currentPlan! : undefined}
+            disabledPlans={isProUser ? ["free"] as PlanType[] : []}
             loadingPlan={upgrading}
             animated={true}
             showProFeatures={true}
             proHighlighted={true}
+            showBillingToggle={!isUserLifetime}
             proTierInfo={proTierInfo}
             lifetimeTierInfo={lifetimeTierInfo}
             canTrial={canTrial}
             ctaLabel={(planKey, billingPeriod) => {
-              if (currentPlan === planKey) {
-                if (planKey === "pro" && billingPeriod === "lifetime") return "Get lifetime access";
-                return planKey === "pro" ? "Dashboard" : "Current plan";
+              if (planKey === "free") return "Get started";
+              // Lifetime user → always "Current plan"
+              if (isUserLifetime && planKey === "pro") return "Current plan";
+              // Pro monthly user
+              if (currentPlan === "pro" && planKey === "pro") {
+                if (billingPeriod === "lifetime") return "Get lifetime access";
+                return "Current plan";
               }
-              if (planKey === "free") return "Try for free";
+              // Friend
+              if (currentPlan === "friend" && planKey === "pro") return "Current plan";
+              // Free / not logged in
               if (planKey === "pro") {
                 return canTrial ? `Start ${TRIAL_DURATION_DAYS}-day free trial` : (billingPeriod === "lifetime" ? "Get lifetime access" : "Claim your spot");
               }

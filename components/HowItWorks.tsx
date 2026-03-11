@@ -1,30 +1,28 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Analytics01Icon, PaintBrush01Icon, Download04Icon } from "@hugeicons/core-free-icons";
 import { FadeInView, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 
 const steps = [
   {
-    icon: Analytics01Icon,
+    number: "1",
     title: "Enter your metrics",
-    description: "Add your handle and input your analytics data.",
+    description: "Add your handle and input your data.",
   },
   {
-    icon: PaintBrush01Icon,
+    number: "2",
     title: "Customize the style",
     description: "Choose a background and pick your colors.",
   },
   {
-    icon: Download04Icon,
+    number: "3",
     title: "Download & share",
-    description: "Export as PNG and share to celebrate your wins.",
+    description: "Export as PNG and share your wins.",
   },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="w-full max-w-4xl mx-auto py-4">
+    <section id="how" className="w-full max-w-4xl mx-auto py-4 px-4 scroll-mt-18">
       <FadeInView>
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
@@ -36,27 +34,18 @@ export default function HowItWorks() {
         </div>
       </FadeInView>
 
-      <StaggerContainer as="ul" className="flex flex-col md:flex-row items-stretch gap-3 md:gap-4" staggerDelay={0.15}>
+      <StaggerContainer className="flex flex-col md:flex-row items-stretch gap-0" staggerDelay={0.15}>
         {steps.map((step, index) => (
           <StaggerItem
-            as="li"
             key={index}
-            className="flex-1 relative p-4 rounded-3xl border-fade"
+            className="flex-1 flex flex-col items-center text-center px-6 py-6 relative"
           >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <HugeiconsIcon icon={step.icon} size={20} strokeWidth={1.5} className="text-primary md:w-6! md:h-6!" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-medium text-muted-foreground">Step {index + 1}</span>
-                </div>
-                <h3 className="text-base font-semibold mb-1">{step.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {step.description}
-                </p>
-              </div>
-            </div>
+            <span className="text-5xl font-bold font-heading text-primary/60 mb-2">{step.number}</span>
+            <h3 className="text-base font-semibold mb-1">{step.title}</h3>
+            <p className="text-sm text-muted-foreground">{step.description}</p>
+            {index < steps.length - 1 && (
+              <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-px h-12 bg-border" />
+            )}
           </StaggerItem>
         ))}
       </StaggerContainer>

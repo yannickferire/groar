@@ -64,6 +64,9 @@ type SidebarProps = {
   isPremium?: boolean;
   lockPremiumFeatures?: boolean;
   onPremiumBlock?: (feature: string) => void;
+  exportsThisWeek?: number;
+  maxExportsPerWeek?: number | null;
+  hasUsedTrial?: boolean;
 };
 
 const X_METRICS_PRIMARY: MetricType[] = ["followers", "verifiedFollowers", "impressions", "replies", "posts", "builders"];
@@ -284,7 +287,7 @@ type ConnectedAccount = {
   } | null;
 };
 
-export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock }: SidebarProps) {
+export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock, exportsThisWeek = 0, maxExportsPerWeek = null, hasUsedTrial = false }: SidebarProps) {
   const isMobile = useIsMobile(940);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [deletingLogoId, setDeletingLogoId] = useState<string | null>(null);
@@ -1688,15 +1691,20 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
         </span>
         {isExporting ? "Loading..." : cooldown > 0 ? `Wait ${cooldown}s` : "Get your image"}
       </Button>
-      {!isPremium && (
-        <a
-          href="#pricing"
-          onClick={(e) => { e.preventDefault(); document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" }); }}
-          className="-mt-3 mb-1 text-xs text-muted-foreground/60 hover:text-primary transition-colors text-center"
-        >
-          Remove watermark & unlock all features
-        </a>
-      )}
+      {!isPremium && maxExportsPerWeek !== null && (() => {
+        const remaining = Math.max(maxExportsPerWeek - exportsThisWeek, 0);
+        const isOut = remaining === 0;
+        const nextMonday = new Date();
+        const day = nextMonday.getDay();
+        nextMonday.setDate(nextMonday.getDate() + ((8 - day) % 7 || 7));
+        const dayName = nextMonday.toLocaleDateString("en", { weekday: "long" });
+        return (
+          <p className={`-mt-3 mb-1 text-xs text-center ${isOut ? "text-red-500" : "text-muted-foreground/60"}`}>
+            {remaining}/{maxExportsPerWeek} exports left this week
+            {isOut && <span className="block">Resets {dayName}</span>}
+          </p>
+        );
+      })()}
     </aside>
   );
 }

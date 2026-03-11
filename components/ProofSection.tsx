@@ -11,7 +11,7 @@ const templates = [
 
 export default function ProofSection() {
   return (
-    <section id="how-it-works" className="w-full max-w-6xl mx-auto py-4">
+    <section id="how-it-works" className="w-full max-w-6xl mx-auto py-4 overflow-hidden md:overflow-visible">
       <FadeInView>
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-2">
@@ -24,7 +24,7 @@ export default function ProofSection() {
       </FadeInView>
 
       {/* Responsive layout: vertical on mobile, horizontal on desktop */}
-      <div className="flex flex-col md:flex-row items-center relative gap-8 md:gap-0 overflow-visible">
+      <div className="flex flex-col md:flex-row items-center relative gap-8 md:gap-0 overflow-visible mx-4 md:mx-0">
         {/* Graph */}
         <FadeInView delay={0.1} direction="up" className="w-full md:w-2/5 md:shrink-0 overflow-visible">
           <div className="relative rounded-2xl overflow-hidden">
@@ -99,7 +99,7 @@ export default function ProofSection() {
 
       <FadeInView delay={0.3}>
         <p className="text-center text-sm text-muted-foreground mt-24 md:mt-16">
-          3 templates. Dozens of backgrounds. Infinite combinations.
+          Dozens of backgrounds. Infinite combinations.
         </p>
       </FadeInView>
     </section>

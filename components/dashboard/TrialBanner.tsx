@@ -86,7 +86,7 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, l
           </div>
         </div>
         <Button asChild variant="default" size="sm" className="shrink-0">
-          <Link href="/pricing">
+          <Link href="/dashboard/plan#plans">
             <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />
             Claim your spot
           </Link>
@@ -115,7 +115,7 @@ export default function TrialBanner({ isTrialing, trialEnd, plan, proTierInfo, l
           </div>
         </div>
         <Button asChild variant="default" size="sm" className="shrink-0">
-          <Link href="/pricing">
+          <Link href="/dashboard/plan#plans">
             <HugeiconsIcon icon={SparklesIcon} size={14} strokeWidth={2} />
             Claim your spot
           </Link>

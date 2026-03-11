@@ -15,6 +15,7 @@ import { TEMPLATES } from "@/lib/templates";
 import { useToast } from "@/components/ui/toast";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import UpgradeModal from "@/components/UpgradeModal";
 import { FREE_WEEKLY_LIMIT } from "@/lib/plans";
@@ -46,9 +47,10 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   // Also sync today's export count from DB when logged in
   const [hideUpgradeModal, setHideUpgradeModal] = useState(false);
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
+  const [exportsThisWeek, setExportsThisWeek] = useState(0);
+  const [maxExportsPerWeek, setMaxExportsPerWeek] = useState<number | null>(null);
   const dbExportCountLoaded = useRef(false);
   useEffect(() => {
-    if (isDashboard) return; // Dashboard already knows
     fetch("/api/user/plan")
       .then((res) => {
         if (res.status === 401) return null; // Not logged in
@@ -58,9 +60,11 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         if (!data) return; // Not logged in
         if (data.plan && data.plan !== "free") setHideUpgradeModal(true);
         // Track if user has already used their trial (trialing or expired)
-        if (data.trialEnd) setHasUsedTrial(true);
-        // Sync export count from DB (more accurate than localStorage)
+        if (data.hasUsedTrial) setHasUsedTrial(true);
+        // Track exports for sidebar display
         if (data.exportsThisWeek !== undefined) {
+          setExportsThisWeek(Number(data.exportsThisWeek));
+          setMaxExportsPerWeek(data.limits?.maxExportsPerWeek ?? null);
           const dbCount = Number(data.exportsThisWeek);
           const localCount = parseInt(localStorage.getItem(getWeekKey()) || "0", 10);
           const maxCount = Math.max(dbCount, localCount);
@@ -70,7 +74,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         }
       })
       .catch(() => {});
-  }, [isDashboard]);
+  }, []);
 
   const lockPremiumFeatures = isDashboard && !isPremium;
 
@@ -261,33 +265,34 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       exportToastIdRef.current = null;
     }
 
-    // Free user checks (premium features + weekly limit) — landing page only
-    // Dashboard handles premium gating at the UI level (lockPremiumFeatures)
-    if (!isPremium && !isDashboard && !hideUpgradeModal) {
-      // Check premium features
-      const usage = checkPremiumFeatures(settings, ALL_BACKGROUNDS);
-      if (usage.isPremium) {
-        setPremiumFeaturesList(usage.features);
-        posthog.capture("premium_feature_blocked", {
-          features: usage.features,
-          has_used_trial: hasUsedTrial,
-          source: isDashboard ? "dashboard" : "landing",
-        });
-        if (hasUsedTrial) {
-          setUpgradeReason("premium-features");
-          setShowUpgradeModal(true);
-          posthog.capture("upgrade_modal_viewed", { reason: "premium-features", source: isDashboard ? "dashboard" : "landing" });
-        } else {
-          setTrialReason("premium-features");
-          setShowTrialModal(true);
+    // Free user checks (premium features + weekly limit)
+    if (!isPremium) {
+      // Check premium features (landing page only — dashboard handles at UI level)
+      if (!isDashboard && !hideUpgradeModal) {
+        const usage = checkPremiumFeatures(settings, ALL_BACKGROUNDS);
+        if (usage.isPremium) {
+          setPremiumFeaturesList(usage.features);
+          posthog.capture("premium_feature_blocked", {
+            features: usage.features,
+            has_used_trial: hasUsedTrial,
+            source: isDashboard ? "dashboard" : "landing",
+          });
+          if (hasUsedTrial) {
+            setUpgradeReason("premium-features");
+            setShowUpgradeModal(true);
+            posthog.capture("upgrade_modal_viewed", { reason: "premium-features", source: isDashboard ? "dashboard" : "landing" });
+          } else {
+            setTrialReason("premium-features");
+            setShowTrialModal(true);
+          }
+          return;
         }
-        return;
       }
 
-      // Check weekly limit
-      if (getWeekExportCount() >= FREE_WEEKLY_LIMIT) {
+      // Check weekly limit (both landing + dashboard)
+      if (weekExportCount >= FREE_WEEKLY_LIMIT) {
         posthog.capture("export_limit_reached", {
-          week_export_count: getWeekExportCount(),
+          week_export_count: weekExportCount,
           has_used_trial: hasUsedTrial,
           source: isDashboard ? "dashboard" : "landing",
         });
@@ -668,22 +673,6 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     ], [handleExport, undo, redo])
   );
 
-  // Auto-export when returning from trial signup
-  const autoExportParam = searchParams.get("autoexport") === "1";
-  const handleExportRef = useRef(handleExport);
-  useEffect(() => { handleExportRef.current = handleExport; }, [handleExport]);
-  useEffect(() => {
-    if (!isPremium || isLoading) return;
-    let pending = false;
-    try { pending = localStorage.getItem("groar-pending-export") === "true"; } catch {}
-    if (!pending && !autoExportParam) return;
-    // Remove flag inside the timeout so React strict mode double-run doesn't clear it prematurely
-    const timer = setTimeout(() => {
-      try { localStorage.removeItem("groar-pending-export"); } catch {}
-      handleExportRef.current();
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [isPremium, isLoading, autoExportParam]);
 
   // Dismiss export toast on unmount (page change)
   useEffect(() => {
@@ -724,6 +713,9 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         isPremium={isPremium}
         lockPremiumFeatures={lockPremiumFeatures}
         onPremiumBlock={handlePremiumBlock}
+        exportsThisWeek={exportsThisWeek}
+        maxExportsPerWeek={maxExportsPerWeek}
+        hasUsedTrial={hasUsedTrial}
       />
       <div className="flex-1 flex flex-col gap-3">
         <AnimatePresence mode="wait">
@@ -762,19 +754,65 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   if (isDashboard) {
     return (
       <>
-        {isPremium ? (
-          <div className="text-center text-sm text-muted-foreground mb-4">
-            When you share your visuals, tag{" "}
-            <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a>
-            , I will repost you!
+        {!isPremium && weekExportCount >= FREE_WEEKLY_LIMIT ? (
+          <div className="flex flex-col items-center justify-center text-center py-16 space-y-6 max-w-md mx-auto">
+            <p className="text-8xl">🐯</p>
+            <h3 className="text-2xl font-heading font-bold">No exports left this week</h3>
+            <p className="text-muted-foreground">
+              Your 3 weekly exports reset every Monday.
+              <br />
+              Upgrade to Pro for unlimited exports.
+            </p>
+            {!hasUsedTrial ? (
+              <div className="flex flex-col items-center gap-1.5">
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    fetch("/api/user/trial", { method: "POST" })
+                      .then(() => { window?.datafast?.("trial_started"); window.location.reload(); })
+                      .catch(() => { window.location.href = "/dashboard/plan#plans"; });
+                  }}
+                >
+                  Start free trial
+                </Button>
+                <span className="text-xs text-muted-foreground">No credit card required</span>
+              </div>
+            ) : (
+              <Button asChild size="lg">
+                <a href="/dashboard/plan#plans">Upgrade to Pro</a>
+              </Button>
+            )}
           </div>
         ) : (
-          <div className="text-center text-sm text-muted-foreground mb-4">
-            Upgrade to Pro to unlock all backgrounds, fonts, templates, and more.{" "}
-            <a href="/pricing" className="text-primary hover:underline font-medium">See plans</a>
-          </div>
+          <>
+            {isPremium ? (
+              <div className="text-center text-sm text-muted-foreground mb-4">
+                When you share your visuals, tag{" "}
+                <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a>
+                , I will repost you!
+              </div>
+            ) : (
+              <div className="text-center text-sm text-muted-foreground mb-4">
+                {!hasUsedTrial ? (
+                  <button
+                    onClick={() => {
+                      fetch("/api/user/trial", { method: "POST" })
+                        .then(() => { window?.datafast?.("trial_started"); window.location.reload(); })
+                        .catch(() => { window.location.href = "/dashboard/plan#plans"; });
+                    }}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Start free trial
+                  </button>
+                ) : (
+                  <a href="/dashboard/plan#plans" className="text-primary hover:underline font-medium">Upgrade to Pro</a>
+                )}
+                {" "}to unlock all backgrounds, templates, and more.
+              </div>
+            )}
+            {editorContent}
+          </>
         )}
-        {editorContent}
       </>
     );
   }

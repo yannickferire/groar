@@ -365,7 +365,7 @@ export default function AnalyticsPage() {
           )}
           {error === "premium" ? (
             <Button asChild size="lg">
-              <Link href="/pricing">Upgrade to Pro</Link>
+              <Link href="/dashboard/plan#plans">Upgrade to Pro</Link>
             </Button>
           ) : needsReconnect ? (
             <Button asChild>

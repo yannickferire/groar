@@ -89,22 +89,22 @@ function DashboardContent() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   // Handle trial start from landing page signup
   const trialParam = searchParams.get("trial") === "start";
+
+  useEffect(() => {
+    // Skip fetching dashboard data if we're about to redirect for trial
+    if (trialParam || localStorage.getItem("groar-trial-intent") === "true") return;
+    fetchData();
+  }, [fetchData, trialParam]);
   useEffect(() => {
     const trialIntent = localStorage.getItem("groar-trial-intent") === "true";
     const shouldStartTrial = trialParam || trialIntent;
     if (!shouldStartTrial) return;
 
-    const hasPendingExport = localStorage.getItem("groar-pending-export") === "true";
     // Clean up localStorage flags
     try {
       localStorage.removeItem("groar-trial-intent");
-      localStorage.removeItem("groar-pending-export");
     } catch {}
     fetch("/api/user/trial", { method: "POST" })
       .then((res) => {
@@ -112,15 +112,16 @@ function DashboardContent() {
           window?.datafast?.("trial_started");
           window.dispatchEvent(new Event("groar:plan-updated"));
         }
-      })
-      .finally(() => {
-        if (hasPendingExport) {
-          // Redirect to editor with autoexport to finish the pending export
-          router.replace("/dashboard/editor?autoexport=1");
-        } else {
-          // No pending export — just activate trial and stay on dashboard
+        // 400 = already trialed or already pro — still redirect to editor
+        // 500 = real error — redirect to dashboard instead
+        if (res.status >= 500) {
           router.replace("/dashboard");
+        } else {
+          router.replace("/dashboard/editor");
         }
+      })
+      .catch(() => {
+        router.replace("/dashboard");
       });
   }, [trialParam, router]);
 
@@ -128,25 +129,9 @@ function DashboardContent() {
   const [trialRedirecting, setTrialRedirecting] = useState(false);
   useEffect(() => {
     if (trialParam || localStorage.getItem("groar-trial-intent") === "true") {
-      if (localStorage.getItem("groar-pending-export") === "true") {
-        setTrialRedirecting(true);
-      }
+      setTrialRedirecting(true);
     }
   }, [trialParam]);
-
-  if (trialRedirecting) {
-    return (
-      <div className="w-full max-w-5xl mx-auto flex items-center justify-center py-32">
-        <div className="space-y-6 max-w-md text-center">
-          <p className="text-8xl">🐯</p>
-          <p className="text-xl text-muted-foreground">Sharpening the claws...</p>
-          <div className="flex justify-center">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Handle checkout success - poll for plan activation
   useEffect(() => {
@@ -209,6 +194,20 @@ function DashboardContent() {
   })();
 
   const hasXAccounts = analyticsAccounts.length > 0;
+
+  if (trialRedirecting) {
+    return (
+      <div className="w-full max-w-5xl mx-auto flex items-center justify-center py-32">
+        <div className="space-y-6 max-w-md text-center">
+          <p className="text-8xl">🐯</p>
+          <p className="text-xl text-muted-foreground">Sharpening the claws...</p>
+          <div className="flex justify-center">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-10">

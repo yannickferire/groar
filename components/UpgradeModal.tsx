@@ -194,7 +194,7 @@ export default function UpgradeModal({
                       {/* Actions */}
                       <div className="flex flex-col gap-2">
                         <Button asChild variant="defaultReverse" size="lg" className="w-full">
-                          <Link href="/pricing">
+                          <Link href="/dashboard/plan#plans">
                             Upgrade to Pro
                           </Link>
                         </Button>
