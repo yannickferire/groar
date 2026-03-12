@@ -63,7 +63,7 @@ function EarlyAdopterProgressBlock({ lifetimeTierInfo, proTierInfo, billingPerio
       {/* Progress bar with tier segments */}
       <div className="relative h-4 rounded-full" style={{ backgroundColor: "var(--card)" }}>
         <motion.div
-          className="absolute inset-y-0 left-0 rounded-full"
+          className="absolute inset-y-0 left-0 rounded-full z-10"
           style={{ background: "linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 100%)" }}
           initial={{ width: 0 }}
           whileInView={{ width: `calc(${overallProgress} * (100% - ${barH}) + ${barH})` }}
@@ -71,13 +71,16 @@ function EarlyAdopterProgressBlock({ lifetimeTierInfo, proTierInfo, billingPerio
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         />
         {/* Tier boundary markers — 1px, extend above/below */}
-        {tiers.slice(0, -1).map((tier) => (
-          <div
-            key={tier.price}
-            className="absolute w-px bg-foreground/50"
-            style={{ left: `calc(${tier.end} * (100% - ${barH}) + ${barH} / 2)`, top: "-3px", bottom: "-3px" }}
-          />
-        ))}
+        {tiers.slice(0, -1).map((tier) => {
+          const isPast = tier.price < info.price;
+          return (
+            <div
+              key={tier.price}
+              className={`absolute w-px ${isPast ? "bg-foreground/15" : "bg-foreground/50"}`}
+              style={{ left: `calc(${tier.end} * (100% - ${barH}) + ${barH} / 2)`, top: "-3px", bottom: "-3px" }}
+            />
+          );
+        })}
       </div>
 
       {/* Tier price labels */}
