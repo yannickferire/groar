@@ -60,7 +60,7 @@ export function getPolarProductId(plan: "pro", billingPeriod: BillingPeriod = "m
 export async function createCheckoutSession(options: {
   productId: string;
   successUrl: string;
-  customerEmail: string;
+  customerEmail?: string | null;
   metadata: Record<string, string>;
 }): Promise<{ url: string } | { error: string }> {
   const { accessToken } = validateEnv();
@@ -75,7 +75,7 @@ export async function createCheckoutSession(options: {
       body: JSON.stringify({
         product_id: options.productId,
         success_url: options.successUrl,
-        customer_email: options.customerEmail,
+        ...(options.customerEmail ? { customer_email: options.customerEmail } : {}),
         metadata: options.metadata,
       }),
     });

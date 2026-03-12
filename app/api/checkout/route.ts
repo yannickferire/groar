@@ -18,7 +18,7 @@ function getProductId(plan: "pro", billingPeriod: BillingPeriod): string | null 
 function createCheckout(options: {
   productId: string;
   successUrl: string;
-  customerEmail: string;
+  customerEmail?: string | null;
   metadata: Record<string, string>;
 }) {
   return PAYMENT_PROVIDER === "creem"
