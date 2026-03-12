@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const result = await createCheckout({
       productId,
       successUrl: `${siteUrl}/dashboard?checkout=success&plan=${planKey}`,
-      customerEmail: /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(session.user.email || "")
+      customerEmail: session.user.email && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(session.user.email)
         ? session.user.email
         : undefined,
       metadata: {
