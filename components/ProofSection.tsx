@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { FadeInView } from "@/components/ui/motion";
 
 const templates = [
@@ -104,6 +105,10 @@ export default function ProofSection() {
       <FadeInView delay={0.3}>
         <p className="text-center text-sm text-muted-foreground mt-24 md:mt-16">
           Dozens of backgrounds. Infinite combinations.
+          <br />
+          <Link href="/wall" className="inline-block mt-0.5 underline underline-offset-2 hover:text-foreground transition-colors">
+            See what the community created
+          </Link>
         </p>
       </FadeInView>
     </section>

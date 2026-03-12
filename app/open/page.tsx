@@ -290,9 +290,9 @@ export default function OpenPage() {
   const showTrends = negativeCount <= 1;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen px-4">
       <Header />
-      <div className="flex-1 w-full max-w-5xl mx-auto px-4 py-12 md:py-20 space-y-12 md:space-y-20">
+      <main className="flex-1 w-full max-w-5xl mx-auto py-8 md:py-16 mt-4 flex flex-col gap-24">
         {/* Hero */}
         <FadeInView>
           <div className="text-center space-y-4">
@@ -467,7 +467,7 @@ export default function OpenPage() {
         <FadeInView delay={0.4}>
           <VsCta />
         </FadeInView>
-      </div>
+      </main>
 
       <Footer />
     </div>

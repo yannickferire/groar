@@ -18,6 +18,7 @@ export const metadata: Metadata = {
     title: "GROAR vs Image-Charts — No-Code Metrics Visuals vs Chart API",
     description:
       "Compare GROAR and Image-Charts for creating metrics visuals. Image-Charts is a developer API for chart images. GROAR is a no-code tool that creates shareable visuals in 10 seconds.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

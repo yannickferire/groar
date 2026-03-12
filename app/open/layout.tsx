@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     title: "Open Startup Stats — Groar",
     description:
       "Groar builds in public. See live revenue, user count, MRR, growth metrics and the full tech stack — updated daily.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

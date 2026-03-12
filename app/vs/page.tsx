@@ -15,6 +15,7 @@ export const metadata: Metadata = {
     title: "GROAR vs Other Tools — Comparisons for Metrics Visuals",
     description:
       "See how GROAR compares to screenshots, Canva, and other tools for creating shareable analytics visuals.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

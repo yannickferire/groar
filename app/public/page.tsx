@@ -20,6 +20,7 @@ export const metadata: Metadata = {
     title: "Leaderboard — GROAR",
     description: "See who's leading the GROAR community leaderboard. Export visuals, log in daily, and climb the ranks.",
     url: `${siteUrl}/public`,
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 
@@ -97,31 +98,31 @@ export default async function PublicLeaderboardPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <Header />
-      <main className="flex-1 flex flex-col items-center py-8 md:py-16 mt-4 md:mt-10">
+      <main className="flex-1 flex flex-col items-center py-8 md:py-16 mt-4 gap-24">
         <FadeInView direction="up" distance={32}>
-          <div className="text-center mb-12">
+          <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-heading font-bold tracking-tight mb-4">
               Leaderboard
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto text-balance">
-              Top 10 of the GROAR community. Export visuals, log in daily, and climb the ranks.
+              Top 10 of the 🐯 GROAR community. Export visuals, log in daily, and climb the ranks.
             </p>
           </div>
         </FadeInView>
 
-        <div className="w-full max-w-5xl">
+        <div className="w-full max-w-5xl -mt-6">
           <PublicLeaderboardClient initialLeaderboard={leaderboard} />
         </div>
 
-        <div className="w-full max-w-3xl mt-12">
+        <div className="w-full max-w-3xl">
           <VsCta title="Want to join the leaderboard?" />
         </div>
 
-        <div className="w-full mt-24">
+        <div className="w-full">
           <Testimonials />
         </div>
 
-        <section className="w-full max-w-3xl mt-24 mb-4">
+        <section className="w-full max-w-3xl">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>
           <VsFaq faqs={faqs} />
         </section>

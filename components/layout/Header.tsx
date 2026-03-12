@@ -56,12 +56,21 @@ export default function Header() {
             >
               Who?
             </button>
-            <button
-              onClick={() => navigateTo("pricing")}
-              className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              Pricing!
-            </button>
+            {isHome ? (
+              <button
+                onClick={() => scrollToElement("pricing", 72)}
+                className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                Pricing!
+              </button>
+            ) : (
+              <Link
+                href="/pricing"
+                className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Pricing!
+              </Link>
+            )}
             <div className="hidden md:block">
               {session ? (
                 <Button asChild variant="default" size="default">

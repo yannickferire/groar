@@ -30,6 +30,9 @@ export default function Footer() {
                 <Link href="/public" className="hover:text-foreground transition-colors">
                   Leaderboard
                 </Link>
+                <Link href="/wall" className="hover:text-foreground transition-colors">
+                  Community Wall
+                </Link>
                 <Link href="/open" className="hover:text-foreground transition-colors">
                   Open Stats
                 </Link>

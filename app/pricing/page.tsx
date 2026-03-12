@@ -114,9 +114,9 @@ function PricingContent() {
   return (
     <div className="flex flex-col min-h-screen px-4">
       <Header />
-      <main className="flex-1 flex flex-col items-center justify-center py-8 md:py-16 mt-4 md:mt-10">
+      <main className="flex-1 flex flex-col items-center justify-center py-8 md:py-16 mt-4 gap-24">
         <FadeInView direction="up" distance={32}>
-          <div className="text-center mb-20">
+          <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-heading font-bold tracking-tight mb-4">
               Simple, transparent pricing
             </h1>
@@ -126,7 +126,7 @@ function PricingContent() {
           </div>
         </FadeInView>
 
-        <div className="w-full max-w-5xl">
+        <div className="w-full max-w-5xl -mt-6">
           <PricingCards
             onSelectPlan={handleSelectPlan}
             currentPlan={isProUser ? currentPlan! : undefined}
@@ -159,11 +159,11 @@ function PricingContent() {
           />
         </div>
 
-        <div className="w-full mt-24">
+        <div className="w-full">
           <Testimonials />
         </div>
 
-        <section className="w-full max-w-3xl mt-24 mb-4">
+        <section className="w-full max-w-3xl">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>
           <VsFaq faqs={faqs} />
         </section>

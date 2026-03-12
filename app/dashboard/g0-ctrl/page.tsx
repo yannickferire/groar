@@ -507,7 +507,7 @@ export default function AdminPage() {
                     </div>
                   </dl>
                   <div className="flex gap-2 mt-3">
-                    {selectedUser.plan !== "friend" && (
+                    {getUserCategory(selectedUser) !== "pro" && selectedUser.plan !== "friend" && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -518,7 +518,7 @@ export default function AdminPage() {
                         {giftingPlan ? "Gifting..." : "Gift Friend plan"}
                       </Button>
                     )}
-                    {selectedUser.plan !== "pro" && (
+                    {getUserCategory(selectedUser) !== "pro" && (
                       <Button
                         variant="outline"
                         size="sm"
