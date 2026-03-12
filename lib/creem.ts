@@ -42,7 +42,7 @@ export function getBillingPeriodFromProductId(productId: string): "monthly" | "l
 export async function createCheckoutSession(options: {
   productId: string;
   successUrl: string;
-  customerEmail: string;
+  customerEmail?: string | null;
   metadata: Record<string, string>;
 }): Promise<{ url: string } | { error: string }> {
   try {
@@ -50,7 +50,7 @@ export async function createCheckoutSession(options: {
     const checkout = await creem.checkouts.create({
       productId: options.productId,
       successUrl: options.successUrl,
-      customer: { email: options.customerEmail },
+      ...(options.customerEmail ? { customer: { email: options.customerEmail } } : {}),
       metadata: options.metadata,
     });
 
