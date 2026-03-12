@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Button } from "@/components/ui/button";
+
 import Testimonials from "@/components/Testimonials";
 import VsCta from "@/components/VsCta";
 import VsFaq from "@/components/VsFaq";
@@ -143,18 +143,6 @@ export default function CommunityPage() {
     return () => observer.disconnect();
   }, [nextCursor, loadingMore, fetchPage, canAutoLoad]);
 
-  const loadMore = () => {
-    if (!nextCursor || loadingMore) return;
-    setLoadingMore(true);
-    setAutoLoaded(0);
-    fetchPage(nextCursor).then((data) => {
-      setExports((prev) => [...prev, ...data.exports]);
-      setNextCursor(data.nextCursor);
-      setAutoLoaded(data.exports.length);
-      setLoadingMore(false);
-    });
-  };
-
   return (
     <div className="flex flex-col min-h-screen px-4">
       <Header />
@@ -184,16 +172,9 @@ export default function CommunityPage() {
                   <WallCard key={exp.id} exp={exp} priority={i < 8} />
                 ))}
               </div>
-              {nextCursor && canAutoLoad && (
+              {canAutoLoad && (
                 <div ref={sentinelRef} className={`${GRID} pt-4`}>
                   {[...Array(12)].map((_, i) => <Skeleton key={i} />)}
-                </div>
-              )}
-              {nextCursor && !canAutoLoad && (
-                <div className="flex justify-center pt-8">
-                  <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-                    {loadingMore ? "Loading..." : "Load more"}
-                  </Button>
                 </div>
               )}
             </>

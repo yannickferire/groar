@@ -1,7 +1,7 @@
 import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { createServerSupabaseClient, toCdnUrl } from "@/lib/supabase";
 import { PLAN_LIMITS } from "@/lib/plans";
 import { getUserPlanFromDB, getWeeklyExportCount } from "@/lib/plans-server";
 import { checkExportMilestones } from "@/lib/milestones";
@@ -115,7 +115,9 @@ export async function GET() {
       [session.user.id]
     );
 
-    return NextResponse.json({ exports: result.rows });
+    return NextResponse.json({
+      exports: result.rows.map((row) => ({ ...row, imageUrl: toCdnUrl(row.imageUrl) })),
+    });
   } catch (error) {
     console.error("Exports fetch error:", error);
     return NextResponse.json({ error: "Failed to fetch exports" }, { status: 500 });

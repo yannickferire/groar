@@ -1,6 +1,7 @@
 import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { toCdnUrl } from "@/lib/supabase";
 
 export async function GET(
   _request: NextRequest,
@@ -22,5 +23,6 @@ export async function GET(
     return NextResponse.json({ error: "Export not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ export: result.rows[0] });
+  const row = result.rows[0];
+  return NextResponse.json({ export: { ...row, imageUrl: toCdnUrl(row.imageUrl) } });
 }

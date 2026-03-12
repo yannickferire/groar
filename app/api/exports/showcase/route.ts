@@ -1,5 +1,6 @@
 import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { toCdnUrl } from "@/lib/supabase";
 
 // Public endpoint — returns the 3 latest exports from Pro users for the landing page
 export async function GET() {
@@ -15,7 +16,7 @@ export async function GET() {
     );
 
     return NextResponse.json(
-      { images: rows.map((r) => r.imageUrl) },
+      { images: rows.map((r) => toCdnUrl(r.imageUrl)) },
       {
         headers: {
           "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",

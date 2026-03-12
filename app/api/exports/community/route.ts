@@ -1,5 +1,6 @@
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { toCdnUrl } from "@/lib/supabase";
 
 const PAGE_SIZE = 12;
 
@@ -21,7 +22,11 @@ export async function GET(request: NextRequest) {
     );
 
     const hasMore = rows.length > PAGE_SIZE;
-    const exports = rows.slice(0, PAGE_SIZE);
+    const exports = rows.slice(0, PAGE_SIZE).map((row) => ({
+      ...row,
+      imageUrl: toCdnUrl(row.imageUrl),
+      userImage: toCdnUrl(row.userImage),
+    }));
     const nextCursor = hasMore ? exports[exports.length - 1].createdAt : null;
 
     return NextResponse.json(
