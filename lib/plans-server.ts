@@ -134,7 +134,7 @@ export async function getLifetimeSubscriberCount(): Promise<number> {
         OR plan = 'friend'
       )`
     );
-    return parseInt(result.rows[0].count);
+    return Math.max(0, parseInt(result.rows[0].count) - 1);
   } catch (error) {
     console.error("Error counting lifetime subscribers:", error);
     return 0;
