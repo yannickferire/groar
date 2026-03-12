@@ -63,6 +63,7 @@ const STACK_GROUPS = [
       { name: "Next.js", role: "Framework", cost: 0, logo: "/logos/stack/nextjs.svg", darkInvert: true },
       { name: "Tailwind CSS", role: "Styling", cost: 0, logo: "/logos/stack/tailwind.svg" },
       { name: "shadcn/ui", role: "UI components", cost: 0, logo: "/logos/stack/shadcn.svg", darkInvert: true },
+      { name: "Motion", role: "Animations", cost: 0, logo: "/logos/stack/motion.png" },
     ],
   },
   {
@@ -420,7 +421,7 @@ export default function OpenPage() {
                   <h3 className="text-sm font-medium text-muted-foreground mb-3">
                     {group.label}
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {group.items.map((service) => (
                       <div
                         key={service.name}

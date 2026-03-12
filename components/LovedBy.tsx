@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { FavouriteIcon, UserCircleIcon } from "@hugeicons/core-free-icons";
+import { UserCircleIcon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 
 type LovedByData = {
@@ -46,49 +46,43 @@ export default function LovedBy() {
   }, []);
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3">
-      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide flex items-center gap-2">
-        <HugeiconsIcon icon={FavouriteIcon} size={18} strokeWidth={2} />
-        Loved by
-      </p>
-      <div className="flex items-center justify-center">
-        <div className="flex items-center -space-x-2">
-          {loading ? (
-            [...Array(5)].map((_, index) => (
-              <div
-                key={`avatar-skeleton-${index}`}
-                className="h-9 w-9 rounded-full bg-sidebar"
-              />
-            ))
-          ) : (
-            lovedBy.avatars.map((avatar, index) => (
-              <div
-                key={`avatar-${index}-${avatar.image}`}
-                className="h-9 w-9 rounded-full overflow-hidden border border-border bg-sidebar flex items-center justify-center"
-              >
-                {avatar.image ? (
-                  <Image
-                    src={avatar.image}
-                    alt={avatar.name || "Avatar"}
-                    width={36}
-                    height={36}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <HugeiconsIcon icon={UserCircleIcon} size={22} strokeWidth={1.5} />
-                )}
-              </div>
-            ))
-          )}
-        </div>
-        {lovedBy.totalUsers > lovedBy.avatars.length && (
-          <span className="ml-3 px-2.5 py-1 rounded-full border border-border text-xs font-medium text-muted-foreground">
-            {lovedBy.totalUsers >= 50
-              ? `+${numberFormatter.format(lovedBy.totalUsers - lovedBy.avatars.length)} creators, join them!`
-              : "and others, join them!"}
-          </span>
+    <div className="flex items-center justify-center">
+      <div className="flex items-center -space-x-2">
+        {loading ? (
+          [...Array(5)].map((_, index) => (
+            <div
+              key={`avatar-skeleton-${index}`}
+              className="h-9 w-9 rounded-full bg-sidebar"
+            />
+          ))
+        ) : (
+          lovedBy.avatars.map((avatar, index) => (
+            <div
+              key={`avatar-${index}-${avatar.image}`}
+              className="h-9 w-9 rounded-full overflow-hidden border border-border bg-sidebar flex items-center justify-center"
+            >
+              {avatar.image ? (
+                <Image
+                  src={avatar.image}
+                  alt={avatar.name || "Avatar"}
+                  width={36}
+                  height={36}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <HugeiconsIcon icon={UserCircleIcon} size={22} strokeWidth={1.5} />
+              )}
+            </div>
+          ))
         )}
       </div>
+      {loading ? (
+        <div className="ml-3 h-6 w-36 rounded-full bg-sidebar animate-pulse" />
+      ) : lovedBy.totalUsers > lovedBy.avatars.length ? (
+        <span className="ml-3 px-2.5 py-1 rounded-full border border-border text-xs font-medium text-muted-foreground">
+          {Math.floor(lovedBy.totalUsers / 10) * 10}+ creators, join them!
+        </span>
+      ) : null}
     </div>
   );
 }
