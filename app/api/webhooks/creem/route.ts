@@ -111,10 +111,15 @@ export async function POST(request: NextRequest) {
 
         // Update email if user has no valid email (e.g. Twitter-only signup)
         if (customerEmail && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(customerEmail)) {
-          await pool.query(
-            `UPDATE "user" SET email = $1 WHERE id = $2 AND email !~ '^[^\\s@]+@[^\\s@]+\\.[a-zA-Z]{2,}$'`,
-            [customerEmail, userId]
-          );
+          try {
+            await pool.query(
+              `UPDATE "user" SET email = $1 WHERE id = $2 AND email !~ '^[^\\s@]+@[^\\s@]+\\.[a-zA-Z]{2,}$'`,
+              [customerEmail, userId]
+            );
+          } catch (emailErr: unknown) {
+            // Unique constraint violation — email already used by another account
+            console.warn("Creem: could not update user email (likely duplicate):", (emailErr as Error).message);
+          }
         }
 
         await setUserPlan(userId, plan, {
