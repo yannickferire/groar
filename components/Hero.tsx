@@ -89,6 +89,11 @@ export default function Hero() {
               Create your first visual
             </Button>
           )}
+          {mounted && !session && (
+            <p className="text-[11px] text-muted-foreground/60 mt-1.5">
+              Free trial · No card needed
+            </p>
+          )}
         </div>
       </FadeIn>
     </section>
