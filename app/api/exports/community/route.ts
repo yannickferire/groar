@@ -10,35 +10,33 @@ export async function GET(request: NextRequest) {
   const cursor = request.nextUrl.searchParams.get("cursor");
 
   try {
-    const queries: [ReturnType<typeof pool.query>, ReturnType<typeof pool.query>] | [ReturnType<typeof pool.query>] = [
-      pool.query(
-        `SELECT e.id, e."imageUrl", e."createdAt", e."userId",
-                u.name as "userName", u."xUsername", u.image as "userImage"
-         FROM export e
-         JOIN "user" u ON u.id = e."userId"
-         JOIN subscription s ON s."userId" = e."userId"
-         WHERE s.plan IN ('pro', 'friend')
-           AND s.status IN ('active', 'trialing')
-           ${cursor ? `AND e."createdAt" < $2` : ""}
-         ORDER BY e."createdAt" DESC
-         LIMIT $1`,
-        cursor ? [PAGE_SIZE * FETCH_MULTIPLIER, cursor] : [PAGE_SIZE * FETCH_MULTIPLIER]
-      ),
-    ];
+    const exportsQuery = pool.query(
+      `SELECT e.id, e."imageUrl", e."createdAt", e."userId",
+              u.name as "userName", u."xUsername", u.image as "userImage"
+       FROM export e
+       JOIN "user" u ON u.id = e."userId"
+       JOIN subscription s ON s."userId" = e."userId"
+       WHERE s.plan IN ('pro', 'friend')
+         AND s.status IN ('active', 'trialing')
+         ${cursor ? `AND e."createdAt" < $2` : ""}
+       ORDER BY e."createdAt" DESC
+       LIMIT $1`,
+      cursor ? [PAGE_SIZE * FETCH_MULTIPLIER, cursor] : [PAGE_SIZE * FETCH_MULTIPLIER]
+    );
 
     // Only fetch total count on first page (DB exports + anonymous counter)
-    if (!cursor) {
-      queries.push(pool.query(
-        `SELECT
-          (SELECT COUNT(*)::int FROM export) +
-          COALESCE((SELECT value::int FROM counter WHERE key = 'anonymous_exports'), 0)
-          as count`
-      ));
-    }
+    const countQuery = !cursor
+      ? pool.query(
+          `SELECT
+            (SELECT COUNT(*)::int FROM export) +
+            COALESCE((SELECT value::int FROM counter WHERE key = 'anonymous_exports'), 0)
+            as count`
+        )
+      : null;
 
-    const results = await Promise.all(queries);
-    const { rows } = results[0];
-    const totalExports = !cursor && results[1] ? results[1].rows[0].count : undefined;
+    const [exportsResult, countResult] = await Promise.all([exportsQuery, countQuery]);
+    const { rows } = exportsResult;
+    const totalExports = countResult ? countResult.rows[0].count : undefined;
 
     // Remove consecutive exports by the same user
     const deduped: typeof rows = [];
