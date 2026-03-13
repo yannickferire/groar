@@ -208,16 +208,8 @@ export async function POST(request: NextRequest) {
           });
           console.log(`Set plan ${plan} (${billingPeriod}) for user ${subUserId} (subscription: ${sub.id})`);
 
-          // Track revenue for new activations
-          if (isNewActivation && sub.amountCents > 0) {
-            await pool.query(
-              `INSERT INTO counter (key, value) VALUES ('total_revenue_cents', $1)
-               ON CONFLICT (key) DO UPDATE SET value = counter.value + $1`,
-              [sub.amountCents]
-            );
-          }
-
           // Only track in PostHog + send email if this is a genuinely new activation
+          // Note: revenue is tracked in order.created, not here (to avoid double-counting)
           if (isNewActivation) {
             const posthog = getPostHogClient();
             posthog.capture({

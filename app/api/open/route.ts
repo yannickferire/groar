@@ -1,5 +1,5 @@
 import { pool } from "@/lib/db";
-import { getLifetimeSubscriberCount } from "@/lib/plans-server";
+
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -36,8 +36,11 @@ export async function GET() {
          WHERE status = 'trialing' AND "trialEnd" > NOW()`
       ),
 
-      // Lifetime subscriber count (includes friend plan)
-      getLifetimeSubscriberCount(),
+      // Lifetime deals actually sold (excludes friend plan)
+      pool.query(
+        `SELECT COUNT(*)::int as count FROM subscription
+         WHERE status = 'active' AND plan = 'pro' AND "billingPeriod" = 'lifetime'`
+      ),
 
       // Pro accounts (active pro + friend)
       pool.query(
@@ -130,7 +133,7 @@ export async function GET() {
         totalUsers: usersResult.rows[0].count,
         totalExports,
         proAccounts: proAccountsResult.rows[0].count,
-        proLifetime: lifetimeCount,
+        proLifetime: Math.max(0, lifetimeCount.rows[0].count - 2),
         activeTrials: trialsResult.rows[0].count,
         totalRevenue: Math.round(totalRevenueCents / 100),
         trendDays: TREND_DAYS,
