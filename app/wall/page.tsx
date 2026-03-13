@@ -10,7 +10,7 @@ import VsCta from "@/components/VsCta";
 import VsFaq from "@/components/VsFaq";
 import { faqs } from "@/lib/faqs";
 
-const AUTO_LOAD_LIMIT = 100;
+const AUTO_LOAD_LIMIT = 36;
 
 type CommunityExport = {
   id: string;
@@ -136,7 +136,7 @@ export default function CommunityPage() {
           });
         }
       },
-      { rootMargin: "400px" }
+      { rootMargin: "200px" }
     );
 
     observer.observe(sentinel);
