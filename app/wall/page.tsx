@@ -10,7 +10,7 @@ import VsCta from "@/components/VsCta";
 import VsFaq from "@/components/VsFaq";
 import { faqs } from "@/lib/faqs";
 
-const AUTO_LOAD_LIMIT = 36;
+const MAX_ITEMS = 48;
 
 type CommunityExport = {
   id: string;
@@ -93,18 +93,17 @@ function WallCard({ exp, priority = false }: { exp: CommunityExport; priority?: 
 
 export default function CommunityPage() {
   const [exports, setExports] = useState<CommunityExport[]>([]);
+  const [totalExports, setTotalExports] = useState<number | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [autoLoaded, setAutoLoaded] = useState(0);
 
   const fetchPage = useCallback(async (cursor?: string) => {
     const url = cursor
       ? `/api/exports/community?cursor=${encodeURIComponent(cursor)}`
       : "/api/exports/community";
     const res = await fetch(url);
-    const data = await res.json();
-    return data as { exports: CommunityExport[]; nextCursor: string | null };
+    return res.json() as Promise<{ exports: CommunityExport[]; nextCursor: string | null; totalExports?: number }>;
   }, []);
 
   useEffect(() => {
@@ -112,17 +111,17 @@ export default function CommunityPage() {
       .then((data) => {
         setExports(data.exports);
         setNextCursor(data.nextCursor);
-        setAutoLoaded(data.exports.length);
+        if (data.totalExports !== undefined) setTotalExports(data.totalExports);
       })
       .finally(() => setLoading(false));
   }, [fetchPage]);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const canAutoLoad = nextCursor && autoLoaded < AUTO_LOAD_LIMIT;
+  const canLoadMore = nextCursor && exports.length < MAX_ITEMS;
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel || !canAutoLoad) return;
+    if (!sentinel || !canLoadMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -131,7 +130,6 @@ export default function CommunityPage() {
           fetchPage(nextCursor).then((data) => {
             setExports((prev) => [...prev, ...data.exports]);
             setNextCursor(data.nextCursor);
-            setAutoLoaded((prev) => prev + data.exports.length);
             setLoadingMore(false);
           });
         }
@@ -141,7 +139,7 @@ export default function CommunityPage() {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [nextCursor, loadingMore, fetchPage, canAutoLoad]);
+  }, [nextCursor, loadingMore, fetchPage, canLoadMore]);
 
   return (
     <div className="flex flex-col min-h-screen px-4">
@@ -153,6 +151,9 @@ export default function CommunityPage() {
           </h1>
           <p className="text-muted-foreground">
             Latest visuals made by 🐯 GROAR users
+            {totalExports != null && totalExports > 0 && (
+              <span className="text-muted-foreground/60"> &middot; {totalExports.toLocaleString()} exported so far</span>
+            )}
           </p>
         </div>
 
@@ -172,7 +173,7 @@ export default function CommunityPage() {
                   <WallCard key={exp.id} exp={exp} priority={i < 8} />
                 ))}
               </div>
-              {canAutoLoad && (
+              {canLoadMore && (
                 <div ref={sentinelRef} className={`${GRID} pt-4`}>
                   {[...Array(12)].map((_, i) => <Skeleton key={i} />)}
                 </div>
