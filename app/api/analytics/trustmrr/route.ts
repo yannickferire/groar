@@ -2,9 +2,12 @@ import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserPlanFromDB } from "@/lib/plans-server";
-import { fetchStartupByXHandle } from "@/lib/trustmrr";
+import { fetchTrustMRRForUser } from "@/lib/trustmrr-analytics";
+
+const FRESHNESS_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
 
 // Get stored TrustMRR analytics for the current user
+// Auto-fetches from TrustMRR API if data is stale (> 15 min)
 export async function GET(request: NextRequest) {
   const { session, response } = await requireAuth();
   if (response) return response;
@@ -18,6 +21,26 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const days = Math.min(parseInt(searchParams.get("days") || "30"), 365);
     const today = new Date().toISOString().split("T")[0];
+
+    // Check freshness of latest snapshot
+    const freshnessResult = await pool.query(
+      `SELECT MAX("createdAt") as latest_fetch FROM trustmrr_snapshot WHERE "userId" = $1`,
+      [session.user.id]
+    );
+    const latestFetch = freshnessResult.rows[0]?.latest_fetch;
+    const isStale = !latestFetch || (Date.now() - new Date(latestFetch).getTime()) > FRESHNESS_THRESHOLD_MS;
+
+    // Auto-fetch if data is stale
+    if (isStale) {
+      const userResult = await pool.query(
+        `SELECT "xUsername" FROM "user" WHERE id = $1`,
+        [session.user.id]
+      );
+      const xHandle = userResult.rows[0]?.xUsername;
+      if (xHandle) {
+        await fetchTrustMRRForUser(session.user.id, xHandle, "auto").catch(() => {});
+      }
+    }
 
     // Check manual refresh count for today
     const MAX_DAILY_REFRESHES = 3;
@@ -60,29 +83,6 @@ export async function GET(request: NextRequest) {
     }
 
     const latest = snapshotsResult.rows[0];
-
-    // Backfill startup info if missing on latest snapshot
-    if (!latest.startupName) {
-      try {
-        const userResult = await pool.query(
-          `SELECT "xUsername" FROM "user" WHERE id = $1`,
-          [session.user.id]
-        );
-        const xHandle = userResult.rows[0]?.xUsername;
-        if (xHandle) {
-          const tmrrResult = await fetchStartupByXHandle(xHandle);
-          if ("startup" in tmrrResult && (tmrrResult.startup.name || tmrrResult.startup.website)) {
-            await pool.query(
-              `UPDATE trustmrr_snapshot SET "startupName" = $2, website = $3
-               WHERE "userId" = $1 AND "startupName" IS NULL`,
-              [session.user.id, tmrrResult.startup.name, tmrrResult.startup.website]
-            );
-            latest.startupName = tmrrResult.startup.name;
-            latest.website = tmrrResult.startup.website;
-          }
-        }
-      } catch {}
-    }
 
     return NextResponse.json({
       hasData: true,

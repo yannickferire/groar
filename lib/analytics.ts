@@ -64,7 +64,7 @@ export async function fetchAccountAnalytics(
   );
 
   const MAX_DAILY_MANUAL_REFRESHES = 3;
-  const AUTO_FETCH_COOLDOWN_HOURS = 5;
+  const AUTO_FETCH_COOLDOWN_MINUTES = 15;
   if (fetchType === "manual" && existingSnapshot.rows.length > 0) {
     const refreshCount = parseInt(existingSnapshot.rows[0].refreshCount);
     if (refreshCount >= MAX_DAILY_MANUAL_REFRESHES) {
@@ -80,7 +80,7 @@ export async function fetchAccountAnalytics(
     const recentAuto = await pool.query(
       `SELECT id, "createdAt" FROM x_analytics_snapshot
        WHERE "accountId" = $1 AND "fetchType" = 'auto'
-       AND "createdAt" > NOW() - interval '${AUTO_FETCH_COOLDOWN_HOURS} hours'
+       AND "createdAt" > NOW() - interval '${AUTO_FETCH_COOLDOWN_MINUTES} minutes'
        ORDER BY "createdAt" DESC LIMIT 1`,
       [accountDbId]
     );
@@ -179,7 +179,8 @@ export async function fetchAccountAnalytics(
       "tweetCount" = EXCLUDED."tweetCount",
       "listedCount" = EXCLUDED."listedCount",
       "followersGained" = EXCLUDED."followersGained",
-      "manualRefreshCount" = COALESCE(x_analytics_snapshot."manualRefreshCount", 1) + 1`,
+      "manualRefreshCount" = COALESCE(x_analytics_snapshot."manualRefreshCount", 1) + 1,
+      "createdAt" = NOW()`,
     [
       accountDbId,
       today,

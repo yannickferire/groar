@@ -77,9 +77,6 @@ const GITHUB_METRICS: MetricType[] = ["githubStars", "githubCommits", "githubFor
 const REDDIT_METRICS: MetricType[] = ["redditKarma", "redditUpvotes", "redditUpvoteRatio"];
 const ALL_METRICS: MetricType[] = [...X_METRICS, ...SAAS_METRICS, ...GITHUB_METRICS, ...REDDIT_METRICS, "custom"];
 const MAX_METRICS = 5;
-const FRESH_FETCH_COOLDOWN = 15 * 60 * 1000; // 15 minutes
-let lastFreshFetchXTime = 0;
-let lastFreshFetchTrustmrrTime = 0;
 const AUTO_FILL_X: MetricType[] = ["followers", "followings", "posts"];
 const AUTO_FILL_SAAS: MetricType[] = ["mrr", "arr", "revenue"];
 
@@ -333,18 +330,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
 
-  // Fetch connected X accounts and analytics
-  const fetchXAnalytics = useCallback((triggerFresh = false) => {
+  // Fetch connected X accounts and analytics (server auto-fetches if stale)
+  const fetchXAnalytics = useCallback(() => {
     if (!isPremium) return;
-    const now = Date.now();
-    const shouldFresh = triggerFresh && now - lastFreshFetchXTime > FRESH_FETCH_COOLDOWN;
-    if (shouldFresh) lastFreshFetchXTime = now;
-    if (shouldFresh) setLoadingX(true);
-    const load = () => fetch("/api/analytics?days=1").then((res) => res.ok ? res.json() : null);
-    (shouldFresh
-      ? fetch("/api/analytics/fetch", { method: "POST" }).then(load)
-      : load()
-    )
+    setLoadingX(true);
+    fetch("/api/analytics?days=1")
+      .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (!data) return;
         if (data.accounts && data.accounts.length > 0) {
@@ -393,18 +384,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
 
-  // Fetch TrustMRR data for SaaS metric auto-fill
-  const fetchTrustMRR = useCallback((triggerFresh = false) => {
+  // Fetch TrustMRR data for SaaS metric auto-fill (server auto-fetches if stale)
+  const fetchTrustMRR = useCallback(() => {
     if (!isPremium) return;
-    const now = Date.now();
-    const shouldFresh = triggerFresh && now - lastFreshFetchTrustmrrTime > FRESH_FETCH_COOLDOWN;
-    if (shouldFresh) lastFreshFetchTrustmrrTime = now;
-    if (shouldFresh) setLoadingTrustmrr(true);
-    const load = () => fetch("/api/analytics/trustmrr").then((res) => res.ok ? res.json() : null);
-    (shouldFresh
-      ? fetch("/api/analytics/trustmrr/fetch", { method: "POST" }).then(load)
-      : load()
-    )
+    setLoadingTrustmrr(true);
+    fetch("/api/analytics/trustmrr")
+      .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data?.hasData && data.latest) {
           const latest = {
@@ -556,10 +541,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     const metricMap = buildMetricMap(selectedAccount);
     const newMetric: Metric = { type, value: metricMap[type] ?? 0 };
     updateSetting("metrics", [...settings.metrics, newMetric]);
-    // Trigger a fresh data fetch when adding a metric that supports auto-fill
-    if (AUTO_FILL_X.includes(type)) fetchXAnalytics(true);
-    if (AUTO_FILL_SAAS.includes(type)) fetchTrustMRR(true);
-  }, [updateSetting, settings.metrics, connectedAccounts, handleMode, buildMetricMap, fetchXAnalytics, fetchTrustMRR]);
+  }, [updateSetting, settings.metrics, connectedAccounts, handleMode, buildMetricMap]);
 
   const removeMetric = useCallback((type: MetricType) => {
     updateSetting("metrics", settings.metrics.filter(m => m.type !== type));

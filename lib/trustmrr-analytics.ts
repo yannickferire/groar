@@ -20,7 +20,7 @@ export type TrustMRRFetchResult = {
 };
 
 const MAX_DAILY_MANUAL_REFRESHES = 3;
-const AUTO_FETCH_COOLDOWN_HOURS = 20; // once per day is enough for revenue data
+const AUTO_FETCH_COOLDOWN_MINUTES = 15;
 
 export async function fetchTrustMRRForUser(
   userId: string,
@@ -51,7 +51,7 @@ export async function fetchTrustMRRForUser(
     const recentAuto = await pool.query(
       `SELECT id, "createdAt" FROM trustmrr_snapshot
        WHERE "userId" = $1 AND "fetchType" = 'auto'
-       AND "createdAt" > NOW() - interval '${AUTO_FETCH_COOLDOWN_HOURS} hours'
+       AND "createdAt" > NOW() - interval '${AUTO_FETCH_COOLDOWN_MINUTES} minutes'
        ORDER BY "createdAt" DESC LIMIT 1`,
       [userId]
     );

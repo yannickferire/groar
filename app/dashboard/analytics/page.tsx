@@ -185,31 +185,13 @@ export default function AnalyticsPage() {
       return;
     }
     try {
+      // Server auto-fetches from TrustMRR API if data is stale (> 15 min)
       const res = await fetch("/api/analytics/trustmrr?days=30");
       if (!res.ok) return;
       const tmrrData = await res.json();
       trustmrrCache = { data: tmrrData, timestamp: Date.now() };
       setTrustmrrData(tmrrData);
-
-      // Auto-fetch on first visit if no data yet
-      if (!tmrrData.hasData) {
-        const fetchRes = await fetch("/api/analytics/trustmrr/fetch", { method: "POST" });
-        if (fetchRes.ok) {
-          const result = await fetchRes.json();
-          if (result.notFound) {
-            setTrustmrrNotFound(true);
-          } else if (result.success) {
-            setTrustmrrNotFound(false);
-            // Re-fetch stored data
-            const res2 = await fetch("/api/analytics/trustmrr?days=30");
-            if (res2.ok) {
-              const tmrrData2 = await res2.json();
-              trustmrrCache = { data: tmrrData2, timestamp: Date.now() };
-              setTrustmrrData(tmrrData2);
-            }
-          }
-        }
-      }
+      if (!tmrrData.hasData) setTrustmrrNotFound(true);
     } catch {
       // Silently fail — TrustMRR section just won't show
     }

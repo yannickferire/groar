@@ -2,8 +2,12 @@ import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserPlanFromDB } from "@/lib/plans-server";
+import { fetchAccountAnalytics } from "@/lib/analytics";
+
+const FRESHNESS_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
 
 // Get stored X analytics for the current user
+// Auto-fetches from X API if data is stale (> 15 min)
 export async function GET(request: NextRequest) {
   const { session, response } = await requireAuth();
   if (response) return response;
@@ -18,9 +22,10 @@ export async function GET(request: NextRequest) {
     const days = Math.min(parseInt(searchParams.get("days") || "30"), 365);
     const accountId = searchParams.get("accountId"); // Optional: filter by specific account
 
-    // Get user's X accounts
+    // Get user's X accounts (include tokens for auto-fetch)
     const accountsResult = await pool.query(
-      `SELECT a.id, a."accountId" as "xUserId", u."xUsername" as username
+      `SELECT a.id, a."accountId" as "xUserId", u."xUsername" as username,
+              a."accessToken", a."refreshToken"
        FROM account a
        JOIN "user" u ON a."userId" = u.id
        WHERE a."userId" = $1 AND a."providerId" = 'twitter'
@@ -37,6 +42,25 @@ export async function GET(request: NextRequest) {
 
     const accountIds = accountsResult.rows.map((a) => a.id);
     const today = new Date().toISOString().split("T")[0];
+
+    // Check freshness of latest snapshot
+    const freshnessResult = await pool.query(
+      `SELECT MAX("createdAt") as latest_fetch FROM x_analytics_snapshot WHERE "accountId" = ANY($1)`,
+      [accountIds]
+    );
+    const latestFetch = freshnessResult.rows[0]?.latest_fetch;
+    const isStale = !latestFetch || (Date.now() - new Date(latestFetch).getTime()) > FRESHNESS_THRESHOLD_MS;
+
+    // Auto-fetch from X API if data is stale
+    if (isStale) {
+      for (const account of accountsResult.rows) {
+        if (account.accessToken) {
+          await fetchAccountAnalytics(
+            account.id, account.xUserId, account.accessToken, "auto", account.refreshToken
+          ).catch(() => {});
+        }
+      }
+    }
 
     // Check how many manual refreshes were done today per account
     const MAX_DAILY_REFRESHES = 3;
