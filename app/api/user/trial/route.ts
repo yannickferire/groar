@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { startTrial, hasUsedTrial, getUserSubscription } from "@/lib/plans-server";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { sendEmail, newTrialNotificationEmail } from "@/lib/email";
+import { inngest } from "@/lib/inngest";
 
 export async function POST() {
   const { session, response } = await requireAuth();
@@ -42,6 +43,17 @@ export async function POST() {
       session.user.email || "no email"
     );
     sendEmail({ to: "yannick.ferire@gmail.com", ...notification });
+
+    // Schedule trial reminder emails at exact times
+    await inngest.send({
+      name: "trial/started",
+      data: {
+        userId: session.user.id,
+        email: session.user.email || "",
+        name: session.user.name || "",
+        trialEnd,
+      },
+    });
 
     return NextResponse.json({ success: true, trialEnd });
   } catch (error) {

@@ -92,152 +92,107 @@ export const dailyAnalyticsFetch = inngest.createFunction(
   }
 );
 
-// Trial ending reminder — runs daily at 8am UTC
-// Finds trials expiring in the next 24h and sends a reminder
-export const trialEndingReminder = inngest.createFunction(
+// Trial email sequence — triggered when a trial starts
+// Sends emails at exact times: 24h before end, at expiry, and 5 days after
+export const trialEmailSequence = inngest.createFunction(
   {
-    id: "trial-ending-reminder",
-    name: "Trial Ending Reminder",
+    id: "trial-email-sequence",
+    name: "Trial Email Sequence",
     retries: 2,
+    cancelOn: [
+      // Cancel if user subscribes to a paid plan
+      { event: "subscription/activated", match: "data.userId" },
+    ],
   },
-  { cron: "0 8 * * *" },
-  async ({ step, logger }) => {
-    const [users, pricing] = await Promise.all([
-      step.run("find-ending-trials", async () => {
-        const result = await pool.query(
-          `SELECT u.email, u.name, s."trialEnd"
-           FROM subscription s
-           JOIN "user" u ON u.id = s."userId"
-           WHERE s.plan = 'pro'
-             AND s."trialEnd" IS NOT NULL
-             AND s."trialEnd" > NOW()
-             AND s."trialEnd" <= NOW() + interval '1 day'
-             AND s.status = 'trialing'
-             AND s."externalCustomerId" IS NULL
-             AND u."emailTrialReminders" = TRUE
-             AND NOT EXISTS (
-               SELECT 1 FROM subscription s2
-               WHERE s2."userId" = s."userId"
-                 AND s2."externalCustomerId" IS NOT NULL
-             )`
-        );
-        return result.rows as { email: string; name: string; trialEnd: string }[];
-      }),
-      step.run("fetch-pricing", async () => {
+  { event: "trial/started" },
+  async ({ event, step, logger }) => {
+    const { userId, email, name, trialEnd } = event.data;
+    const trialEndDate = new Date(trialEnd);
+
+    // 1. Wait until 24h before trial ends, then send "ending soon" email
+    const endingReminderTime = new Date(trialEndDate.getTime() - 24 * 60 * 60 * 1000);
+    await step.sleepUntil("wait-for-ending-reminder", endingReminderTime);
+
+    // Check if user still has an active trial and wants emails
+    const shouldSendEnding = await step.run("check-trial-ending", async () => {
+      const result = await pool.query(
+        `SELECT s.status, s."externalCustomerId", u."emailTrialReminders"
+         FROM subscription s
+         JOIN "user" u ON u.id = s."userId"
+         WHERE s."userId" = $1 AND s.status = 'trialing'`,
+        [userId]
+      );
+      const row = result.rows[0];
+      return row && !row.externalCustomerId && row.emailTrialReminders !== false;
+    });
+
+    if (shouldSendEnding) {
+      await step.run("send-trial-ending", async () => {
         const { proTier, lifetimeTier } = await getPricingTierInfo();
-        return { monthlyPrice: proTier.price, lifetimePrice: lifetimeTier.price };
-      }),
-    ]);
-
-    logger.info(`Found ${users.length} trials ending in 24h`);
-
-    for (const user of users) {
-      await step.run(`send-trial-ending-${user.email}`, async () => {
-        const email = trialEndingEmail(user.name || "there", pricing);
-        await sendEmail({ to: user.email, ...email });
+        const emailContent = trialEndingEmail(name || "there", {
+          monthlyPrice: proTier.price,
+          lifetimePrice: lifetimeTier.price,
+        });
+        await sendEmail({ to: email, ...emailContent });
+        logger.info(`Sent trial ending email to ${email}`);
       });
     }
 
-    return { sent: users.length };
-  }
-);
+    // 2. Wait until trial expires, then send "expired" email
+    await step.sleepUntil("wait-for-expiry", trialEndDate);
 
-// Trial expired — runs daily at 9am UTC
-// Finds trials that expired in the last 24h and sends a follow-up
-export const trialExpiredNotification = inngest.createFunction(
-  {
-    id: "trial-expired-notification",
-    name: "Trial Expired Notification",
-    retries: 2,
-  },
-  { cron: "0 9 * * *" },
-  async ({ step, logger }) => {
-    const [users, pricing] = await Promise.all([
-      step.run("find-expired-trials", async () => {
-        const result = await pool.query(
-          `SELECT u.email, u.name
-           FROM subscription s
-           JOIN "user" u ON u.id = s."userId"
-           WHERE s."trialEnd" IS NOT NULL
-             AND s."trialEnd" <= NOW()
-             AND s."trialEnd" > NOW() - interval '1 day'
-             AND s.plan = 'pro'
-             AND s.status = 'trialing'
-             AND s."externalCustomerId" IS NULL
-             AND u."emailTrialReminders" = TRUE
-             AND NOT EXISTS (
-               SELECT 1 FROM subscription s2
-               WHERE s2."userId" = s."userId"
-                 AND s2."externalCustomerId" IS NOT NULL
-             )`
-        );
-        return result.rows as { email: string; name: string }[];
-      }),
-      step.run("fetch-pricing-expired", async () => {
+    const shouldSendExpired = await step.run("check-trial-expired", async () => {
+      const result = await pool.query(
+        `SELECT s.status, s."externalCustomerId", u."emailTrialReminders"
+         FROM subscription s
+         JOIN "user" u ON u.id = s."userId"
+         WHERE s."userId" = $1 AND s.status = 'trialing'`,
+        [userId]
+      );
+      const row = result.rows[0];
+      return row && !row.externalCustomerId && row.emailTrialReminders !== false;
+    });
+
+    if (shouldSendExpired) {
+      await step.run("send-trial-expired", async () => {
         const { lifetimeTier } = await getPricingTierInfo();
-        return { lifetimePrice: lifetimeTier.price };
-      }),
-    ]);
-
-    logger.info(`Found ${users.length} expired trials`);
-
-    for (const user of users) {
-      await step.run(`send-trial-expired-${user.email}`, async () => {
-        const email = trialExpiredEmail(user.name || "there", pricing);
-        await sendEmail({ to: user.email, ...email });
+        const emailContent = trialExpiredEmail(name || "there", {
+          lifetimePrice: lifetimeTier.price,
+        });
+        await sendEmail({ to: email, ...emailContent });
+        logger.info(`Sent trial expired email to ${email}`);
       });
     }
 
-    return { sent: users.length };
-  }
-);
+    // 3. Wait 5 days after expiry, then send follow-up
+    await step.sleep("wait-for-followup", "5 days");
 
-// Trial follow-up — runs daily at 10am UTC
-// Finds trials that expired 5 days ago (J+5) and sends a gentle nudge
-export const trialFollowUp = inngest.createFunction(
-  {
-    id: "trial-follow-up",
-    name: "Trial Follow-Up (J+5)",
-    retries: 2,
-  },
-  { cron: "0 10 * * *" },
-  async ({ step, logger }) => {
-    const [users, pricing] = await Promise.all([
-      step.run("find-followup-trials", async () => {
-        const result = await pool.query(
-          `SELECT u.email, u.name
-           FROM subscription s
-           JOIN "user" u ON u.id = s."userId"
-           WHERE s."trialEnd" IS NOT NULL
-             AND s."trialEnd" <= NOW() - interval '4 days'
-             AND s."trialEnd" > NOW() - interval '5 days'
-             AND s.status = 'trialing'
-             AND s."externalCustomerId" IS NULL
-             AND u."emailTrialReminders" = TRUE
-             AND NOT EXISTS (
-               SELECT 1 FROM subscription s2
-               WHERE s2."userId" = s."userId"
-                 AND s2."externalCustomerId" IS NOT NULL
-             )`
-        );
-        return result.rows as { email: string; name: string }[];
-      }),
-      step.run("fetch-pricing-followup", async () => {
+    const shouldSendFollowUp = await step.run("check-trial-followup", async () => {
+      const result = await pool.query(
+        `SELECT s.status, s."externalCustomerId", u."emailTrialReminders"
+         FROM subscription s
+         JOIN "user" u ON u.id = s."userId"
+         WHERE s."userId" = $1 AND s.status = 'trialing'
+           AND s."externalCustomerId" IS NULL`,
+        [userId]
+      );
+      const row = result.rows[0];
+      return row && row.emailTrialReminders !== false;
+    });
+
+    if (shouldSendFollowUp) {
+      await step.run("send-trial-followup", async () => {
         const { proTier, lifetimeTier } = await getPricingTierInfo();
-        return { monthlyPrice: proTier.price, lifetimePrice: lifetimeTier.price };
-      }),
-    ]);
-
-    logger.info(`Found ${users.length} trials for J+5 follow-up`);
-
-    for (const user of users) {
-      await step.run(`send-trial-followup-${user.email}`, async () => {
-        const email = trialFollowUpEmail(user.name || "there", pricing);
-        await sendEmail({ to: user.email, ...email });
+        const emailContent = trialFollowUpEmail(name || "there", {
+          monthlyPrice: proTier.price,
+          lifetimePrice: lifetimeTier.price,
+        });
+        await sendEmail({ to: email, ...emailContent });
+        logger.info(`Sent trial follow-up email to ${email}`);
       });
     }
 
-    return { sent: users.length };
+    return { userId, emailsSent: true };
   }
 );
 
@@ -338,4 +293,4 @@ export const dailyPointsCleanup = inngest.createFunction(
 );
 
 // Export all functions for the serve handler
-export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, dailyPointsCleanup, trialEndingReminder, trialExpiredNotification, trialFollowUp];
+export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, dailyPointsCleanup, trialEmailSequence];

@@ -47,13 +47,13 @@ export function welcomeEmail(name: string) {
 
 export function trialEndingEmail(name: string, pricing?: { monthlyPrice: number; lifetimePrice: number }) {
   const firstName = name.split(" ")[0] || name;
-  const monthly = pricing?.monthlyPrice ?? 5;
-  const lifetime = pricing?.lifetimePrice ?? 9;
+  const monthly = pricing?.monthlyPrice ?? 6;
+  const lifetime = pricing?.lifetimePrice ?? 12;
   return {
-    subject: "Your Groar Pro trial ends tomorrow",
+    subject: "Your Groar Pro trial expires in 24h",
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
-      <p>Your Pro trial <strong>expires tomorrow</strong>. After that, you'll be back to 3 exports/week with watermark.</p>
+      <p>Your Pro trial <strong>expires in 24 hours</strong>. After that, you'll be back to 3 exports/week with watermark.</p>
       <p>🔥 Right now, early adopter pricing is still available:</p>
       <ul style="margin:12px 0;padding-left:20px;">
         <li><strong>$${lifetime} one-time</strong> — lifetime access (final price will be $29)</li>
@@ -68,7 +68,7 @@ export function trialEndingEmail(name: string, pricing?: { monthlyPrice: number;
 
 export function trialExpiredEmail(name: string, pricing?: { lifetimePrice: number }) {
   const firstName = name.split(" ")[0] || name;
-  const lifetime = pricing?.lifetimePrice ?? 9;
+  const lifetime = pricing?.lifetimePrice ?? 12;
   return {
     subject: "Your Groar Pro trial has ended",
     html: layout(`
@@ -84,8 +84,8 @@ export function trialExpiredEmail(name: string, pricing?: { lifetimePrice: numbe
 
 export function trialFollowUpEmail(name: string, pricing?: { monthlyPrice: number; lifetimePrice: number }) {
   const firstName = name.split(" ")[0] || name;
-  const monthly = pricing?.monthlyPrice ?? 5;
-  const lifetime = pricing?.lifetimePrice ?? 9;
+  const monthly = pricing?.monthlyPrice ?? 6;
+  const lifetime = pricing?.lifetimePrice ?? 12;
   return {
     subject: "Still thinking about Groar Pro? 🐯",
     html: layout(`
@@ -106,8 +106,8 @@ export function trialFollowUpEmail(name: string, pricing?: { monthlyPrice: numbe
 
 export function winBackEmail(name: string, pricing?: { monthlyPrice: number; lifetimePrice: number }) {
   const firstName = name.split(" ")[0] || name;
-  const monthly = pricing?.monthlyPrice ?? 5;
-  const lifetime = pricing?.lifetimePrice ?? 9;
+  const monthly = pricing?.monthlyPrice ?? 6;
+  const lifetime = pricing?.lifetimePrice ?? 12;
   return {
     subject: "Groar just got better — early adopter pricing inside 🔥",
     html: layout(`
