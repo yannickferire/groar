@@ -46,7 +46,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
   const isSquare = selectedAspectRatio === "square";
   // Square format has more vertical space — scale up text ~15%
   const sq = (base: number) => isSquare ? base * 1.15 : base;
-  const align = settings.textAlign || "center";
+  const align = settings.metricsLayout === "grid" ? "center" : (settings.textAlign || "center");
 
   return (
     <div className="flex flex-col">
