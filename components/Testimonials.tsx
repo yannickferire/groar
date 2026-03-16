@@ -146,8 +146,7 @@ export default function Testimonials() {
         <p className="text-muted-foreground mt-2">Don&apos;t take our word for it</p>
       </FadeInView>
       <div
-        className="overflow-hidden"
-        style={{ maskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)" }}
+        className="overflow-hidden mask-l-from-80% mask-r-from-80%"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >

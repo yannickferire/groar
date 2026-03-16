@@ -89,6 +89,7 @@ type SortableMetricItemProps = {
   canDrag: boolean;
   autoFillValue?: number; // undefined = no auto-fill available
   autoFillLoading?: boolean;
+  disabled?: boolean;
 };
 
 function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
@@ -147,7 +148,7 @@ function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
   );
 }
 
-const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, onCustomLabelChange, canRemove, canDrag, autoFillValue, autoFillLoading }: SortableMetricItemProps) {
+const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, onCustomLabelChange, canRemove, canDrag, autoFillValue, autoFillLoading, disabled }: SortableMetricItemProps) {
   const [inputValue, setInputValue] = useState(metric.prefix ? `${metric.prefix}${metric.value}` : metric.value.toString());
 
   // Sync local state when metric value changes (e.g., from localStorage)
@@ -221,6 +222,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
         value={inputValue}
         onChange={handleInputChange}
         onBlur={handleBlur}
+        disabled={disabled}
         className="w-32 text-center bg-white"
         aria-label={`${METRIC_LABELS[metric.type]} value`}
       />
@@ -744,6 +746,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                       "period": { type: "period", periodType: h?.periodType || "week", periodFrom: h?.periodFrom ?? 1 },
                       "last": { type: "last", lastCount: h?.lastCount ?? 7, lastUnit: h?.lastUnit || h?.periodType || "day" },
                       "date-range": { type: "date-range", dateFrom: h?.dateFrom || new Date().toISOString().slice(0, 10), dateTo: h?.dateTo || new Date().toISOString().slice(0, 10) },
+                      "today": { type: "today" },
+                      "yesterday": { type: "yesterday" },
                       "quote": { type: "quote", text: userText || "Your quote" },
                       "custom": { type: "custom", text: userText || "Your text" },
                     };
@@ -757,6 +761,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                     <SelectItem value="period">Period</SelectItem>
                     <SelectItem value="last">Last</SelectItem>
                     <SelectItem value="date-range">Date range</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="yesterday">Yesterday</SelectItem>
                     <SelectItem value="quote">Quote</SelectItem>
                     <SelectItem value="custom">Custom</SelectItem>
                   </SelectContent>
@@ -919,16 +925,19 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
             {(settings.template || "metrics") === "metrics" ? "Metrics" : "Metric"}
+            {(() => {
+              const max = (settings.metricsLayout === "grid" || settings.aspectRatio === "banner") ? 3 : MAX_METRICS;
+              return (settings.template || "metrics") === "metrics" && settings.metrics.length >= max ? (
+                <>
+                  <span className="text-muted-foreground/30">|</span>
+                  <span className="text-xs text-primary italic font-normal normal-case tracking-normal">
+                    {max} max
+                  </span>
+                </>
+              ) : null;
+            })()}
           </h3>
           <div className="flex items-center gap-1.5">
-            {(settings.template || "metrics") === "metrics" && settings.metrics.length >= MAX_METRICS && (
-              <>
-                <span className="text-xs text-primary italic">
-                  5 max
-                </span>
-                <span className="text-muted-foreground/30">|</span>
-              </>
-            )}
             {(() => {
               const forceAbbreviate = settings.metrics.some(m => m.value > 999_999_999);
               const isAbbreviated = forceAbbreviate || settings.abbreviateNumbers !== false;
@@ -960,6 +969,44 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
           </div>
         </div>
 
+        {/* Layout toggle for metrics template */}
+        {(settings.template || "metrics") === "metrics" && settings.metrics.length >= 2 && (
+          <div className="flex gap-1 p-0.5 rounded-lg bg-muted/50">
+            <button
+              type="button"
+              onClick={() => updateSetting("metricsLayout", "stack")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                (settings.metricsLayout || "stack") === "stack"
+                  ? "bg-white shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-4 h-0.5 rounded-full bg-current" />
+                <div className="w-3 h-0.5 rounded-full bg-current" />
+                <div className="w-3 h-0.5 rounded-full bg-current" />
+              </div>
+              Stack
+            </button>
+            <button
+              type="button"
+              onClick={() => updateSetting("metricsLayout", "grid")}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                settings.metricsLayout === "grid"
+                  ? "bg-white shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-0.5">
+                <div className="w-0.5 h-2 rounded-sm bg-current" />
+                <div className="w-0.5 h-2.5 rounded-sm bg-current" />
+                <div className="w-0.5 h-2 rounded-sm bg-current" />
+              </div>
+              Columns
+            </button>
+          </div>
+        )}
+
         {/* Multi-metric for "metrics" template */}
         {(settings.template || "metrics") === "metrics" ? (
           <>
@@ -972,31 +1019,40 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                 items={settings.metrics.map(m => m.type)}
                 strategy={verticalListSortingStrategy}
               >
-                {settings.metrics.map((metric) => (
-                  <SortableMetricItem
-                    key={metric.type}
-                    metric={metric}
-                    onValueChange={updateMetricValue}
-                    onRemove={removeMetric}
-                    onCustomLabelChange={metric.type === "custom" ? (label) => {
-                      updateSetting("metrics", settings.metrics.map(m =>
-                        m.type === "custom" ? { ...m, customLabel: label } : m
-                      ));
-                    } : undefined}
-                    canRemove={settings.metrics.length > 1}
-                    canDrag={settings.metrics.length > 1}
-                    autoFillValue={autoFillMap[metric.type]}
-                    autoFillLoading={
-                      (AUTO_FILL_X.includes(metric.type) && loadingX) ||
-                      (AUTO_FILL_SAAS.includes(metric.type) && loadingTrustmrr)
-                    }
-                  />
-                ))}
+                {settings.metrics.map((metric, index) => {
+                  const effectiveMax = (settings.metricsLayout === "grid" || settings.aspectRatio === "banner") ? 3 : MAX_METRICS;
+                  const isColumnOverflow = index >= effectiveMax;
+                  return (
+                    <div key={metric.type} className={isColumnOverflow ? "opacity-40" : ""}>
+                      {isColumnOverflow && index === effectiveMax && (
+                        <p className="text-[10px] text-muted-foreground italic mb-1">Hidden (max {effectiveMax})</p>
+                      )}
+                      <SortableMetricItem
+                        metric={metric}
+                        onValueChange={updateMetricValue}
+                        onRemove={removeMetric}
+                        onCustomLabelChange={metric.type === "custom" ? (label) => {
+                          updateSetting("metrics", settings.metrics.map(m =>
+                            m.type === "custom" ? { ...m, customLabel: label } : m
+                          ));
+                        } : undefined}
+                        canRemove={settings.metrics.length > 1}
+                        canDrag={settings.metrics.length > 1 && !isColumnOverflow}
+                        disabled={isColumnOverflow}
+                        autoFillValue={autoFillMap[metric.type]}
+                        autoFillLoading={
+                          (AUTO_FILL_X.includes(metric.type) && loadingX) ||
+                          (AUTO_FILL_SAAS.includes(metric.type) && loadingTrustmrr)
+                        }
+                      />
+                    </div>
+                  );
+                })}
               </SortableContext>
             </DndContext>
 
             {availableMetrics.length > 0 && (
-              settings.metrics.length >= MAX_METRICS ? (
+              settings.metrics.length >= ((settings.metricsLayout === "grid" || settings.aspectRatio === "banner") ? 3 : MAX_METRICS) ? (
                 <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white" disabled>
                   <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
                   Add metric

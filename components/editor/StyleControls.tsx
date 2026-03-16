@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import { EditorSettings, BackgroundPreset, FontFamily, AspectRatioType, BackgroundSettings, BrandingSettings, TemplateType } from "../Editor";
+import { EditorSettings, BackgroundPreset, FontFamily, AspectRatioType, BackgroundSettings, BrandingSettings, TemplateType, TextAlign } from "../Editor";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { isValidHexColor } from "@/lib/validation";
@@ -458,6 +458,48 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
         </div>
 
         <div className="w-px h-6 bg-border" />
+
+        {(!settings.template || settings.template === "metrics") && (
+          <>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Align</span>
+              <div className="flex gap-0.5 p-0.5 rounded-lg bg-muted/50">
+                {([
+                  { id: "left" as TextAlign, label: "Left", icon: (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <line x1="2" y1="3" x2="12" y2="3" />
+                      <line x1="2" y1="7" x2="9" y2="7" />
+                      <line x1="2" y1="11" x2="11" y2="11" />
+                    </svg>
+                  )},
+                  { id: "center" as TextAlign, label: "Center", icon: (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <line x1="2" y1="3" x2="12" y2="3" />
+                      <line x1="3.5" y1="7" x2="10.5" y2="7" />
+                      <line x1="2.5" y1="11" x2="11.5" y2="11" />
+                    </svg>
+                  )},
+                ]).map((align) => (
+                  <button
+                    key={align.id}
+                    type="button"
+                    onClick={() => updateSetting("textAlign", align.id)}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      (settings.textAlign || "center") === align.id
+                        ? "bg-white shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    title={align.label}
+                  >
+                    {align.icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="w-px h-6 bg-border" />
+          </>
+        )}
 
         <Button
           type="button"

@@ -67,7 +67,7 @@ export type PeriodSettings = {
   number: number;
 } | null;
 
-export type HeadingType = "period" | "last" | "date-range" | "quote" | "custom";
+export type HeadingType = "period" | "last" | "date-range" | "today" | "yesterday" | "quote" | "custom";
 
 export type HeadingSettings = {
   type: HeadingType;
@@ -88,6 +88,8 @@ export type HeadingSettings = {
 export type AspectRatioType = "post" | "square" | "banner";
 export type FontFamily = "bricolage" | "inter" | "space-grotesk" | "dm-mono" | "averia-serif-libre" | "dm-serif-display";
 export type TemplateType = "metrics" | "milestone" | "progress" | "announcement";
+export type MetricsLayout = "stack" | "grid";
+export type TextAlign = "left" | "center";
 
 export type BrandingLogo = {
   id: string;
@@ -112,10 +114,12 @@ export type EditorSettings = {
   aspectRatio?: AspectRatioType;
   font?: FontFamily;
   template?: TemplateType;
+  metricsLayout?: MetricsLayout;
   branding?: BrandingSettings;
   goal?: number;
   announcements?: { emoji?: string; text: string }[];
   abbreviateNumbers?: boolean;
+  textAlign?: TextAlign;
   milestoneEmoji?: string;
   milestoneEmojiCount?: number; // 0–10, default 3
 };

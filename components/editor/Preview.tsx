@@ -43,6 +43,10 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
   const selectedAspectRatio = settings.aspectRatio || "post";
   const aspectRatioValue = ASPECT_RATIOS[selectedAspectRatio]?.ratio || "16/9";
   const isBanner = selectedAspectRatio === "banner";
+  const isSquare = selectedAspectRatio === "square";
+  // Square format has more vertical space — scale up text ~15%
+  const sq = (base: number) => isSquare ? base * 1.15 : base;
+  const align = settings.textAlign || "center";
 
   return (
     <div className="flex flex-col">
@@ -65,13 +69,13 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         <header className="absolute top-[3%] left-0 right-0 px-[3%] flex justify-between items-center z-10">
           <p
             className="opacity-60"
-            style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : "2.4cqi" }}
+            style={{ color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : `${sq(2.4)}cqi` }}
           >
             {settings.handle && settings.handle !== "@your_handle" ? settings.handle : ""}
           </p>
           {(() => {
             // Show date label for period-based headings and milestone/progress templates
-            const dateLabelStyle = { color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : "2.4cqi" };
+            const dateLabelStyle = { color: settings.textColor, textShadow, fontSize: isBanner ? "2.1cqi" : `${sq(2.4)}cqi` };
             if (settings.template === "milestone" || settings.template === "progress") {
               return settings.period ? (
                 <p className="opacity-60" style={dateLabelStyle}>{new Date().getFullYear()}</p>
@@ -84,6 +88,9 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
             }
             if (h.type === "last" && h.lastUnit) {
               return <p className="opacity-60" style={dateLabelStyle}>{getDateLabel(h.lastUnit)}</p>;
+            }
+            if (h.type === "today" || h.type === "yesterday") {
+              return <p className="opacity-60" style={dateLabelStyle}>{getDateLabel("day")}</p>;
             }
             return null;
           })()}
@@ -148,6 +155,16 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                   </p>
                 );
               }
+              if (h.type === "today") {
+                return (
+                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>Today</p>
+                );
+              }
+              if (h.type === "yesterday") {
+                return (
+                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>Yesterday</p>
+                );
+              }
               if (h.type === "quote" && h.text) {
                 const size = isBanner ? "5cqi" : "6.5cqi";
                 return (
@@ -171,17 +188,17 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         ) : (
           /* Default: Metrics Template */
           <div
-            className="relative z-10 flex flex-col items-center w-full px-4"
+            className={`relative z-10 flex flex-col w-full ${align === "left" ? "items-start px-[8%]" : "items-center px-4"}`}
             style={{ color: settings.textColor, textShadow, gap: isBanner ? "0.3cqi" : "0.5cqi" }}
           >
             {(() => {
               const h = settings.heading;
               if (!h) return null;
-              const baseFontSize = isBanner ? "6cqi" : "8cqi";
+              const baseFontSize = isBanner ? "6cqi" : `${sq(8)}cqi`;
 
               // Helper for text-based headings: scale down font for longer text
               const textSize = (len: number) =>
-                len > 30 ? (isBanner ? "3.5cqi" : "4.5cqi") : len > 20 ? (isBanner ? "4.5cqi" : "6cqi") : baseFontSize;
+                len > 30 ? (isBanner ? "3.5cqi" : `${sq(4.5)}cqi`) : len > 20 ? (isBanner ? "4.5cqi" : `${sq(6)}cqi`) : baseFontSize;
 
               if (h.type === "period" && h.periodType) {
                 const from = h.periodFrom ?? 1;
@@ -224,8 +241,18 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                   </p>
                 );
               }
+              if (h.type === "today") {
+                return (
+                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>Today</p>
+                );
+              }
+              if (h.type === "yesterday") {
+                return (
+                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>Yesterday</p>
+                );
+              }
               if (h.type === "quote" && h.text) {
-                const size = isBanner ? "5cqi" : "6.5cqi";
+                const size = isBanner ? "5cqi" : `${sq(6.5)}cqi`;
                 return (
                   <p className="font-bold italic tracking-tight text-center text-balance px-[2%]" style={{ fontSize: size, lineHeight: 1.1 }}>
                     &ldquo;{h.text}&rdquo;
@@ -233,7 +260,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 );
               }
               if (h.type === "custom" && h.text) {
-                const size = isBanner ? "5cqi" : "6.5cqi";
+                const size = isBanner ? "5cqi" : `${sq(6.5)}cqi`;
                 return (
                   <p className="font-bold tracking-tight text-center text-balance px-[2%]" style={{ fontSize: size, lineHeight: 1.1 }}>
                     {h.text}
@@ -242,47 +269,114 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
               }
               return null;
             })()}
-            <div className="flex flex-col items-center" style={{ gap: 0 }}>
-              {settings.metrics.map((metric, index) => {
-                const hasHeading = !!settings.heading;
-                const primarySize = hasHeading
-                  ? (isBanner ? "4.6cqi" : "5.7cqi")
-                  : (isBanner ? "6.8cqi" : "8.6cqi");
-                const secondarySize = hasHeading
-                  ? (isBanner ? "2.6cqi" : "3.2cqi")
-                  : (isBanner ? "3.1cqi" : "3.9cqi");
-                const primaryIcon = hasHeading
-                  ? (isBanner ? "3.6cqi" : iconSizes.primaryWithPeriod)
-                  : (isBanner ? "5.2cqi" : iconSizes.primaryNoPeriod);
-                const secondaryIcon = hasHeading
-                  ? (isBanner ? "2.6cqi" : iconSizes.secondaryWithPeriod)
-                  : (isBanner ? "3.4cqi" : iconSizes.secondaryNoPeriod);
+            {settings.metricsLayout === "grid" && settings.metrics.length >= 2 ? (
+              /* Columns layout: metrics side by side with separators, max 3, first metric centered & 20% bigger */
+              (() => {
+                const columnsMetrics = settings.metrics.slice(0, 3);
+                // Reorder: for 3 metrics, put first (main) in the middle → [1, 0, 2]
+                const ordered = columnsMetrics.length === 3
+                  ? [columnsMetrics[1], columnsMetrics[0], columnsMetrics[2]]
+                  : columnsMetrics; // 2 metrics: keep as-is (first on left)
+                const mainIndex = columnsMetrics.length === 3 ? 1 : 0; // position of main metric in ordered array
                 return (
-                  <p
-                    key={metric.type}
-                    className={index === 0 ? "flex items-center font-semibold" : "opacity-80 flex items-center font-medium"}
-                    style={{
-                      fontSize: index === 0 ? primarySize : secondarySize,
-                      gap: index === 0 ? (isBanner ? "0.6cqi" : "1cqi") : (isBanner ? "0.7cqi" : "1.2cqi"),
-                      marginTop: index > 0 ? (isBanner ? "-0.3cqi" : "-0.5cqi") : undefined,
-                    }}
+                  <div
+                    className="flex items-center justify-center w-full"
+                    style={{ gap: isBanner ? "1cqi" : "1.5cqi", paddingLeft: "3%", paddingRight: "3%" }}
                   >
-                    {metric.type !== "custom" && (
-                      <HugeiconsIcon
-                        icon={METRIC_ICONS[metric.type]}
-                        style={{
-                          width: index === 0 ? primaryIcon : secondaryIcon,
-                          height: index === 0 ? primaryIcon : secondaryIcon,
-                        }}
-                        strokeWidth={2}
-                        color="currentColor"
-                      />
-                    )}
-                    {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
-                  </p>
+                    {ordered.map((metric, index) => {
+                      const isMain = index === mainIndex;
+                      const hasHeading = !!settings.heading;
+                      const count = columnsMetrics.length;
+                      const baseValue = hasHeading
+                        ? (isBanner ? 5 / Math.max(count * 0.3, 1) : sq(7) / Math.max(count * 0.3, 1))
+                        : (isBanner ? 6.5 / Math.max(count * 0.3, 1) : sq(8.5) / Math.max(count * 0.3, 1));
+                      const valueSize = `${isMain ? baseValue * 1.2 : baseValue}cqi`;
+                      const baseLabel = hasHeading
+                        ? (isBanner ? 1.8 : sq(2.3))
+                        : (isBanner ? 2.1 : sq(2.7));
+                      const labelSize = `${isMain ? baseLabel * 1.2 : baseLabel}cqi`;
+                      const iconSize = labelSize;
+                      const columnFlex = isMain && columnsMetrics.length === 3 ? 1.3 : 1;
+                      return (
+                        <div key={metric.type} className="flex items-center" style={{ flex: columnFlex, gap: isBanner ? "1cqi" : "1.5cqi" }}>
+                          {index > 0 && (
+                            <div
+                              style={{
+                                width: isBanner ? "1px" : "1.5px",
+                                height: isBanner ? "4cqi" : `${sq(5)}cqi`,
+                                borderRadius: "1px",
+                                background: settings.textColor,
+                                opacity: 0.15,
+                                flexShrink: 0,
+                              }}
+                            />
+                          )}
+                          <div className="flex flex-col items-center" style={{ flex: 1, gap: 0 }}>
+                            <span className="font-bold" style={{ fontSize: valueSize, lineHeight: isBanner ? "6cqi" : `${sq(8.5)}cqi` }}>
+                              {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)}
+                            </span>
+                            <p className="opacity-60 font-medium flex items-center" style={{ fontSize: labelSize, lineHeight: isBanner ? "3cqi" : `${sq(4)}cqi`, gap: isBanner ? "0.3cqi" : "0.5cqi" }}>
+                              {metric.type !== "custom" && (
+                                <HugeiconsIcon
+                                  icon={METRIC_ICONS[metric.type]}
+                                  style={{ width: iconSize, height: iconSize }}
+                                  strokeWidth={2}
+                                  color="currentColor"
+                                />
+                              )}
+                              {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 );
-              })}
-            </div>
+              })()
+            ) : (
+              /* Stack layout: metrics stacked vertically (default) */
+              <div className={`flex flex-col ${align === "left" ? "items-start" : "items-center"}`} style={{ gap: 0 }}>
+                {(isBanner ? settings.metrics.slice(0, 3) : settings.metrics).map((metric, index) => {
+                  const hasHeading = !!settings.heading;
+                  const primarySize = hasHeading
+                    ? (isBanner ? "5.2cqi" : `${sq(6.4)}cqi`)
+                    : (isBanner ? "7.5cqi" : `${sq(9.5)}cqi`);
+                  const secondarySize = hasHeading
+                    ? (isBanner ? "3cqi" : `${sq(3.7)}cqi`)
+                    : (isBanner ? "3.5cqi" : `${sq(4.4)}cqi`);
+                  const primaryIcon = hasHeading
+                    ? (isBanner ? "3.6cqi" : `${sq(parseFloat(iconSizes.primaryWithPeriod))}cqi`)
+                    : (isBanner ? "5.2cqi" : `${sq(parseFloat(iconSizes.primaryNoPeriod))}cqi`);
+                  const secondaryIcon = hasHeading
+                    ? (isBanner ? "2.6cqi" : `${sq(parseFloat(iconSizes.secondaryWithPeriod))}cqi`)
+                    : (isBanner ? "3.4cqi" : `${sq(parseFloat(iconSizes.secondaryNoPeriod))}cqi`);
+                  return (
+                    <p
+                      key={metric.type}
+                      className={index === 0 ? "flex items-center font-semibold" : "opacity-80 flex items-center font-medium"}
+                      style={{
+                        fontSize: index === 0 ? primarySize : secondarySize,
+                        gap: index === 0 ? (isBanner ? "0.6cqi" : "1cqi") : (isBanner ? "0.7cqi" : "1.2cqi"),
+                        marginTop: index > 0 ? (isBanner ? "-0.3cqi" : "-0.5cqi") : undefined,
+                      }}
+                    >
+                      {metric.type !== "custom" && (
+                        <HugeiconsIcon
+                          icon={METRIC_ICONS[metric.type]}
+                          style={{
+                            width: index === 0 ? primaryIcon : secondaryIcon,
+                            height: index === 0 ? primaryIcon : secondaryIcon,
+                          }}
+                          strokeWidth={2}
+                          color="currentColor"
+                        />
+                      )}
+                      {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
+                    </p>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
