@@ -7,6 +7,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, Label } from "recharts";
+import { BACKGROUNDS } from "@/lib/backgrounds";
 
 type StatsData = {
   total: number;
@@ -239,27 +240,44 @@ export default function StatsPage() {
 
       </div>
 
-      {/* Backgrounds — horizontal bars (full width) */}
+      {/* Backgrounds — thumbnail + bar */}
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Backgrounds ({data.backgrounds.length})</h2>
-        <div className="rounded-xl border-fade p-4">
+        <div className="rounded-xl border-fade p-4 space-y-1.5">
           {(() => {
             const bgTotal = data.backgrounds.reduce((s, b) => s + b.count, 0);
-            const bgData = data.backgrounds.map((b) => ({ name: b.backgroundId, pct: Math.round((b.count / bgTotal) * 100), count: b.count }));
-            return (
-              <ChartContainer config={{ pct: { label: "Usage", color: "#f59e0b" } }} className="w-full" style={{ height: `${Math.max(data.backgrounds.length * 28, 100)}px` }}>
-                <BarChart data={bgData} layout="vertical">
-                  <CartesianGrid horizontal={false} />
-                  <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} fontSize={11} width={120} />
-                  <XAxis type="number" tickLine={false} axisLine={false} fontSize={11} unit="%" domain={[0, 100]} />
-                  <ChartTooltip
-                    content={<ChartTooltipContent />}
-                    formatter={(value, _name, item) => [`${item.payload.count} exports (${value}%)`, "Usage"]}
-                  />
-                  <Bar dataKey="pct" fill="var(--color-pct)" radius={[0, 3, 3, 0]} />
-                </BarChart>
-              </ChartContainer>
-            );
+            const maxCount = data.backgrounds[0]?.count || 1;
+            const bgMap = new Map(BACKGROUNDS.map((bg) => [bg.id, bg]));
+            return data.backgrounds.map((b) => {
+              const bg = bgMap.get(b.backgroundId);
+              const pct = Math.round((b.count / bgTotal) * 100);
+              const barWidth = Math.round((b.count / maxCount) * 100);
+              return (
+                <div key={b.backgroundId} className="flex items-center gap-2 h-8">
+                  {/* Thumbnail */}
+                  <div className="w-8 h-8 rounded shrink-0 overflow-hidden border border-border/50">
+                    {bg?.image ? (
+                      <img src={bg.image} alt={bg.name || b.backgroundId} className="w-full h-full object-cover" />
+                    ) : bg?.gradient || bg?.color ? (
+                      <div className="w-full h-full" style={{ background: bg.gradient || bg.color }} />
+                    ) : (
+                      <div className="w-full h-full bg-muted" />
+                    )}
+                  </div>
+                  {/* Name */}
+                  <span className="text-xs w-32 shrink-0 truncate">{bg?.name || b.backgroundId}</span>
+                  {/* Bar */}
+                  <div className="flex-1 h-5 bg-muted/50 rounded overflow-hidden">
+                    <div
+                      className="h-full bg-amber-500/80 rounded"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                  {/* Count */}
+                  <span className="text-xs text-muted-foreground w-16 text-right shrink-0">{b.count} ({pct}%)</span>
+                </div>
+              );
+            });
           })()}
         </div>
       </section>
