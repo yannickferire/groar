@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { SparklesIcon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
+import PeerPushBanner from "@/components/layout/PeerPushBanner";
 const logoContainerClass = "w-8! h-8! sm:w-9! sm:h-9! md:w-14! md:h-14! rounded-lg! md:rounded-xl!";
 const xSvgClass = "[&>svg]:w-4! [&>svg]:h-4! sm:[&>svg]:w-4.5! sm:[&>svg]:h-4.5! md:[&>svg]:w-7! md:[&>svg]:h-7!";
 const platformSvgClass = "[&>svg]:w-5! [&>svg]:h-5! sm:[&>svg]:w-5.5! sm:[&>svg]:h-5.5! md:[&>svg]:w-9! md:[&>svg]:h-9!";
@@ -28,6 +29,11 @@ export default function Hero() {
 
   return (
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto px-4">
+      <FadeIn delay={0.2} duration={0.6}>
+        <div className="flex justify-center">
+          <PeerPushBanner />
+        </div>
+      </FadeIn>
       <FadeIn delay={0.25} duration={0.6}>
         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight leading-[1.3] md:leading-[1.15]">
           Turn your{" "}
@@ -53,9 +59,9 @@ export default function Hero() {
           <Image
             src="/testimonials/marc-lou.jpg"
             alt="Marc Lou"
-            width={32}
-            height={32}
-            className="w-8 h-8 rounded-full"
+            width={36}
+            height={36}
+            className="w-9 h-9 rounded-full"
           />
           <blockquote className="text-sm text-muted-foreground">
             &ldquo;I love the design!&rdquo;

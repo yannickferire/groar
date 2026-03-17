@@ -94,7 +94,7 @@ export default function Footer() {
         <div className="pb-8 pt-4 flex flex-col gap-3">
           <div className="flex items-center justify-start gap-4">
             <a href="https://peerpush.net/p/groar" target="_blank" rel="noopener">
-              <img src="https://peerpush.net/p/groar/badge.png" alt="GROAR on PeerPush" width="230" height="56" className="h-12 w-auto" />
+              <img src="https://peerpush.net/p/groar/badge.png" alt="🐯 GROAR badge" className="h-12 w-auto" />
             </a>
             <a href="https://rankinpublic.xyz/products/groar.app" target="_blank" rel="noopener noreferrer">
               <img src="https://rankinpublic.xyz/api/badges/badge2.png?site=groar.app" alt="Featured on RankInPublic" width="250" height="80" className="h-12 w-auto" />
