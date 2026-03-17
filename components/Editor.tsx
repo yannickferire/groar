@@ -178,6 +178,9 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         if (data.export?.metrics) {
           const raw = data.export.metrics;
           const imported = (typeof raw === "string" ? JSON.parse(raw) : raw) as Partial<EditorSettings>;
+          if (imported.metrics) {
+            imported.metrics = imported.metrics.map(m => m.id ? m : { ...m, id: crypto.randomUUID() });
+          }
           resetSettings({
             ...defaultSettings,
             ...imported,
@@ -231,6 +234,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         ...styleOverrides,
         template: "milestone" as TemplateType,
         metrics: [{
+          id: crypto.randomUUID(),
           type: (milestoneMetric || "followers") as MetricType,
           value: numericValue,
         }],

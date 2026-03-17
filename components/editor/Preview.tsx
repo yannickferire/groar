@@ -298,7 +298,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                       const iconSize = labelSize;
                       const columnFlex = isMain && columnsMetrics.length === 3 ? 1.3 : 1;
                       return (
-                        <div key={metric.type} className="flex items-center" style={{ flex: columnFlex, gap: isBanner ? "1cqi" : "1.5cqi" }}>
+                        <div key={metric.id} className="flex items-center" style={{ flex: columnFlex, gap: isBanner ? "1cqi" : "1.5cqi" }}>
                           {index > 0 && (
                             <div
                               style={{
@@ -352,7 +352,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                     : (isBanner ? "3.4cqi" : `${sq(parseFloat(iconSizes.secondaryNoPeriod))}cqi`);
                   return (
                     <p
-                      key={metric.type}
+                      key={metric.id}
                       className={index === 0 ? "flex items-center font-semibold" : "opacity-80 flex items-center font-medium"}
                       style={{
                         fontSize: index === 0 ? primarySize : secondarySize,

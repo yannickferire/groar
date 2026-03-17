@@ -4,6 +4,7 @@ export type LastUnitType = "hour" | PeriodType;
 export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "valuation" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "visitors" | "redditUpvoteRatio" | "custom";
 
 export type Metric = {
+  id: string;
   type: MetricType;
   value: number;
   prefix?: string;

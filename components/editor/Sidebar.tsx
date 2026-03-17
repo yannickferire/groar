@@ -86,8 +86,8 @@ const AUTO_FILL_SAAS: MetricType[] = ["mrr", "arr", "revenue"];
 
 type SortableMetricItemProps = {
   metric: Metric;
-  onValueChange: (type: MetricType, value: number, prefix?: string) => void;
-  onRemove: (type: MetricType) => void;
+  onValueChange: (id: string, value: number, prefix?: string) => void;
+  onRemove: (id: string) => void;
   onCustomLabelChange?: (label: string) => void;
   canRemove: boolean;
   canDrag: boolean;
@@ -146,7 +146,7 @@ function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
       value={inputValue}
       onChange={handleChange}
       onBlur={handleBlur}
-      className="w-16 text-center bg-background"
+      className="w-16 text-center bg-white dark:bg-background"
       aria-label="Period number"
     />
   );
@@ -167,7 +167,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: metric.type, disabled: !canDrag });
+  } = useSortable({ id: metric.id, disabled: !canDrag });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -183,7 +183,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
     const parsed = parseMetricInput(value, metric.type);
     if (parsed !== null) {
       const prefix = detectPrefix(value);
-      onValueChange(metric.type, parsed, prefix);
+      onValueChange(metric.id, parsed, prefix);
       // If user typed a shortcut like "2k", replace with expanded value
       if (/[kmb]$/i.test(value)) {
         setInputValue(prefix ? `${prefix}${parsed}` : parsed.toString());
@@ -227,7 +227,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
         onChange={handleInputChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className="w-32 text-center bg-background"
+        className="w-32 text-center bg-white dark:bg-background"
         aria-label={`${METRIC_LABELS[metric.type]} value`}
       />
       <span className="text-sm text-muted-foreground whitespace-nowrap flex-1 flex items-center gap-1.5" aria-hidden="true">
@@ -256,7 +256,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
           ) : (
             <button
               type="button"
-              onClick={() => onValueChange(metric.type, autoFillValue, undefined)}
+              onClick={() => onValueChange(metric.id, autoFillValue, undefined)}
               className="flex items-center gap-1 cursor-pointer hover:opacity-80"
               title="Restore auto-fetched value"
             >
@@ -269,7 +269,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => onRemove(metric.type)}
+        onClick={() => onRemove(metric.id)}
         disabled={!canRemove}
         className="shrink-0"
         aria-label={`Remove ${METRIC_LABELS[metric.type]}`}
@@ -545,31 +545,31 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
   const addMetric = useCallback((type: MetricType) => {
     const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
     const metricMap = buildMetricMap(selectedAccount);
-    const newMetric: Metric = { type, value: metricMap[type] ?? 0 };
+    const newMetric: Metric = { id: crypto.randomUUID(), type, value: metricMap[type] ?? 0 };
     updateSetting("metrics", [...settings.metrics, newMetric]);
   }, [updateSetting, settings.metrics, connectedAccounts, handleMode, buildMetricMap]);
 
-  const removeMetric = useCallback((type: MetricType) => {
-    updateSetting("metrics", settings.metrics.filter(m => m.type !== type));
+  const removeMetric = useCallback((id: string) => {
+    updateSetting("metrics", settings.metrics.filter(m => m.id !== id));
   }, [updateSetting, settings.metrics]);
 
-  const updateMetricValue = useCallback((type: MetricType, value: number, prefix?: string) => {
+  const updateMetricValue = useCallback((id: string, value: number, prefix?: string) => {
     updateSetting("metrics", settings.metrics.map(m =>
-      m.type === type ? { ...m, value, prefix } : m
+      m.id === id ? { ...m, value, prefix } : m
     ));
   }, [updateSetting, settings.metrics]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = settings.metrics.findIndex(m => m.type === active.id);
-      const newIndex = settings.metrics.findIndex(m => m.type === over.id);
+      const oldIndex = settings.metrics.findIndex(m => m.id === active.id);
+      const newIndex = settings.metrics.findIndex(m => m.id === over.id);
       updateSetting("metrics", arrayMove(settings.metrics, oldIndex, newIndex));
     }
   }, [updateSetting, settings.metrics]);
 
   const availableMetrics = useMemo(() => ALL_METRICS.filter(
-    type => !settings.metrics.some(m => m.type === type)
+    type => type === "custom" || !settings.metrics.some(m => m.type === type)
   ), [settings.metrics]);
 
   // Metrics that have auto-fill data available (type -> value)
@@ -621,10 +621,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   }}
                   className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
                     lockPremiumFeatures && template.premium
-                      ? "opacity-50 cursor-not-allowed border-transparent bg-white dark:bg-card"
+                      ? "opacity-50 cursor-not-allowed border-transparent bg-white dark:bg-muted"
                       : isSelected
-                        ? "border-primary bg-white dark:bg-card"
-                        : "border-transparent bg-white dark:bg-card hover:border-muted"
+                        ? "border-primary bg-white dark:bg-muted"
+                        : "border-transparent bg-white dark:bg-muted hover:border-muted"
                   }`}
                 >
                   {/* Mini preview */}
@@ -697,7 +697,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           {connectedAccounts.length > 0 ? (
             <div className="flex gap-2">
               <Select value={handleMode} onValueChange={handleAccountSelect}>
-                <SelectTrigger className={`bg-background ${handleMode === "custom" ? "w-28 shrink-0" : "flex-1"}`}>
+                <SelectTrigger className={`bg-white dark:bg-background ${handleMode === "custom" ? "w-28 shrink-0" : "flex-1"}`}>
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
@@ -718,7 +718,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   onFocus={() => { if (!handleTouchedRef.current && settings.handle === "") { updateSetting("handle", "@"); handleTouchedRef.current = true; } }}
                   onChange={(e) => { updateSetting("handle", e.target.value); handleTouchedRef.current = true; }}
                   onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
-                  className="flex-1 bg-background"
+                  className="flex-1 bg-white dark:bg-background"
                 />
               )}
             </div>
@@ -731,7 +731,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               onFocus={() => { if (!handleTouchedRef.current && settings.handle === "") { updateSetting("handle", "@"); handleTouchedRef.current = true; } }}
               onChange={(e) => { updateSetting("handle", e.target.value); handleTouchedRef.current = true; }}
               onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
-              className="bg-background"
+              className="bg-white dark:bg-background"
             />
           )}
         </div>
@@ -760,7 +760,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     updateHeading(defaults[newType]);
                   }}
                 >
-                  <SelectTrigger className="flex-1 bg-background">
+                  <SelectTrigger className="flex-1 bg-white dark:bg-background">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -791,7 +791,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     value={settings.heading.periodType || "week"}
                     onValueChange={(value) => updateHeading({ ...settings.heading!, periodType: value as PeriodType })}
                   >
-                    <SelectTrigger className="flex-1 bg-background">
+                    <SelectTrigger className="flex-1 bg-white dark:bg-background">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -841,7 +841,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     value={settings.heading.lastUnit || "day"}
                     onValueChange={(value) => updateHeading({ ...settings.heading!, lastUnit: value as LastUnitType })}
                   >
-                    <SelectTrigger className="flex-1 bg-background">
+                    <SelectTrigger className="flex-1 bg-white dark:bg-background">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -859,7 +859,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               {settings.heading.type === "date-range" && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between font-normal bg-background">
+                    <Button variant="outline" className="w-full justify-between font-normal bg-white dark:bg-background">
                       {settings.heading.dateFrom && settings.heading.dateTo
                         ? `${new Date(settings.heading.dateFrom + "T00:00:00").toLocaleDateString()} – ${new Date(settings.heading.dateTo + "T00:00:00").toLocaleDateString()}`
                         : "Pick a date range"}
@@ -909,14 +909,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     "Your text..."
                   }
                   rows={2}
-                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="w-full rounded-xl border border-input bg-white dark:bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 />
               )}
             </div>
           ) : (
             <Button
               variant="outline"
-              className="w-full justify-start text-muted-foreground bg-background"
+              className="w-full justify-start text-muted-foreground bg-white dark:bg-background"
               onClick={() => updateHeading({ type: "period", periodType: "week", periodFrom: 1 })}
             >
               <HugeiconsIcon icon={Heading01Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
@@ -984,7 +984,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               onClick={() => updateSetting("metricsLayout", "stack")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 (settings.metricsLayout || "stack") === "stack"
-                  ? "bg-background shadow-sm text-foreground"
+                  ? "bg-white dark:bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -1000,7 +1000,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               onClick={() => updateSetting("metricsLayout", "grid")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 settings.metricsLayout === "grid"
-                  ? "bg-background shadow-sm text-foreground"
+                  ? "bg-white dark:bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -1023,14 +1023,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={settings.metrics.map(m => m.type)}
+                items={settings.metrics.map(m => m.id)}
                 strategy={verticalListSortingStrategy}
               >
                 {settings.metrics.map((metric, index) => {
                   const effectiveMax = (settings.metricsLayout === "grid" || settings.aspectRatio === "banner") ? 3 : MAX_METRICS;
                   const isColumnOverflow = index >= effectiveMax;
                   return (
-                    <div key={metric.type} className={isColumnOverflow ? "opacity-40" : ""}>
+                    <div key={metric.id} className={isColumnOverflow ? "opacity-40" : ""}>
                       {isColumnOverflow && index === effectiveMax && (
                         <p className="text-[10px] text-muted-foreground italic mb-1">Hidden (max {effectiveMax})</p>
                       )}
@@ -1040,7 +1040,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                         onRemove={removeMetric}
                         onCustomLabelChange={metric.type === "custom" ? (label) => {
                           updateSetting("metrics", settings.metrics.map(m =>
-                            m.type === "custom" ? { ...m, customLabel: label } : m
+                            m.id === metric.id ? { ...m, customLabel: label } : m
                           ));
                         } : undefined}
                         canRemove={settings.metrics.length > 1}
@@ -1060,14 +1060,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
 
             {availableMetrics.length > 0 && (
               settings.metrics.length >= ((settings.metricsLayout === "grid" || settings.aspectRatio === "banner") ? 3 : MAX_METRICS) ? (
-                <Button variant="outline" className="w-full justify-start text-muted-foreground bg-background" disabled>
+                <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white dark:bg-background" disabled>
                   <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
                   Add metric
                 </Button>
               ) : (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-muted-foreground bg-background">
+                    <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white dark:bg-background">
                       <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
                       Add metric
                     </Button>
@@ -1190,15 +1190,15 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   const parsed = parseMetricInput(e.target.value, settings.metrics[0]?.type || "followers");
                   if (parsed !== null) {
                     const prefix = detectPrefix(e.target.value);
-                    updateSetting("metrics", [{ type: settings.metrics[0]?.type || "followers", value: parsed, prefix }]);
+                    updateSetting("metrics", [{ ...settings.metrics[0], id: settings.metrics[0]?.id || crypto.randomUUID(), type: settings.metrics[0]?.type || "followers", value: parsed, prefix }]);
                   }
                 }}
-                className="flex-1 bg-background"
+                className="flex-1 bg-white dark:bg-background"
                 aria-label="Metric value"
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex-1 bg-background justify-between font-normal">
+                  <Button variant="outline" className="flex-1 bg-white dark:bg-background justify-between font-normal">
                     {METRIC_LABELS[settings.metrics[0]?.type || "followers"]}
                     <ChevronDownIcon className="h-4 w-4 opacity-50" />
                   </Button>
@@ -1211,7 +1211,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                           const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
                           const metricMap = buildMetricMap(selectedAccount);
                           const autoValue = metricMap[type];
-                          updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
+                          updateSetting("metrics", [{ id: crypto.randomUUID(), type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
                         };
                         return [
                           { label: "X", icon: NewTwitterIcon, metrics: X_METRICS.filter(t => t !== "engagementRate") },
@@ -1232,7 +1232,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       })()}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => {
-                        updateSetting("metrics", [{ type: "custom" as MetricType, value: settings.metrics[0]?.value ?? 0 }]);
+                        updateSetting("metrics", [{ id: crypto.randomUUID(), type: "custom" as MetricType, value: settings.metrics[0]?.value ?? 0 }]);
                       }}>
                         Custom
                       </DropdownMenuItem>
@@ -1247,7 +1247,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                               const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
                               const metricMap = buildMetricMap(selectedAccount);
                               const autoValue = metricMap[type];
-                              updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
+                              updateSetting("metrics", [{ id: crypto.randomUUID(), type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
                             };
                             return (
                               <DropdownMenuItem key={type} onClick={handleClick}>
@@ -1263,7 +1263,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                                   const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
                                   const metricMap = buildMetricMap(selectedAccount);
                                   const autoValue = metricMap[type];
-                                  updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
+                                  updateSetting("metrics", [{ id: crypto.randomUUID(), type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
                                 };
                                 return (
                                   <DropdownMenuItem key={type} onClick={handleClick}>
@@ -1282,7 +1282,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                             <DropdownMenuItem
                               key={type}
                               onClick={() => {
-                                updateSetting("metrics", [{ type, value: settings.metrics[0]?.value ?? 0 }]);
+                                updateSetting("metrics", [{ id: crypto.randomUUID(), type, value: settings.metrics[0]?.value ?? 0 }]);
                               }}
                             >
                               {metricLabel(type)}
@@ -1297,7 +1297,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                             <DropdownMenuItem
                               key={type}
                               onClick={() => {
-                                updateSetting("metrics", [{ type, value: settings.metrics[0]?.value ?? 0 }]);
+                                updateSetting("metrics", [{ id: crypto.randomUUID(), type, value: settings.metrics[0]?.value ?? 0 }]);
                               }}
                             >
                               {metricLabel(type)}
@@ -1315,7 +1315,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                               key={type}
                               onClick={() => {
                                 const autoValue = metricMap[type];
-                                updateSetting("metrics", [{ type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
+                                updateSetting("metrics", [{ id: crypto.randomUUID(), type, value: autoValue ?? settings.metrics[0]?.value ?? 0 }]);
                               }}
                             >
                               {metricLabel(type)}
@@ -1326,7 +1326,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       </DropdownMenuSub>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => {
-                        updateSetting("metrics", [{ type: "custom" as MetricType, value: settings.metrics[0]?.value ?? 0 }]);
+                        updateSetting("metrics", [{ id: crypto.randomUUID(), type: "custom" as MetricType, value: settings.metrics[0]?.value ?? 0 }]);
                       }}>
                         Custom
                       </DropdownMenuItem>
@@ -1343,7 +1343,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                 onChange={(e) => {
                   updateSetting("metrics", [{ ...settings.metrics[0], customLabel: e.target.value }]);
                 }}
-                className="bg-background"
+                className="bg-white dark:bg-background"
                 maxLength={24}
                 aria-label="Custom metric label"
               />
@@ -1366,8 +1366,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   type="button"
                   className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border transition-colors ${
                     settings.milestoneEmoji
-                      ? "border-primary bg-primary/10"
-                      : "border-input bg-background hover:bg-muted/50"
+                      ? "border-input bg-white dark:bg-background"
+                      : "border-input bg-white dark:bg-background hover:bg-muted/50"
                   }`}
                 >
                   {settings.milestoneEmojiUnified ? (
@@ -1428,7 +1428,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                 updateSetting("goal", parsed);
               }
             }}
-            className="bg-background"
+            className="bg-white dark:bg-background"
             aria-label="Goal value"
           />
         </div>
@@ -1448,7 +1448,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="shrink-0 w-9 h-9 rounded-xl border border-input bg-background flex items-center justify-center hover:bg-muted/50 transition-colors"
+                      className="shrink-0 w-9 h-9 rounded-xl border border-input bg-white dark:bg-background flex items-center justify-center hover:bg-muted/50 transition-colors"
                     >
                       {feature.emojiUnified ? (
                         <img src={getAppleEmojiUrl(feature.emojiUnified)} alt="" className="w-5 h-5 object-contain" draggable={false} />
@@ -1483,7 +1483,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     updateSetting("announcements", updated);
                   }}
                   placeholder={`Feature ${index + 1}`}
-                  className="bg-background flex-1"
+                  className="bg-white dark:bg-background flex-1"
                 />
                 <Button
                   variant="ghost"
@@ -1502,7 +1502,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
             {(settings.announcements || []).length < 4 && (
               <Button
                 variant="outline"
-                className="w-full bg-background"
+                className="w-full bg-white dark:bg-background"
                 onClick={() => {
                   const updated = [...(settings.announcements || []), { text: "" }];
                   updateSetting("announcements", updated);
@@ -1648,7 +1648,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                           className={`p-1.5 rounded-lg transition-all border ${
                             (settings.branding?.position || "center") === pos
                               ? "bg-primary text-primary-foreground border-transparent"
-                              : "bg-background text-muted-foreground hover:bg-muted border-border"
+                              : "bg-white dark:bg-background text-muted-foreground hover:bg-muted border-border"
                           }`}
                         >
                           <HugeiconsIcon icon={icon} size={16} strokeWidth={1.5} />

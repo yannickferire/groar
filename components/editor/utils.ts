@@ -27,7 +27,7 @@ export const defaultSettings: EditorSettings = {
   handle: "@your_handle",
   period: { type: "week", number: 1 },
   heading: { type: "period", periodType: "week", periodFrom: 1 },
-  metrics: [{ type: "followers", value: 100 }],
+  metrics: [{ id: crypto.randomUUID(), type: "followers", value: 100 }],
   background: { presetId: BACKGROUNDS[0]?.id || "solid-color", solidColor: "#f59e0b" },
   textColor: "#dfd5b3",
   aspectRatio: "post",
@@ -55,6 +55,12 @@ export function loadSettings(): EditorSettings {
         if (parsed.heading?.periodNumber !== undefined && parsed.heading?.periodFrom === undefined) {
           parsed.heading.periodFrom = parsed.heading.periodNumber;
           delete parsed.heading.periodNumber;
+        }
+        // Migrate metrics without IDs
+        if (parsed.metrics) {
+          parsed.metrics = parsed.metrics.map((m: Record<string, unknown>) =>
+            m.id ? m : { ...m, id: crypto.randomUUID() }
+          );
         }
         return {
           ...defaultSettings,
