@@ -12,7 +12,7 @@ export function getAppleEmojiUrl(unified: string): string {
  */
 export function getAppleEmojiHQUrl(name: string, unified: string): string {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  return `https://em-content.zobj.net/source/apple/391/${slug}_${unified}.png`;
+  return `/api/emoji?name=${encodeURIComponent(slug)}&unified=${encodeURIComponent(unified)}`;
 }
 
 /**

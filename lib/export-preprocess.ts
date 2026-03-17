@@ -62,6 +62,41 @@ export async function inlineBackgroundImages(
 }
 
 /**
+ * Inline external <img> src attributes as base64 data URLs.
+ * Returns a cleanup function that restores original URLs.
+ */
+export async function inlineExternalImages(
+  container: HTMLElement
+): Promise<() => void> {
+  const restorers: (() => void)[] = [];
+  const imgs = Array.from(container.querySelectorAll("img")) as HTMLImageElement[];
+
+  const toInline = imgs.filter((img) => {
+    const src = img.getAttribute("src") || "";
+    return src.startsWith("http") && !src.startsWith(window.location.origin);
+  });
+
+  const fetched = await Promise.all(
+    toInline.map(async (img) => {
+      try {
+        return { img, base64: await urlToBase64(img.src) };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  for (const result of fetched) {
+    if (!result) continue;
+    const original = result.img.src;
+    result.img.src = result.base64;
+    restorers.push(() => { result.img.src = original; });
+  }
+
+  return () => restorers.forEach((r) => r());
+}
+
+/**
  * Build fontEmbedCSS with base64-encoded font data.
  *
  * Strategy: parse the raw innerHTML of all <style> tags in the document

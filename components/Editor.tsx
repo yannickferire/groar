@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { toJpeg } from "html-to-image";
-import { inlineBackgroundImages, buildFontEmbedCSS } from "@/lib/export-preprocess";
+import { inlineBackgroundImages, inlineExternalImages, buildFontEmbedCSS } from "@/lib/export-preprocess";
 import Sidebar from "./editor/Sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
@@ -380,6 +380,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       }
 
       const restoreBackgrounds = await inlineBackgroundImages(previewRef.current);
+      const restoreImages = await inlineExternalImages(previewRef.current);
       const fontEmbedCSS = isWebKit ? await buildFontEmbedCSS() : undefined;
 
       const baseOptions: Record<string, unknown> = {
@@ -426,6 +427,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       // Restore original font family and background image URLs
       exportTarget.style.fontFamily = originalFontFamily;
       restoreBackgrounds();
+      restoreImages();
 
       // Remove injected watermark if we added one
       if (injectedWatermark) {

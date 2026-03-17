@@ -620,10 +620,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   }}
                   className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
                     lockPremiumFeatures && template.premium
-                      ? "opacity-50 cursor-not-allowed border-transparent bg-background"
+                      ? "opacity-50 cursor-not-allowed border-transparent bg-white dark:bg-card"
                       : isSelected
-                        ? "border-primary bg-background"
-                        : "border-transparent bg-background hover:border-muted"
+                        ? "border-primary bg-white dark:bg-card"
+                        : "border-transparent bg-white dark:bg-card hover:border-muted"
                   }`}
                 >
                   {/* Mini preview */}
