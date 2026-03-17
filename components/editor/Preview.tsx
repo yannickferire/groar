@@ -128,7 +128,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 const unit = h.lastUnit;
                 return (
                   <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>
-                    Last {count} <span className="capitalize">{unit}{count !== 1 ? "s" : ""}</span>
+                    Last {count > 1 ? `${count} ` : ""}<span className="capitalize">{unit}{count !== 1 ? "s" : ""}</span>
                   </p>
                 );
               }
@@ -214,7 +214,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 const unit = h.lastUnit;
                 return (
                   <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>
-                    Last {count} <span className="capitalize">{unit}{count !== 1 ? "s" : ""}</span>
+                    Last {count > 1 ? `${count} ` : ""}<span className="capitalize">{unit}{count !== 1 ? "s" : ""}</span>
                   </p>
                 );
               }
