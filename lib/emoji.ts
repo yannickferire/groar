@@ -14,13 +14,3 @@ export function getAppleEmojiHQUrl(name: string, unified: string): string {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   return `/api/emoji?name=${encodeURIComponent(slug)}&unified=${encodeURIComponent(unified)}`;
 }
-
-/**
- * Convert a native emoji string to its unified code point representation.
- * e.g. "🎉" → "1f389", "❤️" → "2764-fe0f"
- */
-export function emojiToUnified(native: string): string {
-  return [...native]
-    .map((char) => char.codePointAt(0)!.toString(16))
-    .join("-");
-}
