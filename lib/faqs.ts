@@ -5,7 +5,7 @@ export const faqs = [
   },
   {
     question: "Is GROAR free to use?",
-    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 3 exports per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month or a one-time payment for lifetime access.",
+    answer: "Yes! GROAR has a free plan that gives you full access to the editor, 1 export per week, and 5 backgrounds. If you want unlimited exports, all backgrounds, and no watermark, the Pro plan starts at $5/month or a one-time payment for lifetime access.",
   },
   {
     question: "How long does it take to create a visual?",
@@ -25,6 +25,6 @@ export const faqs = [
   },
   {
     question: "Can I connect multiple accounts?",
-    answer: "Yes! The Pro plan lets you connect up to 3 accounts per platform. Perfect if you manage multiple accounts.",
+    answer: "Yes! The Pro plan lets you connect your X account to auto-import your metrics directly into the editor.",
   },
 ];

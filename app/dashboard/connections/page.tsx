@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link01Icon, Add01Icon, Rocket01Icon, Delete02Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { authClient } from "@/lib/auth-client";
@@ -11,12 +12,15 @@ import Image from "next/image";
 import XIcon from "@/components/icons/XIcon";
 import Link from "next/link";
 import posthog from "posthog-js";
+import { toast } from "sonner";
 
 type Account = {
   id: string;
   accountId: string;
   providerId: string;
   createdAt: string;
+  username?: string;
+  profileImageUrl?: string;
 };
 
 type SocialPlatform = {
@@ -39,8 +43,16 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
   },
 ];
 
+const LINK_ERROR_MESSAGES: Record<string, string> = {
+  token_exchange_failed: "Failed to connect. Please try again.",
+  user_fetch_failed: "Could not retrieve your X account info. Please try again.",
+  invalid_state: "Session expired. Please try again.",
+  missing_params: "Something went wrong. Please try again.",
+};
+
 function ConnectionsContent() {
   const { data: session } = authClient.useSession();
+  const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [plan, setPlan] = useState<PlanType>("free");
   const [loading, setLoading] = useState(true);
@@ -48,6 +60,16 @@ function ConnectionsContent() {
   const [error, setError] = useState<string | null>(null);
   const [trustmrrConnected, setTrustmrrConnected] = useState(false);
   const [trustmrrStartup, setTrustmrrStartup] = useState<{ names: string[]; websites: string[] }>({ names: [], websites: [] });
+
+  // Show error toast if redirected back with an error
+  useEffect(() => {
+    const linkError = searchParams.get("error");
+    if (linkError) {
+      toast.error(LINK_ERROR_MESSAGES[linkError] || "Something went wrong while linking your account.");
+      // Clean up URL
+      window.history.replaceState({}, "", "/dashboard/connections");
+    }
+  }, [searchParams]);
 
   const maxPerProvider = PLAN_LIMITS[plan].maxConnectionsPerProvider;
 
@@ -107,15 +129,26 @@ function ConnectionsContent() {
     }
   };
 
+  const startLinkX = async () => {
+    try {
+      const res = await fetch("/api/connections/link-x", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to start linking.");
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      toast.error("Failed to start linking. Please try again.");
+    }
+  };
+
   const handleConnect = (provider: "twitter") => {
     posthog.capture("social_account_connected", {
       provider,
       is_reconnect: false,
     });
-    authClient.signIn.social({
-      provider,
-      callbackURL: "/dashboard/connections",
-    });
+    startLinkX();
   };
 
   const handleReconnect = (provider: "twitter") => {
@@ -123,11 +156,7 @@ function ConnectionsContent() {
       provider,
       is_reconnect: true,
     });
-    // Re-triggering OAuth will refresh the tokens
-    authClient.signIn.social({
-      provider,
-      callbackURL: "/dashboard/connections",
-    });
+    startLinkX();
   };
 
   const googleAccount = accounts.find((a) => a.providerId === "google");
@@ -199,10 +228,10 @@ function ConnectionsContent() {
               ) : count > 0 ? (
                 <Badge variant="outline" className="border-emerald-500/30 text-emerald-500 bg-emerald-500/10">
                   <HugeiconsIcon icon={Link01Icon} size={12} strokeWidth={2} />
-                  {count}/{maxPerProvider} Connected
+                  Connected
                 </Badge>
               ) : (
-                <Badge variant="secondary">0/{maxPerProvider} Connected</Badge>
+                <Badge variant="secondary">Not connected</Badge>
               )}
             </div>
 
@@ -214,7 +243,15 @@ function ConnectionsContent() {
                     key={account.id}
                     className="px-6 py-3 flex items-center gap-3 border-b border-border/50 last:border-b-0"
                   >
-                    {session?.user?.image ? (
+                    {account.profileImageUrl ? (
+                      <Image
+                        src={account.profileImageUrl}
+                        alt="Account avatar"
+                        width={28}
+                        height={28}
+                        className="rounded-full shrink-0"
+                      />
+                    ) : session?.user?.image ? (
                       <Image
                         src={session.user.image}
                         alt="Account avatar"
@@ -226,9 +263,11 @@ function ConnectionsContent() {
                       <div className="w-7 h-7 rounded-full bg-muted shrink-0" />
                     )}
                     <span className="text-sm flex-1 truncate">
-                      {session?.user?.xUsername
-                        ? `@${session.user.xUsername}`
-                        : session?.user?.name || account.accountId}
+                      {account.username
+                        ? `@${account.username}`
+                        : session?.user?.xUsername
+                          ? `@${session.user.xUsername}`
+                          : session?.user?.name || account.accountId}
                     </span>
                     <div className="flex items-center gap-2">
                       <Button
@@ -254,11 +293,9 @@ function ConnectionsContent() {
               </ul>
             )}
 
-            {/* Add account button or upgrade link */}
-            <div className="px-6 py-3 border-t border-border/50">
-              {loading ? (
-                <div className="h-8 w-32 rounded-md bg-sidebar" />
-              ) : canAdd ? (
+            {/* Connect button (only shown when no account linked) */}
+            {!loading && canAdd && (
+              <div className="px-6 py-3 border-t border-border/50">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -266,18 +303,10 @@ function ConnectionsContent() {
                   className="text-muted-foreground hover:text-foreground -ml-2"
                 >
                   <HugeiconsIcon icon={Add01Icon} size={16} strokeWidth={2} />
-                  {count === 0 ? "Connect account" : "Add account"}
+                  Connect account
                 </Button>
-              ) : (
-                <Link
-                  href="/dashboard/plan#plans"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                >
-                  Upgrade your plan to connect more accounts
-                  <HugeiconsIcon icon={ArrowRight01Icon} size={14} strokeWidth={2} />
-                </Link>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         );
       })}

@@ -13,7 +13,7 @@ export async function GET() {
   }
 
   const result = await pool.query(
-    `SELECT id, "accountId", "providerId", "createdAt" FROM account WHERE "userId" = $1`,
+    `SELECT id, "accountId", "providerId", "createdAt", username, "profileImageUrl" FROM account WHERE "userId" = $1`,
     [session.user.id]
   );
 

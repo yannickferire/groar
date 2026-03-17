@@ -53,7 +53,7 @@ export function trialEndingEmail(name: string, pricing?: { monthlyPrice: number;
     subject: "Your Groar Pro trial expires in 24h",
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
-      <p>Your Pro trial <strong>expires in 24 hours</strong>. After that, you'll be back to 3 exports/week with watermark.</p>
+      <p>Your Pro trial <strong>expires in 24 hours</strong>. After that, you'll be back to 1 export/week with watermark.</p>
       <p>🔥 Right now, early adopter pricing is still available:</p>
       <ul style="margin:12px 0;padding-left:20px;">
         <li><strong>$${lifetime} one-time</strong> — lifetime access (final price will be $29)</li>
@@ -73,7 +73,7 @@ export function trialExpiredEmail(name: string, pricing?: { lifetimePrice: numbe
     subject: "Your Groar Pro trial has ended",
     html: layout(`
       <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
-      <p>Your trial is over — you're back on the free plan (3 exports/week, watermark, limited templates).</p>
+      <p>Your trial is over — you're back on the free plan (1 export/week, watermark, limited templates).</p>
       <p>🔥 Lifetime access is <strong>$${lifetime}</strong> right now (final price: $29). One payment, Pro forever.</p>
       ${cta("Get lifetime access", `${SITE_URL}/dashboard/plan#plans`)}
       <p style="color:#6b7280;font-size:14px;">Early adopter pricing — price goes up as spots fill.</p>

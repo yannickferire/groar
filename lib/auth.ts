@@ -26,6 +26,13 @@ async function getUserPlan(userId: string): Promise<PlanType> {
 
 export const auth = betterAuth({
   database: pool,
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ["twitter"],
+      allowDifferentEmails: true,
+    },
+  },
   user: {
     additionalFields: {
       xUsername: {
@@ -94,8 +101,7 @@ export const auth = betterAuth({
         after: async (account) => {
           if (account.providerId === "twitter" && account.accessToken) {
             try {
-              // Fetch username from Twitter API
-              const response = await fetch("https://api.twitter.com/2/users/me", {
+              const response = await fetch("https://api.twitter.com/2/users/me?user.fields=profile_image_url", {
                 headers: {
                   Authorization: `Bearer ${account.accessToken}`,
                 },
@@ -104,12 +110,17 @@ export const auth = betterAuth({
               if (response.ok) {
                 const data = await response.json();
                 const username = data.data?.username;
+                const profileImageUrl = data.data?.profile_image_url?.replace("_normal", "_400x400") || null;
 
                 if (username) {
-                  // Update user with xUsername
                   await pool.query(
                     `UPDATE "user" SET "xUsername" = $1 WHERE id = $2`,
                     [username, account.userId]
+                  );
+                  // Store username and profile image on the account row
+                  await pool.query(
+                    `UPDATE account SET username = $1, "profileImageUrl" = $2 WHERE id = $3`,
+                    [username, profileImageUrl, account.id]
                   );
                   console.log(`Updated xUsername to @${username} for user ${account.userId}`);
                 }

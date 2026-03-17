@@ -60,7 +60,7 @@ const faqs = [
   },
   {
     question: "Is GROAR free?",
-    answer: "Yes, GROAR has a free plan with full editor access, 3 exports per week, and 5 backgrounds. Pro starts at $5/month (or a one-time lifetime payment) for unlimited exports, all backgrounds, and no watermark.",
+    answer: "Yes, GROAR has a free plan with full editor access, 1 export per week, and 5 backgrounds. Pro starts at $5/month (or a one-time lifetime payment) for unlimited exports, all backgrounds, and no watermark.",
   },
 ];
 

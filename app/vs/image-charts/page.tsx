@@ -60,7 +60,7 @@ const faqs = [
   },
   {
     question: "How much does each tool cost?",
-    answer: "GROAR Pro is $5/month or a one-time lifetime payment. Image-Charts' paid plans start at $49/month for extended features. GROAR also has a free plan with 3 exports per week.",
+    answer: "GROAR Pro is $5/month or a one-time lifetime payment. Image-Charts' paid plans start at $49/month for extended features. GROAR also has a free plan with 1 export per week.",
   },
 ];
 

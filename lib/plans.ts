@@ -17,10 +17,10 @@ export const PLANS = {
     subtitle: "for hobby growers",
     price: 0,
     maxConnectionsPerProvider: 0,
-    maxExportsPerWeek: 3,
+    maxExportsPerWeek: 1,
     features: [
       "Full access to the editor",
-      "3 exports per week",
+      "1 export per week",
       "5 backgrounds included",
       "Metric template",
     ],
@@ -32,13 +32,13 @@ export const PLANS = {
     name: "Pro",
     subtitle: "for you",
     price: 5,
-    maxConnectionsPerProvider: 3,
+    maxConnectionsPerProvider: 1, // Multi-account ready, increase to re-enable
     maxExportsPerWeek: null, // unlimited
     features: [
       "Unlimited exports",
       "Unlimited backgrounds",
       "No watermark",
-      "Connect 3 accounts per platform",
+      "Connect your X account",
     ],
   },
   friend: {
@@ -82,7 +82,6 @@ export const PRO_FEATURES: { icon: IconSvgElement; title: string }[] = [
 export const PRO_CHECKS: string[] = [
   "No watermark",
   "Unlimited exports",
-  "Connect 3 accounts per platform",
 ];
 
 // Trial

@@ -36,14 +36,14 @@ const pricingJsonLd = {
         name: "Free",
         price: "0",
         priceCurrency: "USD",
-        description: "Full access to the editor, 3 exports per week, 5 backgrounds, Groar watermark",
+        description: "Full access to the editor, 1 export per week, 5 backgrounds, Groar watermark",
       },
       {
         "@type": "Offer",
         name: "Pro (Monthly)",
         price: "5",
         priceCurrency: "USD",
-        description: "Unlimited exports, unlimited backgrounds, no watermark, connect 3 accounts per platform",
+        description: "Unlimited exports, unlimited backgrounds, no watermark",
         priceSpecification: {
           "@type": "UnitPriceSpecification",
           price: "5",
