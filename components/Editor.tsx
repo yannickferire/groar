@@ -437,6 +437,27 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       link.href = dataUrl;
       link.click();
 
+      // Copy image to clipboard as PNG
+      try {
+        const pngBlob = await new Promise<Blob>((resolve, reject) => {
+          const img = new window.Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext("2d")!.drawImage(img, 0, 0);
+            canvas.toBlob((b) => b ? resolve(b) : reject(), "image/png");
+          };
+          img.onerror = reject;
+          img.src = dataUrl;
+        });
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": pngBlob }),
+        ]);
+      } catch {
+        // Clipboard not supported — image was already downloaded
+      }
+
       // Save to database if logged in (premium)
       if (isPremium) {
         try {

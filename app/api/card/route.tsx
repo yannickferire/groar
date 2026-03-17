@@ -297,7 +297,7 @@ function getHeaderDateLabel(settings: { heading?: HeadingSettings; template?: st
   const h = settings.heading;
   if (!h) return null;
   if (h.type === "period" && h.periodType) return getDateLabel(h.periodType);
-  if (h.type === "last" && h.lastUnit) return getDateLabel(h.lastUnit);
+  if (h.type === "last" && h.lastUnit) return getDateLabel(h.lastUnit === "hour" ? "day" : h.lastUnit);
   if (h.type === "today" || h.type === "yesterday") return getDateLabel("day");
   return null;
 }

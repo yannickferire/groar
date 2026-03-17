@@ -87,7 +87,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
               return <p className="opacity-60" style={dateLabelStyle}>{getDateLabel(h.periodType)}</p>;
             }
             if (h.type === "last" && h.lastUnit) {
-              return <p className="opacity-60" style={dateLabelStyle}>{getDateLabel(h.lastUnit)}</p>;
+              return <p className="opacity-60" style={dateLabelStyle}>{getDateLabel(h.lastUnit === "hour" ? "day" : h.lastUnit)}</p>;
             }
             if (h.type === "today" || h.type === "yesterday") {
               return <p className="opacity-60" style={dateLabelStyle}>{getDateLabel("day")}</p>;

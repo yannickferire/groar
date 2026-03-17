@@ -533,7 +533,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
     if (heading?.type === "period" && heading.periodType) {
       period = { type: heading.periodType, number: heading.periodFrom ?? 1 };
     } else if (heading?.type === "last" && heading.lastUnit) {
-      period = { type: heading.lastUnit, number: heading.lastCount ?? 7 };
+      period = { type: heading.lastUnit === "hour" ? "day" : heading.lastUnit, number: heading.lastCount ?? 1 };
     }
     onSettingsChange({ ...settings, heading, period });
   }, [settings, onSettingsChange]);
