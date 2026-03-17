@@ -28,7 +28,7 @@ import { dataURLtoFile, ALL_BACKGROUNDS, defaultSettings, loadSettings, saveSett
 import { METRIC_LABELS, type EditorSettings, type FontFamily, type TemplateType, type MetricType } from "./editor/types";
 
 // Re-export types and constants so existing imports from "@/components/Editor" still work
-export type { PeriodType, MetricType, Metric, BackgroundPreset, BackgroundSettings, PeriodSettings, HeadingType, HeadingSettings, AspectRatioType, FontFamily, TemplateType, MetricsLayout, TextAlign, BrandingSettings, BrandingLogo, EditorSettings } from "./editor/types";
+export type { PeriodType, LastUnitType, MetricType, Metric, BackgroundPreset, BackgroundSettings, PeriodSettings, HeadingType, HeadingSettings, AspectRatioType, FontFamily, TemplateType, MetricsLayout, TextAlign, BrandingSettings, BrandingLogo, EditorSettings } from "./editor/types";
 export { METRIC_LABELS } from "./editor/types";
 
 type EditorProps = {

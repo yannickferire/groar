@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, memo, useEffect, useRef } from "react";
-import { EditorSettings, PeriodType, HeadingType, HeadingSettings, PeriodSettings, MetricType, Metric, METRIC_LABELS, BrandingLogo } from "../Editor";
+import { EditorSettings, PeriodType, LastUnitType, HeadingType, HeadingSettings, PeriodSettings, MetricType, Metric, METRIC_LABELS, BrandingLogo } from "../Editor";
 import { parseMetricInput, detectPrefix } from "@/lib/metrics";
 import { normalizeHandle } from "@/lib/validation";
 import { Label } from "@/components/ui/label";
@@ -744,7 +744,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                     const userText = h?.text && h.text !== "Your quote" && h.text !== "Your text" ? h.text : "";
                     const defaults: Record<HeadingType, HeadingSettings> = {
                       "period": { type: "period", periodType: h?.periodType || "week", periodFrom: h?.periodFrom ?? 1 },
-                      "last": { type: "last", lastCount: h?.lastCount ?? 7, lastUnit: h?.lastUnit || h?.periodType || "day" },
+                      "last": { type: "last", lastCount: h?.lastCount ?? 1, lastUnit: h?.lastUnit || "day" },
                       "date-range": { type: "date-range", dateFrom: h?.dateFrom || new Date().toISOString().slice(0, 10), dateTo: h?.dateTo || new Date().toISOString().slice(0, 10) },
                       "today": { type: "today" },
                       "yesterday": { type: "yesterday" },
@@ -833,16 +833,17 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
                   />
                   <Select
                     value={settings.heading.lastUnit || "day"}
-                    onValueChange={(value) => updateHeading({ ...settings.heading!, lastUnit: value as PeriodType })}
+                    onValueChange={(value) => updateHeading({ ...settings.heading!, lastUnit: value as LastUnitType })}
                   >
                     <SelectTrigger className="flex-1 bg-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="day">{(settings.heading.lastCount ?? 7) === 1 ? "day" : "days"}</SelectItem>
-                      <SelectItem value="week">{(settings.heading.lastCount ?? 7) === 1 ? "week" : "weeks"}</SelectItem>
-                      <SelectItem value="month">{(settings.heading.lastCount ?? 7) === 1 ? "month" : "months"}</SelectItem>
-                      <SelectItem value="year">{(settings.heading.lastCount ?? 7) === 1 ? "year" : "years"}</SelectItem>
+                      <SelectItem value="hour">{(settings.heading.lastCount ?? 1) === 1 ? "hour" : "hours"}</SelectItem>
+                      <SelectItem value="day">{(settings.heading.lastCount ?? 1) === 1 ? "day" : "days"}</SelectItem>
+                      <SelectItem value="week">{(settings.heading.lastCount ?? 1) === 1 ? "week" : "weeks"}</SelectItem>
+                      <SelectItem value="month">{(settings.heading.lastCount ?? 1) === 1 ? "month" : "months"}</SelectItem>
+                      <SelectItem value="year">{(settings.heading.lastCount ?? 1) === 1 ? "year" : "years"}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

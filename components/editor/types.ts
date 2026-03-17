@@ -1,4 +1,5 @@
 export type PeriodType = "day" | "week" | "month" | "year";
+export type LastUnitType = "hour" | PeriodType;
 
 export type MetricType = "followers" | "verifiedFollowers" | "followings" | "posts" | "impressions" | "replies" | "engagementRate" | "engagement" | "profileVisits" | "likes" | "reposts" | "bookmarks" | "builders" | "mrr" | "arr" | "valuation" | "revenue" | "churnRate" | "ltv" | "newCustomers" | "totalCustomers" | "sales" | "domainRating" | "githubStars" | "githubCommits" | "githubForks" | "githubContributors" | "githubPRsClosed" | "githubIssuesResolved" | "redditKarma" | "redditUpvotes" | "visitors" | "redditUpvoteRatio" | "custom";
 
@@ -77,7 +78,7 @@ export type HeadingSettings = {
   periodTo?: number; // when set, renders "Week 1–4" range style
   // Last mode ("Last 7 days")
   lastCount?: number;
-  lastUnit?: PeriodType;
+  lastUnit?: LastUnitType;
   // Date range mode ("Jan 1 – Mar 2")
   dateFrom?: string; // ISO date string "2026-01-01"
   dateTo?: string;   // ISO date string "2026-03-02"
