@@ -764,7 +764,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       <Sidebar
         settings={settings}
         onSettingsChange={setSettings}
-        onExport={handleExport}
+        onExport={() => handleExport(false)}
         onCopy={handleCopy}
         isExporting={isExporting}
         cooldown={cooldown}

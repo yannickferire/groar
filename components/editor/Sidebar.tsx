@@ -1711,7 +1711,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           onClick={onExport}
           disabled={isExporting || cooldown > 0}
           size="xl"
-          className="flex-1 group duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+          className="flex-1 group transition-[transform,box-shadow] duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
         >
           <span className="relative mr-2">
             <HugeiconsIcon icon={Download04Icon} size={22} strokeWidth={2} className="transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-0 group-hover:scale-75" />
@@ -1723,7 +1723,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           onClick={onCopy}
           disabled={isExporting || cooldown > 0}
           size="xl"
-          className="shrink-0 gradient-muted text-foreground border shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),inset_0_-1px_0_0_rgba(0,0,0,0.06)] hover:brightness-[1.03] hover:scale-[1.02] active:scale-[0.98] duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+          className="shrink-0 gradient-muted text-foreground border shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),inset_0_-1px_0_0_rgba(0,0,0,0.06)] hover:brightness-[1.03] hover:scale-[1.02] active:scale-[0.98] transition-[transform,filter] duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
           title="Copy to clipboard (⌘C)"
         >
           <HugeiconsIcon icon={Copy01Icon} size={20} strokeWidth={2} />
