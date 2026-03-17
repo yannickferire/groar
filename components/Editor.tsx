@@ -266,7 +266,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     return () => clearTimeout(timer);
   }, []);
 
-  const handleExport = useCallback(async () => {
+  const handleExport = useCallback(async (copyOnly = false) => {
     if (!previewRef.current || cooldown > 0) return;
 
     // Dismiss previous export toast if any
@@ -432,10 +432,13 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         injectedWatermark.remove();
       }
 
-      const link = document.createElement("a");
-      link.download = `groar-${settings.handle.replace("@", "")}-${Date.now()}.jpg`;
-      link.href = dataUrl;
-      link.click();
+      // Download file (skip for copy-only mode)
+      if (!copyOnly) {
+        const link = document.createElement("a");
+        link.download = `groar-${settings.handle.replace("@", "")}-${Date.now()}.jpg`;
+        link.href = dataUrl;
+        link.click();
+      }
 
       // Copy image to clipboard as PNG
       try {
@@ -584,7 +587,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
                 <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
                   <svg className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-                <span className="text-sm md:text-base font-semibold">Image downloaded!</span>
+                <span className="text-sm md:text-base font-semibold">{copyOnly ? "Copied to clipboard!" : "Image downloaded!"}</span>
               </div>
               <button onClick={() => { toast.dismiss(id); exportToastIdRef.current = null; }} className="text-muted-foreground/60 hover:text-foreground transition-colors p-1 -m-1">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -696,12 +699,15 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   }, [settings.metrics, settings.template, settings.heading, isDashboard]);
   shareToXRef.current = shareToX;
 
+  const handleCopy = useCallback(() => handleExport(true), [handleExport]);
+
   useKeyboardShortcuts(
     useMemo(() => [
       { key: "s", meta: true, action: handleExport },
+      { key: "c", meta: true, action: handleCopy, whenIdle: true },
       { key: "z", meta: true, action: undo },
       { key: "z", meta: true, shift: true, action: redo },
-    ], [handleExport, undo, redo])
+    ], [handleExport, handleCopy, undo, redo])
   );
 
 
@@ -757,6 +763,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         settings={settings}
         onSettingsChange={setSettings}
         onExport={handleExport}
+        onCopy={handleCopy}
         isExporting={isExporting}
         cooldown={cooldown}
         isPremium={isPremium}

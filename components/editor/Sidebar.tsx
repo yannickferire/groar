@@ -31,7 +31,7 @@ import { type DateRange } from "react-day-picker";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon, AlignBoxBottomLeftIcon, AlignBoxBottomCenterIcon, AlignBoxBottomRightIcon, NewTwitterIcon, GithubIcon, RedditIcon, BrowserIcon, ShuffleIcon } from "@hugeicons/core-free-icons";
+import { Menu01Icon, Cancel01Icon, UserAccountIcon, Analytics01Icon, Heading01Icon, Download04Icon, Copy01Icon, ImageAdd01Icon, Delete02Icon, Loading03Icon, CrownIcon, PlusSignIcon, DashboardSquare01Icon, Target01Icon, AlignBoxBottomLeftIcon, AlignBoxBottomCenterIcon, AlignBoxBottomRightIcon, NewTwitterIcon, GithubIcon, RedditIcon, BrowserIcon, ShuffleIcon } from "@hugeicons/core-free-icons";
 import { TEMPLATE_LIST } from "@/lib/templates";
 import { compressImage } from "@/lib/image-compress";
 import { TemplateType } from "../Editor";
@@ -59,6 +59,7 @@ type SidebarProps = {
   settings: EditorSettings;
   onSettingsChange: (settings: EditorSettings) => void;
   onExport: () => void;
+  onCopy: () => void;
   isExporting: boolean;
   cooldown?: number;
   isPremium?: boolean;
@@ -286,7 +287,7 @@ type ConnectedAccount = {
   } | null;
 };
 
-export default function Sidebar({ settings, onSettingsChange, onExport, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock, exportsThisWeek = 0, maxExportsPerWeek = null, hasUsedTrial = false }: SidebarProps) {
+export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock, exportsThisWeek = 0, maxExportsPerWeek = null, hasUsedTrial = false }: SidebarProps) {
   const isMobile = useIsMobile(940);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [deletingLogoId, setDeletingLogoId] = useState<string | null>(null);
@@ -1718,18 +1719,30 @@ export default function Sidebar({ settings, onSettingsChange, onExport, isExport
 
       {/* Export */}
       <div className="flex-1" />
-      <Button
-        onClick={onExport}
-        disabled={isExporting || cooldown > 0}
-        size="xl"
-        className="w-full group duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
-      >
-        <span className="relative mr-2">
-          <HugeiconsIcon icon={Download04Icon} size={22} strokeWidth={2} className="transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-0 group-hover:scale-75" />
-          <span className="absolute inset-0 flex items-center justify-center text-xl opacity-0 scale-75 transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-100 group-hover:scale-125 group-hover:rotate-[-8deg]">🐯</span>
-        </span>
-        {isExporting ? "Loading..." : cooldown > 0 ? `Wait ${cooldown}s` : "Get your image"}
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          onClick={onExport}
+          disabled={isExporting || cooldown > 0}
+          size="xl"
+          className="flex-1 group duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+        >
+          <span className="relative mr-2">
+            <HugeiconsIcon icon={Download04Icon} size={22} strokeWidth={2} className="transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-0 group-hover:scale-75" />
+            <span className="absolute inset-0 flex items-center justify-center text-xl opacity-0 scale-75 transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-100 group-hover:scale-125 group-hover:rotate-[-8deg]">🐯</span>
+          </span>
+          {isExporting ? "Loading..." : cooldown > 0 ? `Wait ${cooldown}s` : "Download image"}
+        </Button>
+        <Button
+          onClick={onCopy}
+          disabled={isExporting || cooldown > 0}
+          size="xl"
+          className="shrink-0 gradient-muted text-foreground border shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),inset_0_-1px_0_0_rgba(0,0,0,0.06)] hover:brightness-[1.03] hover:scale-[1.02] active:scale-[0.98] duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+          title="Copy to clipboard (⌘C)"
+        >
+          <HugeiconsIcon icon={Copy01Icon} size={20} strokeWidth={2} />
+          <span className="hidden min-[360px]:inline">Copy</span>
+        </Button>
+      </div>
       {!isPremium && maxExportsPerWeek !== null && (() => {
         const remaining = Math.max(maxExportsPerWeek - exportsThisWeek, 0);
         const isOut = remaining === 0;

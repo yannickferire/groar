@@ -95,6 +95,31 @@ input.gooey:focus {
   border-radius: inherit;
 }
 
+.gradient-muted {
+  background: linear-gradient(135deg, var(--sidebar) 0%, var(--background) 100%);
+  position: relative;
+}
+
+.gradient-muted::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.gradient-muted::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 50%, rgba(0,0,0,0.05) 100%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
 .gradient-primary-reverse {
   background: linear-gradient(315deg, var(--primary) 0%, var(--chart-2) 100%);
   position: relative;
