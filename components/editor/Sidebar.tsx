@@ -614,6 +614,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     if (template.id === "milestone" && !settings.milestoneEmoji) {
                       updates.milestoneEmoji = "🎉";
                       updates.milestoneEmojiUnified = "1f389";
+                      updates.milestoneEmojiName = "Party Popper";
                       updates.milestoneEmojiCount = 3;
                     }
                     onSettingsChange({ ...settings, ...updates });
