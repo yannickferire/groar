@@ -54,6 +54,9 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import data from "@emoji-mart/data/sets/15/apple.json";
+import Picker from "@emoji-mart/react";
+import { getAppleEmojiUrl } from "@/lib/emoji";
 
 type SidebarProps = {
   settings: EditorSettings;
@@ -610,6 +613,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     }
                     if (template.id === "milestone" && !settings.milestoneEmoji) {
                       updates.milestoneEmoji = "🎉";
+                      updates.milestoneEmojiUnified = "1f389";
                       updates.milestoneEmojiCount = 3;
                     }
                     onSettingsChange({ ...settings, ...updates });
@@ -1354,53 +1358,42 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Emoji
           </h3>
-          <div className="flex gap-1">
-            {(() => {
-              const emojis: { key: string; src: string }[] = [
-                { key: "🎉", src: "/emoji/party.png" },
-                { key: "🔥", src: "/emoji/fire.png" },
-                { key: "🚀", src: "/emoji/rocket.png" },
-                { key: "✨", src: "/emoji/sparkles.png" },
-                { key: "🎯", src: "/emoji/bullseye.png" },
-                { key: "🐯", src: "/emoji/tiger.png" },
-                { key: "❤️", src: "/emoji/heart.png" },
-                { key: "🎈", src: "/emoji/balloon.png" },
-              ];
-              return (
-                <>
-                  {emojis.map(({ key, src }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => updateSetting("milestoneEmoji", settings.milestoneEmoji === key ? undefined : key)}
-                      className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-colors ${
-                        settings.milestoneEmoji === key
-                          ? "border-primary bg-primary/10"
-                          : "border-input bg-background hover:bg-muted/50"
-                      }`}
-                    >
-                      <img src={src} alt="" className="w-5 h-5 object-contain" draggable={false} />
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const available = emojis.filter(e => e.key !== settings.milestoneEmoji);
-                      updateSetting("milestoneEmoji", available[Math.floor(Math.random() * available.length)].key);
-                    }}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-input bg-background hover:bg-muted/50 text-xs font-medium text-muted-foreground transition-colors"
-                    title="Random emoji"
-                  >
-                    <HugeiconsIcon icon={ShuffleIcon} size={16} strokeWidth={2} />
-                  </button>
-                </>
-              );
-            })()}
-          </div>
-          {settings.milestoneEmoji && (
-            <div>
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] text-muted-foreground w-2.5 text-right">0</span>
+          <div className="flex gap-2 items-center">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border transition-colors ${
+                    settings.milestoneEmoji
+                      ? "border-primary bg-primary/10"
+                      : "border-input bg-background hover:bg-muted/50"
+                  }`}
+                >
+                  {settings.milestoneEmojiUnified ? (
+                    <img src={getAppleEmojiUrl(settings.milestoneEmojiUnified)} alt="" className="w-6 h-6 object-contain" draggable={false} />
+                  ) : (
+                    <span className="text-lg">😀</span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 border-0" align="start" side="right">
+                <Picker
+                  data={data}
+                  set="apple"
+                  theme="light"
+                  onEmojiSelect={(emoji: { native: string; unified: string; name: string }) => {
+                    onSettingsChange({ ...settings, milestoneEmoji: emoji.native, milestoneEmojiUnified: emoji.unified, milestoneEmojiName: emoji.name });
+                  }}
+                  previewPosition="none"
+                  skinTonePosition="search"
+                  perLine={10}
+                  maxFrequentRows={1}
+                />
+              </PopoverContent>
+            </Popover>
+            {settings.milestoneEmoji && (
+              <div className="flex items-center gap-1 flex-1 min-w-0">
+                <span className="text-[10px] text-muted-foreground w-2.5 text-right shrink-0">0</span>
                 <Slider
                   min={0}
                   max={10}
@@ -1409,18 +1402,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   onValueChange={([v]) => updateSetting("milestoneEmojiCount", v)}
                   className="flex-1"
                 />
-                <span className="text-[10px] text-muted-foreground w-2.5">10</span>
+                <span className="text-[10px] text-muted-foreground w-2.5 shrink-0">10</span>
               </div>
-              <div className="relative h-3 mx-3.5">
-                <span
-                  className="absolute text-[10px] text-muted-foreground -translate-x-1/2"
-                  style={{ left: `calc(${((settings.milestoneEmojiCount ?? 3) / 10) * 100}% + ${8 - ((settings.milestoneEmojiCount ?? 3) / 10) * 16}px)` }}
-                >
-                  {settings.milestoneEmojiCount ?? 3}
-                </span>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
@@ -1462,28 +1447,30 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="shrink-0 w-9 h-9 rounded-xl border border-input bg-background flex items-center justify-center text-lg hover:bg-muted/50 transition-colors"
+                      className="shrink-0 w-9 h-9 rounded-xl border border-input bg-background flex items-center justify-center hover:bg-muted/50 transition-colors"
                     >
-                      {feature.emoji || "✅"}
+                      {feature.emojiUnified ? (
+                        <img src={getAppleEmojiUrl(feature.emojiUnified)} alt="" className="w-5 h-5 object-contain" draggable={false} />
+                      ) : (
+                        <span className="text-lg">{feature.emoji || "✅"}</span>
+                      )}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2" align="start">
-                    <div className="grid grid-cols-6 gap-1">
-                      {["✅", "🚀", "⚡", "🎨", "🔧", "💡", "📦", "🔒", "🎯", "💬", "📊", "🌙", "⭐", "🔥", "💪", "🎉", "✨", "🛠️", "🐛", "🔔", "💳", "🔗", "📈", "💰"].map((emoji) => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() => {
-                            const updated = [...(settings.announcements || [])];
-                            updated[index] = { ...updated[index], emoji };
-                            updateSetting("announcements", updated);
-                          }}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-lg"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
+                  <PopoverContent className="w-auto p-0 border-0" align="start" side="right">
+                    <Picker
+                      data={data}
+                      set="apple"
+                      theme="light"
+                      onEmojiSelect={(emoji: { native: string; unified: string; name: string }) => {
+                        const updated = [...(settings.announcements || [])];
+                        updated[index] = { ...updated[index], emoji: emoji.native, emojiUnified: emoji.unified, emojiName: emoji.name };
+                        updateSetting("announcements", updated);
+                      }}
+                      previewPosition="none"
+                      skinTonePosition="search"
+                      perLine={10}
+                      maxFrequentRows={1}
+                    />
                   </PopoverContent>
                 </Popover>
                 <Input

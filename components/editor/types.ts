@@ -118,9 +118,11 @@ export type EditorSettings = {
   metricsLayout?: MetricsLayout;
   branding?: BrandingSettings;
   goal?: number;
-  announcements?: { emoji?: string; text: string }[];
+  announcements?: { emoji?: string; emojiUnified?: string; emojiName?: string; text: string }[];
   abbreviateNumbers?: boolean;
   textAlign?: TextAlign;
   milestoneEmoji?: string;
+  milestoneEmojiUnified?: string; // unified code for Apple emoji CDN (e.g. "1f389")
+  milestoneEmojiName?: string; // emoji name slug for Emojipedia CDN (e.g. "party-popper")
   milestoneEmojiCount?: number; // 0–10, default 3
 };

@@ -4,6 +4,7 @@ import { EditorSettings, METRIC_LABELS, MetricType } from "@/components/Editor";
 import { formatMetricValue } from "@/lib/metrics";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { METRIC_ICONS } from "@/lib/metric-icons";
+import { getAppleEmojiHQUrl } from "@/lib/emoji";
 
 type MilestoneTemplateProps = {
   settings: EditorSettings;
@@ -244,42 +245,41 @@ function getEmojiStyles(emoji: string, isBanner: boolean, count: number): EmojiS
   return all.slice(0, count);
 }
 
-const EMOJI_IMAGES: Record<string, string> = {
-  "🎉": "/emoji/party.png",
-  "🔥": "/emoji/fire.png",
-  "🚀": "/emoji/rocket.png",
-  "✨": "/emoji/sparkles.png",
-  "🎯": "/emoji/bullseye.png",
-  "🐯": "/emoji/tiger.png",
-  "❤️": "/emoji/heart.png",
-  "🎈": "/emoji/balloon.png",
-};
-
 export function MilestoneEmojis({ settings }: { settings: EditorSettings }) {
   const emoji = settings.milestoneEmoji;
+  const unified = settings.milestoneEmojiUnified;
+  const name = settings.milestoneEmojiName;
   const count = settings.milestoneEmojiCount ?? 3;
   const isBanner = settings.aspectRatio === "banner";
 
   if (!emoji || count <= 0) return null;
 
-  const imageSrc = EMOJI_IMAGES[emoji];
   const styles = getEmojiStyles(emoji, isBanner, count);
+  const appleUrl = unified && name ? getAppleEmojiHQUrl(name, unified) : null;
 
   return (
     <>
       {styles.map((style, i) => {
-        // Convert fontSize (cqi) to width/height for img
-        const { fontSize, lineHeight: _lh, ...rest } = style;
-        return (
+        const { fontSize, lineHeight, ...positionStyle } = style;
+        return appleUrl ? (
           <img
             key={i}
-            src={imageSrc || ""}
+            src={appleUrl}
             alt=""
             className="absolute select-none pointer-events-none"
-            style={{ ...rest, width: fontSize, height: fontSize, objectFit: "contain" }}
-            aria-hidden="true"
+            style={{ ...positionStyle, width: fontSize, height: fontSize }}
             draggable={false}
+            aria-hidden="true"
           />
+        ) : (
+          <span
+            key={i}
+            className="absolute select-none pointer-events-none"
+            style={style}
+            aria-hidden="true"
+          >
+            {emoji}
+          </span>
         );
       })}
     </>
