@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon, Notification03Icon, GiftIcon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon, Notification03Icon, GiftIcon, SourceCodeSquareIcon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import UserMenu from "./UserMenu";
@@ -28,6 +28,7 @@ type NavItem = {
   href: string;
   icon: IconSvgElement;
   premium?: boolean;
+  comingSoon?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -35,6 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Connections", href: "/dashboard/connections", icon: Link01Icon, premium: true },
   { label: "History", href: "/dashboard/history", icon: Clock01Icon, premium: true },
   { label: "Notifications", href: "/dashboard/notifications", icon: Notification03Icon },
+  { label: "API", href: "/dashboard/api", icon: SourceCodeSquareIcon, premium: true, comingSoon: true },
   { label: "Leaderboard", href: "/dashboard/leaderboard", icon: RankingIcon },
 ];
 
@@ -46,6 +48,7 @@ export default function DashboardSidebar() {
   const [trialEnd, setTrialEnd] = useState<string | null>(null);
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isBetaApiUser, setIsBetaApiUser] = useState(false);
 
   const [pointsToday, setPointsToday] = useState<number | null>(null);
   const [animatingPoints, setAnimatingPoints] = useState<number | null>(null);
@@ -61,6 +64,8 @@ export default function DashboardSidebar() {
         setTrialEnd(data.trialEnd || null);
         setHasUsedTrial(!!data.hasUsedTrial);
         setIsAdmin(!!data.isAdmin);
+        const apiBetaEmails = ["yannick@ferire.com", "victor.petersen2@gmail.com"];
+        if (data.email && apiBetaEmails.includes(data.email)) setIsBetaApiUser(true);
       })
       .catch(() => setUserPlan("free"));
   }, []);
@@ -174,6 +179,25 @@ export default function DashboardSidebar() {
             {/* Other nav items */}
             <SidebarMenu>
               {NAV_ITEMS.map((item) => {
+                if (item.comingSoon && !isBetaApiUser) {
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        tooltip={`${item.label} (Coming soon)`}
+                        className="opacity-50 pointer-events-none"
+                      >
+                        <HugeiconsIcon
+                          icon={item.icon}
+                          size={20}
+                          strokeWidth={2}
+                        />
+                        <span className="flex-1">{item.label}</span>
+                        <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">Soon</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+
                 const isLocked = item.premium && userPlan === "free";
 
                 if (isLocked) {
@@ -221,6 +245,9 @@ export default function DashboardSidebar() {
                           strokeWidth={2}
                         />
                         <span className="flex-1">{item.label}</span>
+                        {item.comingSoon && isBetaApiUser && (
+                          <span className={`text-[10px] font-medium text-muted-foreground px-1.5 py-0.5 rounded-full ${isActive(item.href) ? "bg-muted" : "bg-sidebar-accent"}`}>Beta</span>
+                        )}
                         {isNotifications && unreadNotifications > 0 && (
                           <span className="flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-red-400/90 text-white text-[11px] font-bold">
                             {unreadNotifications > 99 ? "99+" : unreadNotifications}

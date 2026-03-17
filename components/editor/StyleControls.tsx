@@ -9,7 +9,7 @@ import { isValidHexColor } from "@/lib/validation";
 import { FONT_LIST } from "@/lib/fonts";
 import { ASPECT_RATIO_LIST } from "@/lib/aspect-ratios";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CrownIcon, Cancel01Icon, FloppyDiskIcon, Loading03Icon, ShuffleSquareIcon, Delete02Icon, PencilEdit02Icon } from "@hugeicons/core-free-icons";
+import { CrownIcon, Cancel01Icon, FloppyDiskIcon, Loading03Icon, ShuffleSquareIcon, Delete02Icon, PencilEdit02Icon, SourceCodeSquareIcon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import {
   Select,
   SelectContent,
@@ -101,9 +101,11 @@ type StyleControlsProps = {
   isPremium?: boolean;
   lockPremiumFeatures?: boolean;
   onPremiumBlock?: (feature: string) => void;
+  onSaveAsTemplate?: (settings: EditorSettings, name?: string) => void;
+  hasApiKeys?: boolean;
 };
 
-export default function StyleControls({ settings, onSettingsChange, backgrounds, isPremium = false, lockPremiumFeatures = false, onPremiumBlock }: StyleControlsProps) {
+export default function StyleControls({ settings, onSettingsChange, backgrounds, isPremium = false, lockPremiumFeatures = false, onPremiumBlock, onSaveAsTemplate, hasApiKeys = false }: StyleControlsProps) {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [isSavingPreset, setIsSavingPreset] = useState(false);
@@ -686,6 +688,92 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
               </>
             )}
           </div>
+        </div>
+      )}
+      {/* Row 5: Save as API template (Pro + has API keys — only shown for beta users) */}
+      {hasApiKeys && onSaveAsTemplate && (
+        <ApiTemplateSaveRow settings={settings} onSaveAsTemplate={onSaveAsTemplate} />
+      )}
+    </div>
+  );
+}
+
+// --- Simple API template save row ---
+
+function ApiTemplateSaveRow({
+  settings,
+  onSaveAsTemplate,
+}: {
+  settings: EditorSettings;
+  onSaveAsTemplate: (settings: EditorSettings, name?: string) => void;
+}) {
+  const [showInput, setShowInput] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSave = useCallback((name: string) => {
+    setIsSaving(true);
+    onSaveAsTemplate(settings, name);
+    setTimeout(() => setIsSaving(false), 1000);
+  }, [settings, onSaveAsTemplate]);
+
+  return (
+    <div className="flex flex-col items-center gap-2 w-full">
+      {showInput ? (
+        <form
+          className="flex items-center gap-2 w-full max-w-md"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (templateName.trim()) {
+              handleSave(templateName.trim());
+              setTemplateName("");
+              setShowInput(false);
+            }
+          }}
+        >
+          <Input
+            ref={inputRef}
+            autoFocus
+            placeholder="Template name..."
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Escape") { setShowInput(false); setTemplateName(""); } }}
+            className="flex-1 h-9 text-sm"
+          />
+          <Button type="submit" size="sm" variant="default" disabled={!templateName.trim() || isSaving} className="h-9 px-3 text-xs shrink-0">
+            {isSaving ? <HugeiconsIcon icon={Loading03Icon} size={14} className="animate-spin" /> : <>
+              <HugeiconsIcon icon={FloppyDiskIcon} size={14} strokeWidth={1.5} />
+              Save
+            </>}
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={() => { setShowInput(false); setTemplateName(""); }} className="h-9 px-2 shrink-0">
+            <HugeiconsIcon icon={Cancel01Icon} size={14} />
+          </Button>
+        </form>
+      ) : (
+        <div className="flex items-center justify-center gap-2 w-full">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              setTemplateName("Template");
+              setShowInput(true);
+              setTimeout(() => inputRef.current?.select(), 50);
+            }}
+            className="h-8 px-3 text-xs shrink-0"
+          >
+            <HugeiconsIcon icon={SourceCodeSquareIcon} size={14} strokeWidth={1.5} />
+            Save as API template
+          </Button>
+          <a
+            href="/dashboard/api"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
+          >
+            Manage templates
+            <HugeiconsIcon icon={ArrowRight01Icon} size={12} strokeWidth={1.5} />
+          </a>
         </div>
       )}
     </div>

@@ -18,6 +18,7 @@ export async function GET() {
 
   return NextResponse.json({
     plan,
+    email: session.user.email,
     name: planDetails.name,
     price: planDetails.price,
     features: planDetails.features,

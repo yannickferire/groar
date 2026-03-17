@@ -49,6 +49,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [exportsThisWeek, setExportsThisWeek] = useState(0);
   const [maxExportsPerWeek, setMaxExportsPerWeek] = useState<number | null>(null);
+  const [hasApiKeys, setHasApiKeys] = useState(false);
   const dbExportCountLoaded = useRef(false);
   useEffect(() => {
     fetch("/api/user/plan")
@@ -58,7 +59,16 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       })
       .then((data) => {
         if (!data) return; // Not logged in
-        if (data.plan && data.plan !== "free") setHideUpgradeModal(true);
+        if (data.plan && data.plan !== "free") {
+          setHideUpgradeModal(true);
+          // API is coming soon — only enable for beta users
+          const apiBetaEmails = ["yannick@ferire.com", "victor.petersen2@gmail.com"];
+          if (data.email && apiBetaEmails.includes(data.email)) {
+            fetch("/api/user/api-keys").then(r => r.ok ? r.json() : null).then(d => {
+              if (d?.keys?.length > 0) setHasApiKeys(true);
+            }).catch(() => {});
+          }
+        }
         // Track if user has already used their trial (trialing or expired)
         if (data.hasUsedTrial) setHasUsedTrial(true);
         // Track exports for sidebar display
@@ -702,6 +712,24 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     }
   }, [hasUsedTrial, isDashboard]);
 
+  const handleSaveAsTemplate = useCallback(async (s: EditorSettings, name?: string) => {
+    try {
+      const res = await fetch("/api/user/card-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name || "My template", settings: s }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || "Failed to save template");
+        return;
+      }
+      toast.success("Template saved");
+    } catch {
+      toast.error("Failed to save template");
+    }
+  }, []);
+
   const editorContent = (
     <section id="editor" className="relative flex flex-col min-[940px]:flex-row gap-3 rounded-4xl bg-fade p-3 scroll-mt-18">
       <Sidebar
@@ -745,6 +773,8 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
           isPremium={isPremium}
           lockPremiumFeatures={lockPremiumFeatures}
           onPremiumBlock={handlePremiumBlock}
+          onSaveAsTemplate={handleSaveAsTemplate}
+          hasApiKeys={hasApiKeys}
         />
       </div>
     </section>
