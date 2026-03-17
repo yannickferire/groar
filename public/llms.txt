@@ -37,7 +37,7 @@ Create scroll-stopping visuals from your growth data — followers, MRR, GitHub 
 
 ## Pricing
 
-- **Free**: full editor, 3 exports/week, 5 backgrounds, watermark
+- **Free**: full editor, 1 export/week, 5 backgrounds, watermark
 - **Pro Monthly**: $5/mo — unlimited exports, all backgrounds, no watermark, branding, analytics
 - **Pro Lifetime**: from $9 one-time (early adopter pricing, increases as spots fill)
 - **3-day free trial** of Pro, no credit card required

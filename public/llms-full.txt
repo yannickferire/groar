@@ -124,7 +124,7 @@ Auto-filled metrics show a green dot indicator. If the user manually changes the
 - 30-day trends with deltas
 - Impressions, likes, reposts, replies, bookmarks
 - Average engagement rate calculation
-- Multi-account support (up to 3 connected X accounts)
+- Connected X account analytics
 - Manual refresh (3x/day) + automatic daily cron fetch (4x/day)
 
 **Revenue Analytics (via TrustMRR)**:
@@ -144,9 +144,8 @@ Auto-filled metrics show a green dot indicator. If the user manually changes the
 
 ### Connections
 - Connect X (Twitter) account for analytics auto-fetch
-- Multi-account support: up to 3 accounts per platform (Pro)
+- Connect your X account for analytics auto-fetch
 - Account management and disconnection
-- Provider-based organization
 
 ### Leaderboard (https://groar.app/public)
 Community gamification system:
@@ -194,7 +193,7 @@ Community gamification system:
 
 ### Free Tier
 - Full editor access (metrics template only)
-- 3 exports per week
+- 1 export per week
 - 5 backgrounds
 - Watermark on exports
 - Post aspect ratio (16:9) only
@@ -210,7 +209,7 @@ Community gamification system:
 - All 3 aspect ratios
 - All 6 font families
 - Custom branding with logo
-- Up to 3 account connections per platform
+- Connect your X account
 - Full analytics dashboard
 - Export history with re-import
 
@@ -240,7 +239,7 @@ Monthly pricing also increases with lifetime tiers: $5 → $6 → $7 → $8 → 
 - Automated analytics fetch (followers, tweets, impressions, engagement)
 - Cron job: 4 fetches/day (1am, 7am, 1pm, 7pm UTC)
 - Manual refresh: up to 3x/day
-- Multi-account support
+- X account analytics integration
 
 ### TrustMRR
 - Revenue data integration via API

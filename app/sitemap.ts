@@ -3,94 +3,97 @@ import type { MetadataRoute } from "next";
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
 
+  // Update these dates when page content actually changes
+  const lastUpdated = "2026-03-17";
+
   return [
     {
       url: siteUrl,
-      lastModified: new Date(),
+      lastModified: lastUpdated,
       changeFrequency: "weekly",
       priority: 1,
     },
     {
       url: `${siteUrl}/pricing`,
-      lastModified: new Date(),
+      lastModified: lastUpdated,
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${siteUrl}/login`,
-      lastModified: new Date(),
+      lastModified: "2026-02-01",
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${siteUrl}/vs`,
-      lastModified: new Date(),
+      lastModified: "2026-02-15",
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/vs/canva`,
-      lastModified: new Date(),
+      lastModified: "2026-02-15",
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/vs/screenshots`,
-      lastModified: new Date(),
+      lastModified: "2026-02-15",
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/vs/piktochart`,
-      lastModified: new Date(),
+      lastModified: "2026-02-15",
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/vs/image-charts`,
-      lastModified: new Date(),
+      lastModified: "2026-02-15",
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/vs/spreadsheets`,
-      lastModified: new Date(),
+      lastModified: "2026-02-15",
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/vs/build-in-public`,
-      lastModified: new Date(),
+      lastModified: "2026-02-15",
       changeFrequency: "monthly",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/public`,
-      lastModified: new Date(),
+      lastModified: lastUpdated,
       changeFrequency: "daily",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/open`,
-      lastModified: new Date(),
+      lastModified: lastUpdated,
       changeFrequency: "daily",
       priority: 0.7,
     },
     {
       url: `${siteUrl}/wall`,
-      lastModified: new Date(),
+      lastModified: lastUpdated,
       changeFrequency: "daily",
       priority: 0.6,
     },
     {
       url: `${siteUrl}/privacy`,
-      lastModified: new Date(),
+      lastModified: "2026-01-29",
       changeFrequency: "monthly",
       priority: 0.5,
     },
     {
       url: `${siteUrl}/terms`,
-      lastModified: new Date(),
+      lastModified: "2026-01-29",
       changeFrequency: "monthly",
       priority: 0.5,
     },

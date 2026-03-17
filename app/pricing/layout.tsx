@@ -9,6 +9,7 @@ export const metadata: Metadata = {
     title: "Groar Pricing — Free & Pro Plans",
     description:
       "Create stunning growth visuals for free or unlock unlimited exports, analytics dashboard & custom branding with Pro — from $5/mo or $19 lifetime.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar — Turn your growth into visuals" }],
   },
 };
 

@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Terms of Service",
   description: "Terms of Service for Groar - Rules and guidelines for using our service.",
   alternates: { canonical: "/terms" },
+  openGraph: {
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar — Terms of Service" }],
+  },
 };
 
 export default function TermsPage() {
