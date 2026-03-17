@@ -292,6 +292,7 @@ function ApiContent() {
 
     // Build a minimal EditorSettings from the template for the modal
     const metrics = slots.map((slot) => ({
+      id: crypto.randomUUID(),
       type: slot.type,
       value: 0,
       customLabel: slot.customLabel,

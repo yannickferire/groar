@@ -587,7 +587,7 @@ export async function GET(request: NextRequest) {
 
   if (templateType === "milestone") {
     // ── Milestone template ──────────────────────────────────────────────────
-    const primaryMetric = metrics[0] || { type: "followers", value: 0 };
+    const primaryMetric = metrics[0] || { id: "fallback", type: "followers" as const, value: 0 };
     const value = primaryMetric.value;
     const metricLabel = primaryMetric.type === "custom" && primaryMetric.customLabel
       ? primaryMetric.customLabel
@@ -630,7 +630,7 @@ export async function GET(request: NextRequest) {
     );
   } else if (templateType === "progress") {
     // ── Progress template ───────────────────────────────────────────────────
-    const primaryMetric = metrics[0] || { type: "followers", value: 0 };
+    const primaryMetric = metrics[0] || { id: "fallback", type: "followers" as const, value: 0 };
     const currentValue = primaryMetric.value;
     const resolvedGoal = goal > 0 ? goal : getNextGoal(currentValue);
     const progress = Math.min((currentValue / resolvedGoal) * 100, 100);
