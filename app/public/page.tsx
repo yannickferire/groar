@@ -15,6 +15,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
 export const metadata: Metadata = {
   title: "Leaderboard",
   description: "See who's leading the GROAR community leaderboard. Export visuals, log in daily, and climb the ranks.",
+  keywords: ["creator leaderboard", "build in public community", "indie hacker leaderboard", "growth community ranking"],
   alternates: { canonical: "/public" },
   openGraph: {
     title: "Leaderboard — GROAR",

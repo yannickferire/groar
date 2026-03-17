@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   title: "GROAR vs Canva — Best Tool for Growth Metrics Visuals",
   description:
     "Compare GROAR and Canva for creating metrics visuals. See why creators choose GROAR to turn their analytics into shareable images in seconds.",
+  keywords: ["canva alternative metrics", "canva vs groar", "metrics visual without canva", "faster than canva for metrics"],
   alternates: { canonical: "/vs/canva" },
   openGraph: {
     title: "GROAR vs Canva — Best Tool for Growth Metrics Visuals",

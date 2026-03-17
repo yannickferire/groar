@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "GROAR vs Other Tools — Comparisons for Metrics Visuals",
   description:
     "See how GROAR compares to screenshots, Canva, and other tools for creating shareable analytics visuals. Find the best way to showcase your growth.",
+  keywords: ["metrics visual tool comparison", "best tool share analytics", "growth metrics image maker", "analytics visual comparison"],
   alternates: { canonical: "/vs" },
   openGraph: {
     title: "GROAR vs Other Tools — Comparisons for Metrics Visuals",

@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "GROAR vs Image-Charts — No-Code Metrics Visuals vs Chart API",
   description:
     "Compare GROAR and Image-Charts for creating metrics visuals. Image-Charts is a developer API for chart images. GROAR is a no-code tool that creates shareable visuals in 10 seconds.",
+  keywords: ["image-charts alternative", "no-code metrics visual", "chart image generator alternative", "metrics visual without coding"],
   alternates: { canonical: "/vs/image-charts" },
   openGraph: {
     title: "GROAR vs Image-Charts — No-Code Metrics Visuals vs Chart API",

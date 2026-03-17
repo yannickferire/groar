@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "GROAR vs Piktochart — Best Tool for Sharing Your Metrics",
   description:
     "Compare GROAR and Piktochart for creating metrics visuals. Piktochart is great for infographics, but GROAR is purpose-built for sharing growth metrics on social media.",
+  keywords: ["piktochart alternative", "piktochart vs groar", "metrics infographic maker", "share growth metrics social media"],
   alternates: { canonical: "/vs/piktochart" },
   openGraph: {
     title: "GROAR vs Piktochart — Best Tool for Sharing Your Metrics",

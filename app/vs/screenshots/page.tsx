@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "GROAR vs Screenshots — Stop Screenshotting Your Analytics",
   description:
     "Screenshots of your analytics look messy and get ignored. GROAR turns your metrics into clean, branded visuals that actually get engagement — in 10 seconds.",
+  keywords: ["analytics screenshot alternative", "better than screenshots metrics", "share analytics without screenshot", "metrics image maker"],
   alternates: { canonical: "/vs/screenshots" },
   openGraph: {
     title: "GROAR vs Screenshots — Stop Screenshotting Your Analytics",

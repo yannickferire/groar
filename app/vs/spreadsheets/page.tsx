@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "GROAR vs Spreadsheet Charts — Share Metrics Without Ugly Excel Exports",
   description:
     "Stop exporting ugly charts from Google Sheets or Excel. GROAR turns your metrics into clean, branded visuals designed for social media — in 10 seconds.",
+  keywords: ["google sheets chart alternative", "excel chart for social media", "share spreadsheet metrics", "better than excel screenshots"],
   alternates: { canonical: "/vs/spreadsheets" },
   openGraph: {
     title: "GROAR vs Spreadsheet Charts — Share Metrics Without Ugly Excel Exports",

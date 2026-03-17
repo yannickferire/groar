@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Community Wall",
   description:
     "Browse visuals created by the GROAR community. See how creators share their growth metrics and milestones.",
+  keywords: ["creator visuals gallery", "growth metrics showcase", "build in public examples", "metrics visual inspiration"],
   alternates: { canonical: "/wall" },
   openGraph: {
     title: "Community Wall — GROAR",

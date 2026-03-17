@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   title: "Best Build in Public Tools for Sharing Growth Metrics",
   description:
     "Build in public? GROAR turns your growth metrics into eye-catching visuals for X and social media. Share milestones, MRR, followers, and more in 10 seconds.",
+  keywords: ["build in public twitter", "share mrr on twitter", "build in public tools", "indie hacker growth visual", "share startup metrics"],
   alternates: { canonical: "/vs/build-in-public" },
   openGraph: {
     title: "Best Build in Public Tools for Sharing Growth Metrics",

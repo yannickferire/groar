@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "Pricing — Free & Pro Plans",
   description:
     "Simple, transparent pricing. Create stunning growth visuals for free or unlock unlimited exports, analytics dashboard & custom branding with Pro — from $5/mo or $19 lifetime.",
+  keywords: ["free metrics visual tool", "metrics tool pricing", "growth visual free plan", "cheap social media analytics tool"],
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "Groar Pricing — Free & Pro Plans",
