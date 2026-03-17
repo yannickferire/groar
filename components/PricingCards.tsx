@@ -190,7 +190,7 @@ function ProCard({
             <div className="space-y-2 mb-6">
               {PRO_FEATURES.map((feature, index) => (
                 <div key={index} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center shrink-0">
                     <HugeiconsIcon icon={feature.icon} size={16} strokeWidth={1.5} className="text-primary" />
                   </div>
                   <p className="text-sm font-medium leading-tight text-muted">{feature.title}</p>

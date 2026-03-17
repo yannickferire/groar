@@ -143,7 +143,7 @@ function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
       value={inputValue}
       onChange={handleChange}
       onBlur={handleBlur}
-      className="w-16 text-center bg-white"
+      className="w-16 text-center bg-background"
       aria-label="Period number"
     />
   );
@@ -224,7 +224,7 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
         onChange={handleInputChange}
         onBlur={handleBlur}
         disabled={disabled}
-        className="w-32 text-center bg-white"
+        className="w-32 text-center bg-background"
         aria-label={`${METRIC_LABELS[metric.type]} value`}
       />
       <span className="text-sm text-muted-foreground whitespace-nowrap flex-1 flex items-center gap-1.5" aria-hidden="true">
@@ -616,10 +616,10 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   }}
                   className={`relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-colors ${
                     lockPremiumFeatures && template.premium
-                      ? "opacity-50 cursor-not-allowed border-transparent bg-white"
+                      ? "opacity-50 cursor-not-allowed border-transparent bg-background"
                       : isSelected
-                        ? "border-primary bg-white"
-                        : "border-transparent bg-white hover:border-muted"
+                        ? "border-primary bg-background"
+                        : "border-transparent bg-background hover:border-muted"
                   }`}
                 >
                   {/* Mini preview */}
@@ -692,7 +692,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           {connectedAccounts.length > 0 ? (
             <div className="flex gap-2">
               <Select value={handleMode} onValueChange={handleAccountSelect}>
-                <SelectTrigger className={`bg-white ${handleMode === "custom" ? "w-28 shrink-0" : "flex-1"}`}>
+                <SelectTrigger className={`bg-background ${handleMode === "custom" ? "w-28 shrink-0" : "flex-1"}`}>
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
@@ -713,7 +713,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   onFocus={() => { if (!handleTouchedRef.current && settings.handle === "") { updateSetting("handle", "@"); handleTouchedRef.current = true; } }}
                   onChange={(e) => { updateSetting("handle", e.target.value); handleTouchedRef.current = true; }}
                   onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
-                  className="flex-1 bg-white"
+                  className="flex-1 bg-background"
                 />
               )}
             </div>
@@ -726,7 +726,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               onFocus={() => { if (!handleTouchedRef.current && settings.handle === "") { updateSetting("handle", "@"); handleTouchedRef.current = true; } }}
               onChange={(e) => { updateSetting("handle", e.target.value); handleTouchedRef.current = true; }}
               onBlur={(e) => updateSetting("handle", normalizeHandle(e.target.value))}
-              className="bg-white"
+              className="bg-background"
             />
           )}
         </div>
@@ -755,7 +755,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     updateHeading(defaults[newType]);
                   }}
                 >
-                  <SelectTrigger className="flex-1 bg-white">
+                  <SelectTrigger className="flex-1 bg-background">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -786,7 +786,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     value={settings.heading.periodType || "week"}
                     onValueChange={(value) => updateHeading({ ...settings.heading!, periodType: value as PeriodType })}
                   >
-                    <SelectTrigger className="flex-1 bg-white">
+                    <SelectTrigger className="flex-1 bg-background">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -836,7 +836,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     value={settings.heading.lastUnit || "day"}
                     onValueChange={(value) => updateHeading({ ...settings.heading!, lastUnit: value as LastUnitType })}
                   >
-                    <SelectTrigger className="flex-1 bg-white">
+                    <SelectTrigger className="flex-1 bg-background">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -854,7 +854,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               {settings.heading.type === "date-range" && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between font-normal bg-white">
+                    <Button variant="outline" className="w-full justify-between font-normal bg-background">
                       {settings.heading.dateFrom && settings.heading.dateTo
                         ? `${new Date(settings.heading.dateFrom + "T00:00:00").toLocaleDateString()} – ${new Date(settings.heading.dateTo + "T00:00:00").toLocaleDateString()}`
                         : "Pick a date range"}
@@ -904,14 +904,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     "Your text..."
                   }
                   rows={2}
-                  className="w-full rounded-xl border border-input bg-white px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 />
               )}
             </div>
           ) : (
             <Button
               variant="outline"
-              className="w-full justify-start text-muted-foreground bg-white"
+              className="w-full justify-start text-muted-foreground bg-background"
               onClick={() => updateHeading({ type: "period", periodType: "week", periodFrom: 1 })}
             >
               <HugeiconsIcon icon={Heading01Icon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
@@ -979,7 +979,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               onClick={() => updateSetting("metricsLayout", "stack")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 (settings.metricsLayout || "stack") === "stack"
-                  ? "bg-white shadow-sm text-foreground"
+                  ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -995,7 +995,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               onClick={() => updateSetting("metricsLayout", "grid")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 settings.metricsLayout === "grid"
-                  ? "bg-white shadow-sm text-foreground"
+                  ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -1055,19 +1055,19 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
 
             {availableMetrics.length > 0 && (
               settings.metrics.length >= ((settings.metricsLayout === "grid" || settings.aspectRatio === "banner") ? 3 : MAX_METRICS) ? (
-                <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white" disabled>
+                <Button variant="outline" className="w-full justify-start text-muted-foreground bg-background" disabled>
                   <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
                   Add metric
                 </Button>
               ) : (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-muted-foreground bg-white">
+                    <Button variant="outline" className="w-full justify-start text-muted-foreground bg-background">
                       <HugeiconsIcon icon={PlusSignIcon} size={18} strokeWidth={1.5} className="mr-2" aria-hidden="true" />
                       Add metric
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="bg-white max-h-[60vh] overflow-y-auto" style={{ width: isMobile ? "var(--radix-dropdown-menu-trigger-width)" : "calc(var(--radix-dropdown-menu-trigger-width) * 0.5)" }}>
+                  <DropdownMenuContent align="start" className="bg-background max-h-[60vh] overflow-y-auto" style={{ width: isMobile ? "var(--radix-dropdown-menu-trigger-width)" : "calc(var(--radix-dropdown-menu-trigger-width) * 0.5)" }}>
                     {isMobile ? (
                       <>
                         {[
@@ -1100,7 +1100,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                         {availableMetrics.some(t => X_METRICS.includes(t)) && (
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger><HugeiconsIcon icon={NewTwitterIcon} size={14} strokeWidth={1.5} /> X</DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="bg-white">
+                            <DropdownMenuSubContent className="bg-background">
                               {availableMetrics.filter(t => X_METRICS_PRIMARY.includes(t)).map((type) => (
                                 <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
                                   {metricLabel(type)}
@@ -1109,7 +1109,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                               {availableMetrics.some(t => X_METRICS_MORE.includes(t)) && (
                                 <DropdownMenuSub>
                                   <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
-                                  <DropdownMenuSubContent className="bg-white">
+                                  <DropdownMenuSubContent className="bg-background">
                                     {availableMetrics.filter(t => X_METRICS_MORE.includes(t)).map((type) => (
                                       <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
                                         {metricLabel(type)}
@@ -1124,7 +1124,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                         {availableMetrics.some(t => GITHUB_METRICS.includes(t)) && (
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger><HugeiconsIcon icon={GithubIcon} size={14} strokeWidth={1.5} /> GitHub</DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="bg-white">
+                            <DropdownMenuSubContent className="bg-background">
                               {availableMetrics.filter(t => GITHUB_METRICS.includes(t)).map((type) => (
                                 <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
                                   {metricLabel(type)}
@@ -1136,7 +1136,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                         {availableMetrics.some(t => REDDIT_METRICS.includes(t)) && (
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger><HugeiconsIcon icon={RedditIcon} size={14} strokeWidth={1.5} /> Reddit</DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="bg-white">
+                            <DropdownMenuSubContent className="bg-background">
                               {availableMetrics.filter(t => REDDIT_METRICS.includes(t)).map((type) => (
                                 <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
                                   {metricLabel(type)}
@@ -1148,7 +1148,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                         {availableMetrics.some(t => SAAS_METRICS.includes(t)) && (
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger><HugeiconsIcon icon={BrowserIcon} size={14} strokeWidth={1.5} /> SaaS</DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="bg-white">
+                            <DropdownMenuSubContent className="bg-background">
                               {availableMetrics.filter(t => SAAS_METRICS.includes(t)).map((type) => (
                                 <DropdownMenuItem key={type} onClick={() => addMetric(type)}>
                                   {metricLabel(type)}
@@ -1188,17 +1188,17 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     updateSetting("metrics", [{ type: settings.metrics[0]?.type || "followers", value: parsed, prefix }]);
                   }
                 }}
-                className="flex-1 bg-white"
+                className="flex-1 bg-background"
                 aria-label="Metric value"
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex-1 bg-white justify-between font-normal">
+                  <Button variant="outline" className="flex-1 bg-background justify-between font-normal">
                     {METRIC_LABELS[settings.metrics[0]?.type || "followers"]}
                     <ChevronDownIcon className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-white max-h-[60vh] overflow-y-auto" style={{ width: isMobile ? "var(--radix-dropdown-menu-trigger-width)" : "calc(var(--radix-dropdown-menu-trigger-width) * 0.5)" }}>
+                <DropdownMenuContent align="end" className="bg-background max-h-[60vh] overflow-y-auto" style={{ width: isMobile ? "var(--radix-dropdown-menu-trigger-width)" : "calc(var(--radix-dropdown-menu-trigger-width) * 0.5)" }}>
                   {isMobile ? (
                     <>
                       {(() => {
@@ -1236,7 +1236,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     <>
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger><HugeiconsIcon icon={NewTwitterIcon} size={14} strokeWidth={1.5} /> X</DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="bg-white">
+                        <DropdownMenuSubContent className="bg-background">
                           {X_METRICS_PRIMARY.filter(type => type !== "engagementRate").map((type) => {
                             const handleClick = () => {
                               const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
@@ -1252,7 +1252,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                           })}
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger>More</DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="bg-white">
+                            <DropdownMenuSubContent className="bg-background">
                               {X_METRICS_MORE.filter(type => type !== "engagementRate").map((type) => {
                                 const handleClick = () => {
                                   const selectedAccount = connectedAccounts.find(a => a.username === handleMode);
@@ -1272,7 +1272,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       </DropdownMenuSub>
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger><HugeiconsIcon icon={GithubIcon} size={14} strokeWidth={1.5} /> GitHub</DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="bg-white">
+                        <DropdownMenuSubContent className="bg-background">
                           {GITHUB_METRICS.map((type) => (
                             <DropdownMenuItem
                               key={type}
@@ -1287,7 +1287,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       </DropdownMenuSub>
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger><HugeiconsIcon icon={RedditIcon} size={14} strokeWidth={1.5} /> Reddit</DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="bg-white">
+                        <DropdownMenuSubContent className="bg-background">
                           {REDDIT_METRICS.filter(type => type !== "redditUpvoteRatio").map((type) => (
                             <DropdownMenuItem
                               key={type}
@@ -1302,7 +1302,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       </DropdownMenuSub>
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger><HugeiconsIcon icon={BrowserIcon} size={14} strokeWidth={1.5} /> SaaS</DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="bg-white">
+                        <DropdownMenuSubContent className="bg-background">
                           {SAAS_METRICS.filter(type => type !== "churnRate").map((type) => {
                             const metricMap = buildMetricMap();
                             return (
@@ -1338,7 +1338,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                 onChange={(e) => {
                   updateSetting("metrics", [{ ...settings.metrics[0], customLabel: e.target.value }]);
                 }}
-                className="bg-white"
+                className="bg-background"
                 maxLength={24}
                 aria-label="Custom metric label"
               />
@@ -1376,7 +1376,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-colors ${
                         settings.milestoneEmoji === key
                           ? "border-primary bg-primary/10"
-                          : "border-input bg-white hover:bg-muted/50"
+                          : "border-input bg-background hover:bg-muted/50"
                       }`}
                     >
                       <img src={src} alt="" className="w-5 h-5 object-contain" draggable={false} />
@@ -1388,7 +1388,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       const available = emojis.filter(e => e.key !== settings.milestoneEmoji);
                       updateSetting("milestoneEmoji", available[Math.floor(Math.random() * available.length)].key);
                     }}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-input bg-white hover:bg-muted/50 text-xs font-medium text-muted-foreground transition-colors"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl border border-input bg-background hover:bg-muted/50 text-xs font-medium text-muted-foreground transition-colors"
                     title="Random emoji"
                   >
                     <HugeiconsIcon icon={ShuffleIcon} size={16} strokeWidth={2} />
@@ -1442,7 +1442,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                 updateSetting("goal", parsed);
               }
             }}
-            className="bg-white"
+            className="bg-background"
             aria-label="Goal value"
           />
         </div>
@@ -1462,7 +1462,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="shrink-0 w-9 h-9 rounded-xl border border-input bg-white flex items-center justify-center text-lg hover:bg-muted/50 transition-colors"
+                      className="shrink-0 w-9 h-9 rounded-xl border border-input bg-background flex items-center justify-center text-lg hover:bg-muted/50 transition-colors"
                     >
                       {feature.emoji || "✅"}
                     </button>
@@ -1495,7 +1495,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     updateSetting("announcements", updated);
                   }}
                   placeholder={`Feature ${index + 1}`}
-                  className="bg-white flex-1"
+                  className="bg-background flex-1"
                 />
                 <Button
                   variant="ghost"
@@ -1514,7 +1514,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
             {(settings.announcements || []).length < 4 && (
               <Button
                 variant="outline"
-                className="w-full bg-white"
+                className="w-full bg-background"
                 onClick={() => {
                   const updated = [...(settings.announcements || []), { text: "" }];
                   updateSetting("announcements", updated);
@@ -1660,7 +1660,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                           className={`p-1.5 rounded-lg transition-all border ${
                             (settings.branding?.position || "center") === pos
                               ? "bg-primary text-primary-foreground border-transparent"
-                              : "bg-white text-muted-foreground hover:bg-muted border-border"
+                              : "bg-background text-muted-foreground hover:bg-muted border-border"
                           }`}
                         >
                           <HugeiconsIcon icon={icon} size={16} strokeWidth={1.5} />

@@ -17,6 +17,22 @@ export default function DashboardLayout({
   const router = useRouter();
   const { data: session } = authClient.useSession();
 
+  // Sync body background with dashboard theme to prevent white flash on overscroll
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const isDark = document.documentElement.classList.contains("dark");
+      document.body.style.backgroundColor = isDark ? "#171717" : "";
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    // Set initial value
+    const isDark = document.documentElement.classList.contains("dark");
+    document.body.style.backgroundColor = isDark ? "#171717" : "";
+    return () => {
+      observer.disconnect();
+      document.body.style.backgroundColor = "";
+    };
+  }, []);
+
   // Refresh router when tab regains focus after being hidden for 5+ minutes
   useEffect(() => {
     let hiddenAt = 0;
@@ -57,6 +73,7 @@ export default function DashboardLayout({
   }, [session?.user]);
 
   return (
+    <div id="dashboard-root" className="bg-background text-foreground min-h-screen overscroll-none">
     <SidebarProvider>
       <DashboardSidebar />
       <SidebarInset>
@@ -69,7 +86,15 @@ export default function DashboardLayout({
               width={120}
               height={32}
               sizes="112px"
-              className="h-auto w-28"
+              className="h-auto w-28 dark:hidden"
+            />
+            <Image
+              src="/groar-logo_white.png"
+              alt="Groar"
+              width={120}
+              height={32}
+              sizes="112px"
+              className="h-auto w-28 hidden dark:block"
             />
           </Link>
           <SidebarTrigger />
@@ -81,5 +106,6 @@ export default function DashboardLayout({
         </main>
       </SidebarInset>
     </SidebarProvider>
+    </div>
   );
 }

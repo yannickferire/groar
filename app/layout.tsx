@@ -3,6 +3,7 @@ import { Averia_Serif_Libre, Bricolage_Grotesque, DM_Mono, DM_Serif_Display, Int
 import { Analytics } from "@vercel/analytics/next";
 import Script from "next/script";
 import { Toaster } from "@/components/ui/toast";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -136,10 +137,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${bricolage.variable} ${dmMono.variable} ${inter.variable} ${playfair.variable} ${spaceGrotesk.variable} ${averiaSerifLibre.variable} ${dmSerifDisplay.variable} antialiased max-w-[100vw] overflow-x-hidden`}
       >
+        <ThemeProvider>
         {children}
         <Toaster />
         <Analytics />
@@ -156,6 +158,7 @@ export default function RootLayout({
           data-domain="groar.app"
           strategy="afterInteractive"
         />
+        </ThemeProvider>
       </body>
     </html>
   );

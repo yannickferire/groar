@@ -4,7 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Logout01Icon, UserCircleIcon, CreditCardIcon, MoreVerticalIcon, Settings03Icon, DashboardSquare01Icon } from "@hugeicons/core-free-icons";
+import { Logout01Icon, UserCircleIcon, CreditCardIcon, MoreVerticalIcon, Settings03Icon, DashboardSquare01Icon, Moon02Icon, Sun01Icon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -14,10 +14,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import posthog from "posthog-js";
+import { useTheme } from "next-themes";
+
+const THEME_OPTIONS = [
+  { value: "light", icon: Sun01Icon, label: "Light" },
+  { value: "dark", icon: Moon02Icon, label: "Dark" },
+] as const;
 
 export default function UserMenu({ isAdmin }: { isAdmin?: boolean }) {
   const { data: session } = authClient.useSession();
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   const handleSignOut = async () => {
     posthog.capture("sign_out", {
@@ -70,6 +77,24 @@ export default function UserMenu({ isAdmin }: { isAdmin?: boolean }) {
             Settings
           </Link>
         </DropdownMenuItem>
+        <div className="px-2 py-1.5">
+          <div className="grid grid-cols-2 p-1 rounded-lg bg-muted">
+            {THEME_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setTheme(opt.value)}
+                className={`flex items-center justify-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium cursor-pointer ${
+                  theme === opt.value
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <HugeiconsIcon icon={opt.icon} size={14} strokeWidth={1.5} className="shrink-0" />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} variant="destructive" className="cursor-pointer">
           <HugeiconsIcon icon={Logout01Icon} size={16} strokeWidth={1.5} />

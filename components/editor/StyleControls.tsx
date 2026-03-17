@@ -434,7 +434,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
               selectFont(value as FontFamily);
             }}
           >
-            <SelectTrigger className="w-56 h-10 bg-white">
+            <SelectTrigger className="w-56 h-10 bg-background">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -488,7 +488,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
                     onClick={() => updateSetting("textAlign", align.id)}
                     className={`p-1.5 rounded-md transition-colors ${
                       (settings.textAlign || "center") === align.id
-                        ? "bg-white shadow-sm text-foreground"
+                        ? "bg-background shadow-sm text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                     title={align.label}
@@ -508,7 +508,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
           variant="outline"
           size="sm"
           onClick={handleRandomStyle}
-          className="h-9 bg-white"
+          className="h-9 bg-background"
         >
           <HugeiconsIcon icon={ShuffleSquareIcon} size={14} strokeWidth={2} />
           <span className="hidden sm:inline">Randomize style</span>
@@ -532,7 +532,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
                     ? "opacity-50 cursor-not-allowed border-border"
                     : isSelected
                       ? "bg-primary text-primary-foreground border-transparent"
-                      : "bg-white text-muted-foreground hover:bg-muted border-border"
+                      : "bg-background text-muted-foreground hover:bg-muted border-border"
                 }`}
               >
                 {ratio.label}
@@ -596,7 +596,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
                     if (preset) loadPreset(preset);
                   }}
                 >
-                  <SelectTrigger className="flex-1 h-9 bg-white text-sm">
+                  <SelectTrigger className="flex-1 h-9 bg-background text-sm">
                     <SelectValue placeholder="No preset selected" />
                   </SelectTrigger>
                   <SelectContent>

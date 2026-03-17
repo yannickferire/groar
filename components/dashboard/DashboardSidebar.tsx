@@ -136,7 +136,14 @@ export default function DashboardSidebar() {
             alt="Groar"
             width={180}
             height={48}
-            className="h-auto w-36"
+            className="h-auto w-36 dark:hidden"
+          />
+          <Image
+            src="/groar-logo_white.png"
+            alt="Groar"
+            width={180}
+            height={48}
+            className="h-auto w-36 hidden dark:block"
           />
         </Link>
       </SidebarHeader>
