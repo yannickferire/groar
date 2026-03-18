@@ -4,7 +4,7 @@ import { EditorSettings, METRIC_LABELS, MetricType } from "@/components/Editor";
 import { formatMetricValue } from "@/lib/metrics";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { METRIC_ICONS } from "@/lib/metric-icons";
-import { getAppleEmojiHQUrl } from "@/lib/emoji";
+import { getAppleEmojiHQUrl, getAppleEmojiUrlFromNative } from "@/lib/emoji";
 
 type MilestoneTemplateProps = {
   settings: EditorSettings;
@@ -255,13 +255,15 @@ export function MilestoneEmojis({ settings }: { settings: EditorSettings }) {
   if (!emoji || count <= 0) return null;
 
   const styles = getEmojiStyles(emoji, isBanner, count);
-  const appleUrl = unified && name ? getAppleEmojiHQUrl(name, unified) : null;
+  const appleUrl = unified && name
+    ? getAppleEmojiHQUrl(name, unified)
+    : getAppleEmojiUrlFromNative(emoji);
 
   return (
     <>
       {styles.map((style, i) => {
         const { fontSize, lineHeight, ...positionStyle } = style;
-        return appleUrl ? (
+        return (
           <img
             key={i}
             src={appleUrl}
@@ -271,15 +273,6 @@ export function MilestoneEmojis({ settings }: { settings: EditorSettings }) {
             draggable={false}
             aria-hidden="true"
           />
-        ) : (
-          <span
-            key={i}
-            className="absolute select-none pointer-events-none"
-            style={style}
-            aria-hidden="true"
-          >
-            {emoji}
-          </span>
         );
       })}
     </>

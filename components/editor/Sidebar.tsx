@@ -606,7 +606,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     if (lockPremiumFeatures && template.premium) { onPremiumBlock?.("Premium template"); return; }
                     const updates: Partial<EditorSettings> = { template: template.id as TemplateType };
                     if (template.id === "announcement" && (!settings.announcements || settings.announcements.length === 0)) {
-                      updates.announcements = [{ emoji: "✅", text: "Item 1" }];
+                      updates.announcements = [{ emoji: "✅", emojiUnified: "2705", emojiName: "Check Mark Button", text: "Item 1" }];
                     }
                     if (template.id === "announcement" && !settings.heading) {
                       updates.heading = { type: "period", periodType: "day", periodFrom: 1 };
@@ -1504,7 +1504,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                 variant="outline"
                 className="w-full bg-white dark:bg-background"
                 onClick={() => {
-                  const updated = [...(settings.announcements || []), { text: "" }];
+                  const updated = [...(settings.announcements || []), { emoji: "✅", emojiUnified: "2705", emojiName: "Check Mark Button", text: "" }];
                   updateSetting("announcements", updated);
                 }}
               >

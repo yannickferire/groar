@@ -1,7 +1,7 @@
 "use client";
 
 import { EditorSettings } from "@/components/Editor";
-import { getAppleEmojiHQUrl } from "@/lib/emoji";
+import { getAppleEmojiHQUrl, getAppleEmojiUrlFromNative } from "@/lib/emoji";
 
 type AnnouncementTemplateProps = {
   settings: EditorSettings;
@@ -35,18 +35,14 @@ export default function AnnouncementTemplate({ settings }: AnnouncementTemplateP
             maskImage: "linear-gradient(white, white)",
           }}
         >
-          {feature.emojiUnified && feature.emojiName ? (
-            <img
-              src={getAppleEmojiHQUrl(feature.emojiName, feature.emojiUnified)}
-              alt=""
-              style={{ width: isBanner ? "2.8cqi" : "3.8cqi", height: isBanner ? "2.8cqi" : "3.8cqi" }}
-              draggable={false}
-            />
-          ) : (
-            <span style={{ fontSize: isBanner ? "2.8cqi" : "3.8cqi", lineHeight: 1 }}>
-              {feature.emoji || "✅"}
-            </span>
-          )}
+          <img
+            src={feature.emojiUnified && feature.emojiName
+              ? getAppleEmojiHQUrl(feature.emojiName, feature.emojiUnified)
+              : getAppleEmojiUrlFromNative(feature.emoji || "✅")}
+            alt=""
+            style={{ width: isBanner ? "2.8cqi" : "3.8cqi", height: isBanner ? "2.8cqi" : "3.8cqi" }}
+            draggable={false}
+          />
           <span
             className="font-semibold"
             style={{ fontSize: isBanner ? "2.2cqi" : "2.8cqi" }}
