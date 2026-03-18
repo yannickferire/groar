@@ -52,7 +52,7 @@ export default function ApiTemplateModal({ open, onOpenChange, template, setting
   const { fullUrl, sParam, dynamicParams, fixedParams } = useMemo(() => {
     if (!template || !settings) return { fullUrl: "", sParam: "", dynamicParams: [] as Param[], fixedParams: [] as Param[] };
 
-    const baseUrl = "https://groar.app";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://groar.app";
     const tplType = (template.templateType || "metrics") as TemplateType;
 
     // Build minimal settings for `s` param — strip dynamic data (values, texts, goal)
@@ -106,56 +106,52 @@ export default function ApiTemplateModal({ open, onOpenChange, template, setting
     const dynamic: Param[] = [];
     dynamic.push({ key: "key", value: "YOUR_API_KEY", label: "Your API key", dynamic: true });
 
+    const SAMPLE_VALUES = ["12500", "350", "42", "100", "25"];
     if (tplType === "metrics") {
       template.metricSlots.forEach((slot, i) => {
-        const metric = settings.metrics[i];
-        const val = metric ? String(metric.value) : "VALUE";
         const label = slot.customLabel || METRIC_LABELS[slot.type];
-        dynamic.push({ key: `v${i + 1}`, value: val, label, dynamic: true });
+        dynamic.push({ key: `v${i + 1}`, value: SAMPLE_VALUES[i] || "100", label, dynamic: true });
       });
     } else if (tplType === "milestone") {
       const slot = template.metricSlots[0];
       if (slot) {
-        const metric = settings.metrics[0];
-        const val = metric ? String(metric.value) : "VALUE";
         const label = slot.customLabel || METRIC_LABELS[slot.type];
-        dynamic.push({ key: "v1", value: val, label, dynamic: true });
+        dynamic.push({ key: "v1", value: "10000", label, dynamic: true });
       }
     } else if (tplType === "progress") {
       const slot = template.metricSlots[0];
       if (slot) {
-        const metric = settings.metrics[0];
-        const val = metric ? String(metric.value) : "VALUE";
         const label = slot.customLabel || METRIC_LABELS[slot.type];
-        dynamic.push({ key: "v1", value: val, label, dynamic: true });
+        dynamic.push({ key: "v1", value: "750", label, dynamic: true });
       }
-      dynamic.push({ key: "goal", value: String(settings.goal || 0), label: "Goal", dynamic: true });
+      dynamic.push({ key: "goal", value: String(settings.goal || 1000), label: "Goal", dynamic: true });
     } else if (tplType === "announcement") {
       const announcements = settings.announcements || [];
-      announcements.forEach((a, i) => {
-        dynamic.push({ key: `a${i + 1}`, value: a.text || "YOUR_TEXT", label: `Announcement ${i + 1} text`, dynamic: true });
-        dynamic.push({ key: `e${i + 1}`, value: a.emoji || "YOUR_EMOJI", label: `Announcement ${i + 1} emoji`, dynamic: true });
+      announcements.forEach((_, i) => {
+        dynamic.push({ key: `a${i + 1}`, value: `Sample text ${i + 1}`, label: `Announcement ${i + 1} text`, dynamic: true });
+        dynamic.push({ key: `e${i + 1}`, value: announcements[i]?.emoji || "✅", label: `Announcement ${i + 1} emoji`, dynamic: true });
       });
     }
 
     // Optional overrides — can be added to URL to override what's in `s`
     const fixed: Param[] = [
-      { key: "bg", value: settings.background.presetId, label: "Background", randomizable: true },
-      { key: "font", value: settings.font || "bricolage", label: "Font", randomizable: true },
-      { key: "color", value: settings.textColor || "#ffffff", label: "Text color" },
-      { key: "size", value: settings.aspectRatio || "post", label: "Aspect ratio" },
-      { key: "handle", value: settings.handle || "@handle", label: "X handle (top-left)" },
+      { key: "bg", value: settings.background.presetId, label: "Background preset ID | random" },
+      { key: "font", value: settings.font || "bricolage", label: "bricolage | inter | space-grotesk | dm-mono | averia-serif-libre | dm-serif-display | random" },
+      { key: "color", value: settings.textColor || "#ffffff", label: "Hex color — e.g. %23ffffff" },
+      { key: "size", value: settings.aspectRatio || "post", label: "post | square | banner" },
+      { key: "handle", value: settings.handle || "@handle", label: "Display name shown top-left — e.g. @username" },
       { key: "heading", value: "...", label: "Custom heading text" },
-      { key: "date", value: "...", label: "Date label (top-right)" },
+      { key: "date", value: "...", label: "Date label shown top-right — e.g. March 2026" },
     ];
     if (tplType === "metrics") {
-      fixed.push({ key: "layout", value: (settings.metricsLayout || "stack").replace("grid", "columns"), label: "Layout" });
+      fixed.push({ key: "layout", value: (settings.metricsLayout || "stack").replace("grid", "columns"), label: "stack | columns" });
     }
     if (tplType === "milestone") {
-      fixed.push({ key: "emoji", value: settings.milestoneEmoji || "🎉", label: "Emoji", randomizable: true });
-      fixed.push({ key: "emojiCount", value: String(settings.milestoneEmojiCount ?? 3), label: "Emoji count" });
+      fixed.push({ key: "emoji", value: settings.milestoneEmoji || "🎉", label: "Emoji character | random" });
+      fixed.push({ key: "emojiCount", value: String(settings.milestoneEmojiCount ?? 3), label: "Number of emojis — 0 to 10" });
     }
-    fixed.push({ key: "branding", value: "false", label: "Hide groar.app watermark" });
+    fixed.push({ key: "branding", value: "true", label: "true | false — show or hide your logo" });
+    fixed.push({ key: "watermark", value: "true", label: "true | false — show or hide the groar.app watermark" });
 
     // Build URL: key + s + dynamic value overrides
     const urlParams = [
@@ -207,7 +203,7 @@ The endpoint returns a PNG image. Display it as an <img> tag, replacing the dyna
 
             <RadixDialog.Content asChild>
               <motion.div
-                className="fixed left-[50%] top-[50%] z-50 w-full max-w-xl origin-bottom px-4"
+                className="fixed left-[50%] top-[50%] z-50 w-full max-w-2xl origin-bottom px-4"
                 style={{ translateX: "-50%", translateY: "-50%" }}
                 initial={{ opacity: 0, y: 60, rotateX: 8, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
@@ -246,7 +242,7 @@ The endpoint returns a PNG image. Display it as an <img> tag, replacing the dyna
                           ];
                           return (
                             <>
-                              https://groar.app/api/card?
+                              {typeof window !== "undefined" ? window.location.origin : "https://groar.app"}/api/card?
                               {urlParts.map((p, i) => (
                                 <span key={p.key}>
                                   {i > 0 && "&"}
@@ -292,13 +288,10 @@ The endpoint returns a PNG image. Display it as an <img> tag, replacing the dyna
                         <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
                           {fixedParams.map((p) => (
                             <div key={p.key} className="flex items-center gap-3 px-3 py-2 text-xs">
-                              <code className="font-mono font-medium text-muted-foreground shrink-0 min-w-[3rem]">{p.key}</code>
+                              <code className="font-mono font-medium text-muted-foreground shrink-0 min-w-[5rem]">{p.key}</code>
                               <span className="text-foreground/70 flex-1">
                                 {p.label}
                               </span>
-                              {p.randomizable && (
-                                <span className="text-muted-foreground/60 font-mono text-[10px] shrink-0">or &quot;random&quot;</span>
-                              )}
                             </div>
                           ))}
                         </div>

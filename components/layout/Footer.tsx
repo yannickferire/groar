@@ -107,6 +107,9 @@ export default function Footer() {
             </a>
           </div>
           <div className="flex items-center justify-start gap-4">
+            <a href="https://findly.tools/groar?utm_source=groar" target="_blank" rel="noopener noreferrer">
+              <img src="https://findly.tools/badges/findly-tools-badge-light.svg" alt="Featured on Findly.tools" className="h-12 w-auto" />
+            </a>
             <a href="https://twelve.tools" target="_blank" rel="noopener noreferrer">
               <img src="https://twelve.tools/badge0-white.svg" alt="Featured on Twelve Tools" className="h-12" />
             </a>

@@ -92,6 +92,38 @@ async function convertBgToPngDataUrl(imagePath: string, origin: string): Promise
   }
 }
 
+// ─── Logo conversion to data URL for Satori ─────────────────────────────────
+
+const logoCache = new Map<string, string>();
+
+async function convertLogoToDataUrl(logoUrl: string): Promise<string | null> {
+  const cached = logoCache.get(logoUrl);
+  if (cached) return cached;
+
+  try {
+    console.log("[card] Fetching logo:", logoUrl);
+    const res = await fetch(logoUrl);
+    if (!res.ok) {
+      console.log("[card] Logo fetch failed:", res.status, res.statusText);
+      return null;
+    }
+    const buffer = Buffer.from(await res.arrayBuffer());
+    console.log("[card] Logo fetched, size:", buffer.length, "bytes");
+    const contentType = res.headers.get("content-type") || "image/png";
+    // Convert to PNG for Satori compatibility (handles SVG, WebP, etc.)
+    const pngBuffer = contentType.includes("svg")
+      ? await sharp(buffer).png().toBuffer()
+      : await sharp(buffer).png({ compressionLevel: 1 }).toBuffer();
+    const dataUrl = `data:image/png;base64,${pngBuffer.toString("base64")}`;
+    logoCache.set(logoUrl, dataUrl);
+    console.log("[card] Logo converted to data URL, length:", dataUrl.length);
+    return dataUrl;
+  } catch (err) {
+    console.error("[card] Logo conversion error:", err);
+    return null;
+  }
+}
+
 // ─── Metric formatting ──────────────────────────────────────────────────────
 
 function formatNumber(value: number, abbreviate: boolean): string {
@@ -470,7 +502,9 @@ export async function GET(request: NextRequest) {
   const headingParam = params.get("heading");
   const alignParam = params.get("align") || settings.textAlign || "center";
   const brandingParam = params.get("branding");
-  const showBranding = brandingParam !== "false" && brandingParam !== "0";
+  const showLogo = brandingParam !== "false" && brandingParam !== "0";
+  const watermarkParam = params.get("watermark");
+  const showWatermark = watermarkParam !== "false" && watermarkParam !== "0";
 
   // Random support
   const imageBackgrounds = BACKGROUNDS.filter(b => b.image);
@@ -553,6 +587,16 @@ export async function GET(request: NextRequest) {
   }
   const bgColor = bg?.color || bg?.gradient || "#1a1a1a";
 
+  // ── Resolve branding logo ────────────────────────────────────────────────
+  const branding = settings.branding;
+  console.log("[card] branding settings:", JSON.stringify(branding), "showLogo:", showLogo);
+  let logoDataUrl: string | null = null;
+  if (showLogo && branding?.logoUrl && branding?.enabled !== false) {
+    logoDataUrl = await convertLogoToDataUrl(branding.logoUrl);
+  }
+  const logoPosition = branding?.position || "left";
+  const logoSize = branding?.logoSize ?? 30;
+
   const aspectConfig = ASPECT_RATIOS[sizeParam] || ASPECT_RATIOS.post;
   const { width, height } = aspectConfig;
   const isBanner = sizeParam === "banner";
@@ -561,10 +605,14 @@ export async function GET(request: NextRequest) {
   const layout = layoutParam === "grid" ? "columns" : layoutParam;
   const align = layout === "columns" ? "center" : alignParam;
 
+  // Determine the best bold weight for the font (DM Mono only has 500, DM Serif Display only 400)
+  const FONT_BOLD_WEIGHTS: Record<string, number> = { "dm-mono": 500, "dm-serif-display": 400 };
+  const boldWeight = FONT_BOLD_WEIGHTS[fontId] || 700;
+
   let fontRegular: ArrayBuffer;
   let fontBold: ArrayBuffer;
   try {
-    [fontRegular, fontBold] = await Promise.all([loadFont(fontId, 400), loadFont(fontId, 700)]);
+    [fontRegular, fontBold] = await Promise.all([loadFont(fontId, 400), loadFont(fontId, boldWeight)]);
   } catch {
     [fontRegular, fontBold] = await Promise.all([loadFont("bricolage", 400), loadFont("bricolage", 700)]);
   }
@@ -840,10 +888,27 @@ export async function GET(request: NextRequest) {
       {/* Main content */}
       {content}
 
+      {/* User logo (if right position, force to left to cohabit with groar branding) */}
+      {logoDataUrl && (
+        <div style={{
+          position: "absolute",
+          bottom: "3%",
+          display: "flex",
+          ...(logoPosition === "right" || logoPosition === "left" ? { left: "3%" } : { left: "50%", transform: "translateX(-50%)" }),
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={logoDataUrl}
+            alt=""
+            style={{ height: unit * logoSize / 8, objectFit: "contain" }}
+          />
+        </div>
+      )}
+
       {/* Powered by GROAR (bottom-right) */}
-      {showBranding && (
+      {showWatermark && (
         <div style={{ position: "absolute", bottom: "3%", right: "3%", display: "flex", alignItems: "center", color: textColor, opacity: 0.5, fontSize: isBanner ? unit * 2.3 : unit * 2.7, textShadow }}>
-          powered by groar.app
+          groar.app
         </div>
       )}
     </div>

@@ -53,6 +53,7 @@ function minimalSettings(tplSettings: any): string {
     heading: tplSettings?.heading || undefined,
     textAlign: tplSettings?.textAlign !== "center" ? tplSettings?.textAlign : undefined,
     abbreviateNumbers: tplSettings?.abbreviateNumbers === false ? false : undefined,
+    branding: tplSettings?.branding || undefined,
   };
   if (tplType === "metrics") {
     m.metricsLayout = tplSettings?.metricsLayout;
@@ -253,28 +254,26 @@ function ApiContent() {
     const slots = (tplSettings?.metricSlots || tplSettings?.metrics || []) as { type: string; customLabel?: string }[];
 
     const s = minimalSettings(tplSettings);
-    const parts = [`key=YOUR_API_KEY`, `s=${encodeURIComponent(s)}`];
+    const userKey = apiKeys[0]?.key || "YOUR_API_KEY";
+    const parts = [`key=${encodeURIComponent(userKey)}`, `s=${encodeURIComponent(s)}`];
 
     if (tplType === "metrics") {
-      slots.forEach((_: unknown, i: number) => parts.push(`v${i + 1}=VALUE`));
+      slots.forEach((_: unknown, i: number) => parts.push(`v${i + 1}=${i === 0 ? "12500" : i === 1 ? "350" : "42"}`));
     } else if (tplType === "milestone") {
-      if (slots.length > 0) parts.push("v1=VALUE");
+      if (slots.length > 0) parts.push("v1=10000");
     } else if (tplType === "progress") {
-      if (slots.length > 0) parts.push("v1=VALUE");
-      parts.push("goal=VALUE");
+      if (slots.length > 0) parts.push("v1=750");
+      parts.push(`goal=${tplSettings?.goal || 1000}`);
     } else if (tplType === "announcement") {
       const aSlots = tplSettings?.announcementSlots || tplSettings?.announcements || [];
-      aSlots.forEach((_: unknown, i: number) => {
-        parts.push(`a${i + 1}=TEXT`);
-        parts.push(`e${i + 1}=EMOJI`);
-      });
+      aSlots.forEach((_: unknown, i: number) => parts.push(`a${i + 1}=${encodeURIComponent(`Sample text ${i + 1}`)}`));
     }
 
-    const url = `https://groar.app/api/card?${parts.join("&")}`;
+    const url = `${window.location.origin}/api/card?${parts.join("&")}`;
     navigator.clipboard.writeText(url);
     setCopiedTemplateId(tpl.id);
     setTimeout(() => setCopiedTemplateId(null), 2000);
-  }, []);
+  }, [apiKeys]);
 
   const openTemplateModal = useCallback((tpl: CardTemplate) => {
     const tplSettings = typeof tpl.settings === "string" ? JSON.parse(tpl.settings as unknown as string) : tpl.settings;
@@ -709,16 +708,17 @@ function ApiContent() {
               Override any visual setting per-request. Use <code className="bg-muted px-1 py-0.5 rounded">bg=random</code>, <code className="bg-muted px-1 py-0.5 rounded">font=random</code>, or <code className="bg-muted px-1 py-0.5 rounded">emoji=random</code> for variety.
             </p>
             <div className="border border-border rounded-lg overflow-hidden divide-y divide-border text-xs">
-              <ParamRow name="bg" desc="Background ID or &quot;random&quot;" />
-              <ParamRow name="font" desc="Font or &quot;random&quot;" />
-              <ParamRow name="color" desc="Text color hex (e.g. %23ffffff)" />
-              <ParamRow name="size" desc="Aspect ratio: post, story, banner" />
-              <ParamRow name="heading" desc="Override heading text" />
-              <ParamRow name="handle" desc="X handle (top-left)" />
-              <ParamRow name="date" desc="Date label (top-right)" />
-              <ParamRow name="layout" desc="Metrics layout: stack, columns (metrics template)" />
-              <ParamRow name="emoji" desc="Milestone emoji or &quot;random&quot; (milestone template)" />
-              <ParamRow name="branding" desc="Set to &quot;false&quot; to hide the groar.app watermark" />
+              <ParamRow name="bg" desc="Background preset ID | &quot;random&quot;" />
+              <ParamRow name="font" desc="bricolage | inter | space-grotesk | dm-mono | averia-serif-libre | dm-serif-display | random" />
+              <ParamRow name="color" desc="Hex color — e.g. %23ffffff | %231a1a1a" />
+              <ParamRow name="size" desc="post | square | banner" />
+              <ParamRow name="heading" desc="Custom heading text" />
+              <ParamRow name="handle" desc="Display name shown top-left — e.g. @username" />
+              <ParamRow name="date" desc="Date label shown top-right — e.g. March 2026" />
+              <ParamRow name="layout" desc="stack | columns (metrics template only)" />
+              <ParamRow name="emoji" desc="Emoji character | random (milestone template only)" />
+              <ParamRow name="branding" desc="true | false — show or hide your logo" />
+              <ParamRow name="watermark" desc="true | false — show or hide the groar.app watermark" />
             </div>
           </div>
         </div>
