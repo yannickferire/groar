@@ -25,6 +25,7 @@ export async function GET() {
       s."trialEnd",
       s."billingPeriod",
       s."secondTrialAt",
+      s."discountSentAt",
       COALESCE(us."exportsCount", 0)::int as "exportCount",
       COALESCE(us."currentStreak", 0)::int as "currentStreak",
       COALESCE(us."longestStreak", 0)::int as "longestStreak",

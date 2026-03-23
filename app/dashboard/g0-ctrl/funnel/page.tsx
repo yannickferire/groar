@@ -54,6 +54,7 @@ type FunnelUser = {
   firstExportAt: string | null;
   lastExportAt: string | null;
   secondTrialAt: string | null;
+  discountSentAt: string | null;
 };
 
 type Stage =
@@ -221,45 +222,69 @@ function UserAvatar({ user }: { user: FunnelUser }) {
   );
 }
 
-function FunnelBar({
-  label,
-  count,
-  total,
-  color,
-  active,
-  onClick,
-}: {
+type FunnelStep = {
+  key: Stage;
   label: string;
   count: number;
-  total: number;
   color: string;
-  active: boolean;
-  onClick: () => void;
+  bgColor: string;
+};
+
+function StackedFunnel({
+  steps,
+  total,
+  activeStage,
+  onStageClick,
+}: {
+  steps: FunnelStep[];
+  total: number;
+  activeStage: Stage;
+  onStageClick: (stage: Stage) => void;
 }) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-  const widthPct = total > 0 ? Math.max((count / total) * 100, 8) : 8;
   return (
-    <button
-      onClick={onClick}
-      className={`group text-left transition-all rounded-lg px-3 py-2 cursor-pointer ${
-        active
-          ? "bg-foreground/5 ring-1 ring-foreground/10"
-          : "hover:bg-muted/50"
-      }`}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium">{label}</span>
-        <span className="text-xs text-muted-foreground">
-          {count} ({pct}%)
-        </span>
+    <div className="space-y-3">
+      {/* Stacked bar */}
+      <div className="relative h-10 rounded-lg bg-muted overflow-hidden flex">
+        {steps.map((step) => {
+          const widthPct = total > 0 ? (step.count / total) * 100 : 0;
+          if (widthPct === 0) return null;
+          return (
+            <button
+              key={step.key}
+              onClick={() => onStageClick(step.key)}
+              className={`relative h-full transition-all cursor-pointer hover:brightness-110 ${step.color} ${
+                activeStage === step.key ? "ring-2 ring-foreground/30 ring-inset" : ""
+              }`}
+              style={{ width: `${widthPct}%`, minWidth: widthPct > 0 ? "2px" : 0 }}
+              title={`${step.label}: ${step.count} (${Math.round(widthPct)}%)`}
+            />
+          );
+        })}
       </div>
-      <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${color}`}
-          style={{ width: `${widthPct}%` }}
-        />
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {steps.map((step) => {
+          const pct = total > 0 ? Math.round((step.count / total) * 100) : 0;
+          return (
+            <button
+              key={step.key}
+              onClick={() => onStageClick(step.key)}
+              className={`flex items-center gap-1.5 text-xs transition-colors cursor-pointer ${
+                activeStage === step.key
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span className={`w-2.5 h-2.5 rounded-sm shrink-0 ${step.color}`} />
+              <span>{step.label}</span>
+              <span className="tabular-nums">{step.count}</span>
+              <span className="text-muted-foreground/60">({pct}%)</span>
+            </button>
+          );
+        })}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -373,7 +398,7 @@ export default function FunnelPage() {
   const [grantingTrialId, setGrantingTrialId] = useState<string | null>(null);
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
   const [batchReengaging, setBatchReengaging] = useState(false);
-  const [batchResult, setBatchResult] = useState<{ hot: number; cold: number; skipped: number; total: number } | null>(null);
+  const [batchStarted, setBatchStarted] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/funnel")
@@ -409,6 +434,32 @@ export default function FunnelPage() {
       expiredNoConvert,
       converted,
     };
+  }, [users]);
+
+  // ─── Funnel steps (mutually exclusive segments for stacked bar) ───
+  const funnelSteps: FunnelStep[] = useMemo(() => {
+    const stageCounts = {
+      signed_up: 0,
+      first_export: 0,
+      trial_started: 0,
+      active_trial: 0,
+      trial_expired_no_convert: 0,
+      multi_export: 0,
+      converted: 0,
+    };
+    for (const u of users) {
+      const stage = getUserStage(u);
+      if (stage in stageCounts) stageCounts[stage as keyof typeof stageCounts]++;
+    }
+    return [
+      { key: "converted" as Stage, label: "Pro", count: stageCounts.converted, color: "bg-green-500", bgColor: "bg-green-500/10" },
+      { key: "active_trial" as Stage, label: "Active trial", count: stageCounts.active_trial, color: "bg-violet-500", bgColor: "bg-violet-500/10" },
+      { key: "multi_export" as Stage, label: "Multi export", count: stageCounts.multi_export, color: "bg-amber-500", bgColor: "bg-amber-500/10" },
+      { key: "trial_expired_no_convert" as Stage, label: "Trial expired", count: stageCounts.trial_expired_no_convert, color: "bg-red-400", bgColor: "bg-red-400/10" },
+      { key: "trial_started" as Stage, label: "Trial started", count: stageCounts.trial_started, color: "bg-blue-400", bgColor: "bg-blue-400/10" },
+      { key: "first_export" as Stage, label: "1 export", count: stageCounts.first_export, color: "bg-sky-300", bgColor: "bg-sky-300/10" },
+      { key: "signed_up" as Stage, label: "Signed up only", count: stageCounts.signed_up, color: "bg-foreground/15", bgColor: "bg-foreground/5" },
+    ];
   }, [users]);
 
   // ─── Heat distribution ───
@@ -498,17 +549,15 @@ export default function FunnelPage() {
   }, [users]);
 
   const batchReengage = useCallback(async () => {
-    if (!confirm(`This will send emails to ~${batchEligibleCount} old leads (hot → discount, cold → second trial). Continue?`)) return;
+    if (!confirm(`This will start a background job to re-engage ~${batchEligibleCount} old leads (30s between each email). Continue?`)) return;
     setBatchReengaging(true);
-    setBatchResult(null);
     try {
       const res = await fetch("/api/admin/users/batch-reengage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
       if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
-      setBatchResult(data);
+      setBatchStarted(true);
     } catch {
       alert("Batch re-engage failed");
     } finally {
@@ -590,72 +639,22 @@ export default function FunnelPage() {
         </div>
       </div>
 
-      {/* Batch result */}
-      {batchResult && (
+      {/* Batch started */}
+      {batchStarted && (
         <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-4 text-sm">
-          Batch re-engage done: <strong>{batchResult.hot}</strong> hot leads (discount sent),{" "}
-          <strong>{batchResult.cold}</strong> cold leads (second trial granted),{" "}
-          <strong>{batchResult.skipped}</strong> skipped. Total: {batchResult.total}.
+          Batch re-engage job started — emails are being sent in background (~30s apart). Check Inngest dashboard for progress.
         </div>
       )}
 
       {/* Funnel Visualization */}
-      <div className="rounded-2xl border-fade p-5 space-y-1">
+      <div className="rounded-2xl border-fade p-5">
         <h2 className="text-sm font-medium mb-3">Conversion Funnel</h2>
-        <FunnelBar
-          label="Signed up"
-          count={funnel.signedUp}
+        <StackedFunnel
+          steps={funnelSteps}
           total={funnel.total}
-          color="bg-foreground/20"
-          active={stageFilter === "signed_up"}
-          onClick={() =>
-            setStageFilter(stageFilter === "signed_up" ? "all" : "signed_up")
-          }
-        />
-        <FunnelBar
-          label="First export"
-          count={funnel.hadExport}
-          total={funnel.total}
-          color="bg-blue-500"
-          active={stageFilter === "first_export"}
-          onClick={() =>
-            setStageFilter(
-              stageFilter === "first_export" ? "all" : "first_export"
-            )
-          }
-        />
-        <FunnelBar
-          label="Trial started"
-          count={funnel.trialStarted}
-          total={funnel.total}
-          color="bg-violet-500"
-          active={stageFilter === "trial_started"}
-          onClick={() =>
-            setStageFilter(
-              stageFilter === "trial_started" ? "all" : "trial_started"
-            )
-          }
-        />
-        <FunnelBar
-          label="Multiple exports (2+)"
-          count={funnel.multiExport + funnel.converted}
-          total={funnel.total}
-          color="bg-amber-500"
-          active={stageFilter === "multi_export"}
-          onClick={() =>
-            setStageFilter(
-              stageFilter === "multi_export" ? "all" : "multi_export"
-            )
-          }
-        />
-        <FunnelBar
-          label="Converted to Pro"
-          count={funnel.converted}
-          total={funnel.total}
-          color="bg-green-500"
-          active={stageFilter === "converted"}
-          onClick={() =>
-            setStageFilter(stageFilter === "converted" ? "all" : "converted")
+          activeStage={stageFilter}
+          onStageClick={(stage) =>
+            setStageFilter(stageFilter === stage ? "all" : stage)
           }
         />
       </div>
@@ -718,6 +717,52 @@ export default function FunnelPage() {
           </p>
         </div>
       </div>
+
+      {/* Re-engagement Stats */}
+      {(() => {
+        const secondTrials = users.filter((u) => u.secondTrialAt);
+        const secondTrialConverted = secondTrials.filter(isPro);
+        const discountSent = users.filter((u) => u.discountSentAt);
+        const discountConverted = discountSent.filter(isPro);
+        const totalReengaged = secondTrials.length + discountSent.length;
+
+        if (totalReengaged === 0) return null;
+
+        return (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="rounded-xl border-fade p-4">
+              <p className="text-xs text-muted-foreground">2nd trials granted</p>
+              <p className="text-2xl font-heading font-bold mt-1">{secondTrials.length}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {secondTrialConverted.length} converted ({secondTrials.length > 0 ? Math.round((secondTrialConverted.length / secondTrials.length) * 100) : 0}%)
+              </p>
+            </div>
+            <div className="rounded-xl border-fade p-4">
+              <p className="text-xs text-muted-foreground">Discounts sent</p>
+              <p className="text-2xl font-heading font-bold mt-1">{discountSent.length}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {discountConverted.length} converted ({discountSent.length > 0 ? Math.round((discountConverted.length / discountSent.length) * 100) : 0}%)
+              </p>
+            </div>
+            <div className="rounded-xl border-fade p-4">
+              <p className="text-xs text-muted-foreground">Total re-engaged</p>
+              <p className="text-2xl font-heading font-bold mt-1">{totalReengaged}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {secondTrialConverted.length + discountConverted.length} converted
+              </p>
+            </div>
+            <div className="rounded-xl border-fade p-4">
+              <p className="text-xs text-muted-foreground">Re-engage &rarr; Pro</p>
+              <p className="text-2xl font-heading font-bold mt-1">
+                {totalReengaged > 0
+                  ? Math.round(((secondTrialConverted.length + discountConverted.length) / totalReengaged) * 100)
+                  : 0}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">conversion rate</p>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Heat Distribution */}
       <div className="flex gap-2 flex-wrap">
@@ -914,6 +959,11 @@ export default function FunnelPage() {
                       {user.trialStart && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-600">
                           {user.secondTrialAt ? "2nd Trial" : "Trial"}
+                        </span>
+                      )}
+                      {user.discountSentAt && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600">
+                          -25%
                         </span>
                       )}
                     </div>

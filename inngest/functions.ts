@@ -4,6 +4,7 @@ import { fetchTrustMRRForUser, getUsersForTrustMRR } from "@/lib/trustmrr-analyt
 import { pool } from "@/lib/db";
 import { sendEmail, trialEndingEmail, trialExpiredEmail, trialFollowUpEmail, secondChanceTrialEmail, hotLeadDiscountEmail } from "@/lib/email";
 import { getPricingTierInfo } from "@/lib/plans-server";
+import { TRIAL_DURATION_DAYS } from "@/lib/plans";
 
 // Daily analytics fetch - runs at 1am UTC for all accounts
 export const dailyAnalyticsFetch = inngest.createFunction(
@@ -227,6 +228,10 @@ export const trialEmailSequence = inngest.createFunction(
           lifetimePrice: lifetimeTier.price,
         });
         await sendEmail({ to: email, ...emailContent });
+        await pool.query(
+          `UPDATE subscription SET "discountSentAt" = NOW(), "updatedAt" = NOW() WHERE "userId" = $1`,
+          [userId]
+        );
         logger.info(`Sent 25% discount email to hot lead ${email}`);
       });
     }
@@ -373,5 +378,122 @@ export const dailyPointsCleanup = inngest.createFunction(
   }
 );
 
+// Batch re-engage old leads — triggered manually from admin funnel page
+// Spaces out emails with 30s between each to avoid rate limits
+export const batchReengage = inngest.createFunction(
+  {
+    id: "batch-reengage",
+    name: "Batch Re-engage Old Leads",
+    retries: 1,
+  },
+  { event: "admin/batch-reengage" },
+  async ({ step, logger }) => {
+    // Find old leads: trial expired > 10 days ago, never paid, no second trial yet
+    const leads = await step.run("find-eligible-leads", async () => {
+      const result = await pool.query(`
+        SELECT
+          u.id, u.name, u.email,
+          u."brandingLogoUrl",
+          s."trialEnd",
+          COALESCE(us."exportsCount", 0)::int as "exportCount",
+          EXISTS(SELECT 1 FROM account a WHERE a."userId" = u.id AND a."providerId" = 'twitter') as "hasX",
+          EXISTS(SELECT 1 FROM trustmrr_snapshot t WHERE t."userId" = u.id) as "hasTrustMRR"
+        FROM "user" u
+        JOIN subscription s ON s."userId" = u.id
+        LEFT JOIN user_stats us ON us."userId" = u.id
+        WHERE s.status = 'trialing'
+          AND s."trialEnd" < NOW() - INTERVAL '10 days'
+          AND s."externalCustomerId" IS NULL
+          AND s."secondTrialAt" IS NULL
+          AND u."emailTrialReminders" IS DISTINCT FROM false
+      `);
+      return result.rows;
+    });
+
+    logger.info(`Batch re-engage: found ${leads.length} eligible old leads`);
+
+    if (leads.length === 0) {
+      return { success: true, total: 0, hot: 0, cold: 0, skipped: 0 };
+    }
+
+    const pricing = await step.run("get-pricing", async () => {
+      const { proTier, lifetimeTier } = await getPricingTierInfo();
+      return { monthlyPrice: proTier.price, lifetimePrice: lifetimeTier.price };
+    });
+
+    const discountCode = process.env.CREEM_DISCOUNT_CODE_25 || "HOTTIGER25";
+    let hotCount = 0;
+    let coldCount = 0;
+    let skippedCount = 0;
+
+    for (let i = 0; i < leads.length; i++) {
+      const lead = leads[i];
+
+      // Space out emails: 30s between each
+      if (i > 0) {
+        await step.sleep(`wait-${i}`, "30s");
+      }
+
+      const result = await step.run(`process-lead-${lead.id}`, async () => {
+        if (!lead.email) return "skipped" as const;
+
+        const hasDeepSignal = lead.hasX || lead.hasTrustMRR || !!lead.brandingLogoUrl;
+        const isHot = lead.exportCount > 2 && hasDeepSignal;
+        const isCold = lead.exportCount <= 1;
+
+        if (isHot) {
+          const emailContent = hotLeadDiscountEmail(lead.name || "there", discountCode, 25, pricing);
+          await sendEmail({ to: lead.email, ...emailContent });
+          await pool.query(
+            `UPDATE subscription SET "discountSentAt" = NOW(), "updatedAt" = NOW() WHERE "userId" = $1`,
+            [lead.id]
+          );
+          return "hot" as const;
+        } else if (isCold) {
+          // Grant second trial
+          const now = new Date();
+          const newTrialEnd = new Date(now.getTime() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
+          await pool.query(
+            `UPDATE subscription
+             SET plan = 'pro', status = 'trialing',
+                 "trialStart" = $2, "trialEnd" = $3,
+                 "secondTrialAt" = $2, "updatedAt" = NOW()
+             WHERE "userId" = $1`,
+            [lead.id, now, newTrialEnd]
+          );
+
+          const emailContent = secondChanceTrialEmail(lead.name || "there");
+          await sendEmail({ to: lead.email, ...emailContent });
+
+          // Trigger trial email sequence for the new trial
+          await inngest.send({
+            name: "trial/started",
+            data: {
+              userId: lead.id,
+              email: lead.email,
+              name: lead.name || "",
+              trialEnd: newTrialEnd.toISOString(),
+            },
+          });
+
+          return "cold" as const;
+        }
+
+        return "skipped" as const;
+      });
+
+      if (result === "hot") hotCount++;
+      else if (result === "cold") coldCount++;
+      else skippedCount++;
+
+      logger.info(`Batch re-engage [${i + 1}/${leads.length}]: ${lead.email} → ${result}`);
+    }
+
+    logger.info(`Batch re-engage done: ${hotCount} hot, ${coldCount} cold, ${skippedCount} skipped`);
+
+    return { success: true, total: leads.length, hot: hotCount, cold: coldCount, skipped: skippedCount };
+  }
+);
+
 // Export all functions for the serve handler
-export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, dailyPointsCleanup, trialEmailSequence];
+export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, dailyPointsCleanup, trialEmailSequence, batchReengage];
