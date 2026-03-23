@@ -78,6 +78,18 @@ export const dailyAnalyticsFetch = inngest.createFunction(
       `Completed: ${successCount} success, ${errorCount} errors, ${skippedCount} skipped`
     );
 
+    // Cleanup old daily_points rows (older than 60 days) — piggyback on daily fetch
+    const cleanup = await step.run("cleanup-old-daily-points", async () => {
+      const result = await pool.query(
+        `DELETE FROM daily_points WHERE date < CURRENT_DATE - 60`
+      );
+      return result.rowCount || 0;
+    });
+
+    if (cleanup > 0) {
+      logger.info(`Daily points cleanup: ${cleanup} old rows deleted`);
+    }
+
     return {
       success: true,
       date: new Date().toISOString().split("T")[0],
@@ -361,23 +373,6 @@ export const dailyTrustMRRFetch = inngest.createFunction(
   }
 );
 
-// Cleanup old daily_points rows (older than 60 days) — runs 1st of each month
-export const dailyPointsCleanup = inngest.createFunction(
-  {
-    id: "daily-points-cleanup",
-    name: "Daily Points Cleanup",
-    retries: 2,
-  },
-  { cron: "0 2 1 * *" },
-  async ({ logger }) => {
-    const result = await pool.query(
-      `DELETE FROM daily_points WHERE date < CURRENT_DATE - 60`
-    );
-    logger.info(`Daily points cleanup: ${result.rowCount} old rows deleted`);
-    return { success: true, rowsDeleted: result.rowCount };
-  }
-);
-
 // Batch re-engage old leads — triggered manually from admin funnel page
 // Spaces out emails with 30s between each to avoid rate limits
 export const batchReengage = inngest.createFunction(
@@ -496,4 +491,5 @@ export const batchReengage = inngest.createFunction(
 );
 
 // Export all functions for the serve handler
-export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, dailyPointsCleanup, trialEmailSequence, batchReengage];
+// Export all functions for the serve handler (max 5 on free Inngest plan)
+export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, trialEmailSequence, batchReengage];
