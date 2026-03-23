@@ -126,7 +126,7 @@ export function winBackEmail(name: string, pricing?: { monthlyPrice: number; lif
   };
 }
 
-export function milestoneEmail(name: string, milestone: string, metric: string) {
+export function milestoneEmail(name: string, milestone: string, metric: string, isPro: boolean = true) {
   const firstName = name.split(" ")[0] || name;
   const metricLabel =
     metric === "followers" ? "followers"
@@ -135,6 +135,13 @@ export function milestoneEmail(name: string, milestone: string, metric: string) 
     : metric === "revenue" ? "in revenue"
     : metric === "customers" ? "customers"
     : metric;
+
+  const upgradeCta = !isPro ? `
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:16px;margin:16px 0;text-align:center;">
+        <p style="margin:0 0 8px;font-size:14px;color:#9a3412;">🐯 Want to share this milestone as a stunning visual? Upgrade to Pro — no watermark, unlimited exports.</p>
+        ${cta("Upgrade to Pro", `${SITE_URL}/dashboard/plan#plans`)}
+      </div>` : "";
+
   return {
     subject: `You just hit ${milestone} ${metricLabel}! 🎉`,
     html: layout(`
@@ -142,6 +149,7 @@ export function milestoneEmail(name: string, milestone: string, metric: string) 
       <p>You just reached <strong>${milestone} ${metricLabel}</strong>. That's a big deal — share it with your audience.</p>
       <p>We've got a milestone template ready for you:</p>
       ${cta("Share the milestone", `${SITE_URL}/dashboard/editor?template=milestone&metric=${metric}&value=${milestone}`)}
+      ${upgradeCta}
       <p style="color:#6b7280;font-size:14px;">Keep growing! 🐯</p>
       <p>— Yannick</p>
     `),
@@ -190,6 +198,46 @@ export function newFeedbackNotificationEmail(userName: string, userEmail: string
         ${page ? `<li><strong>Page:</strong> ${page}</li>` : ""}
       </ul>
       <div style="background:#f3f4f6;border-radius:8px;padding:16px;margin:16px 0;font-size:14px;white-space:pre-wrap;">${message}</div>
+    `),
+  };
+}
+
+// ─── Re-engagement emails ───
+
+export function secondChanceTrialEmail(name: string) {
+  const firstName = name.split(" ")[0] || name;
+  return {
+    subject: "We reactivated your Pro trial — 3 more days, on us",
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
+      <p>We noticed you signed up for the Pro trial but didn't really get a chance to use it. Life gets busy — we get it.</p>
+      <p>So we just <strong>reactivated your Pro trial for 3 more days</strong>. It's already active — unlimited exports, no watermark, all templates & backgrounds.</p>
+      <p>Jump in and try it out:</p>
+      ${cta("Open the editor", `${SITE_URL}/dashboard`)}
+      <p style="color:#6b7280;font-size:14px;">Tip: connect your X account and your metrics get auto-imported — your visual is ready in 10 seconds. Reply to this email if you need help!</p>
+      <p>— Yannick</p>
+    `),
+  };
+}
+
+export function hotLeadDiscountEmail(name: string, discountCode: string, discountPercent: number, pricing: { monthlyPrice: number; lifetimePrice: number }) {
+  const firstName = name.split(" ")[0] || name;
+  const discountedMonthly = Math.round(pricing.monthlyPrice * (1 - discountPercent / 100) * 100) / 100;
+  const discountedLifetime = Math.round(pricing.lifetimePrice * (1 - discountPercent / 100));
+  return {
+    subject: `${discountPercent}% off Groar Pro — just for you`,
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
+      <p>I saw you've been using Groar regularly — looks like it's working for you. Your trial ended a few days ago, so here's a little push:</p>
+      <p style="font-size:20px;font-weight:bold;text-align:center;margin:20px 0;color:#f97316;">🔥 ${discountPercent}% off with code <span style="background:#fff3e0;padding:4px 10px;border-radius:6px;font-family:monospace;">${discountCode}</span></p>
+      <ul style="margin:12px 0;padding-left:20px;">
+        <li><strong>$${discountedLifetime} one-time</strong> instead of $${pricing.lifetimePrice} — lifetime access</li>
+        <li><strong>$${discountedMonthly}/month</strong> instead of $${pricing.monthlyPrice}/mo — cancel anytime</li>
+      </ul>
+      <p>The code is valid for 48 hours. Just enter it at checkout:</p>
+      ${cta("Get ${discountPercent}% off", `${SITE_URL}/dashboard/plan#plans`)}
+      <p style="color:#6b7280;font-size:14px;">This is a personal offer — not on the website. Reply if you have any questions!</p>
+      <p>— Yannick</p>
     `),
   };
 }

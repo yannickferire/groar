@@ -54,6 +54,7 @@ export async function createCheckoutSession(options: {
   successUrl: string;
   customerEmail?: string | null;
   metadata: Record<string, string>;
+  discountCode?: string;
 }): Promise<{ url: string } | { error: string }> {
   try {
     const creem = getCreem();
@@ -61,6 +62,7 @@ export async function createCheckoutSession(options: {
       productId: options.productId,
       successUrl: options.successUrl,
       ...(options.customerEmail ? { customer: { email: options.customerEmail } } : {}),
+      ...(options.discountCode ? { discountCode: options.discountCode } : {}),
       metadata: options.metadata,
     });
 

@@ -2,7 +2,7 @@ import { inngest } from "@/lib/inngest";
 import { fetchAccountAnalytics, getAllXAccounts } from "@/lib/analytics";
 import { fetchTrustMRRForUser, getUsersForTrustMRR } from "@/lib/trustmrr-analytics";
 import { pool } from "@/lib/db";
-import { sendEmail, trialEndingEmail, trialExpiredEmail, trialFollowUpEmail } from "@/lib/email";
+import { sendEmail, trialEndingEmail, trialExpiredEmail, trialFollowUpEmail, secondChanceTrialEmail, hotLeadDiscountEmail } from "@/lib/email";
 import { getPricingTierInfo } from "@/lib/plans-server";
 
 // Daily analytics fetch - runs at 1am UTC for all accounts
@@ -190,6 +190,87 @@ export const trialEmailSequence = inngest.createFunction(
         await sendEmail({ to: email, ...emailContent });
         logger.info(`Sent trial follow-up email to ${email}`);
       });
+    }
+
+    // 4. Wait 2 more days (7 days after trial end), send 25% discount to hot leads
+    await step.sleep("wait-for-discount", "2 days");
+
+    const hotLeadCheck = await step.run("check-hot-lead", async () => {
+      const result = await pool.query(
+        `SELECT s.status, s."externalCustomerId", u."emailTrialReminders",
+                u."brandingLogoUrl",
+                COALESCE(us."exportsCount", 0)::int as "exportCount",
+                EXISTS(SELECT 1 FROM account a WHERE a."userId" = $1 AND a."providerId" = 'twitter') as "hasX",
+                EXISTS(SELECT 1 FROM trustmrr_snapshot t WHERE t."userId" = $1) as "hasTrustMRR"
+         FROM subscription s
+         JOIN "user" u ON u.id = s."userId"
+         LEFT JOIN user_stats us ON us."userId" = s."userId"
+         WHERE s."userId" = $1
+           AND s.status = 'trialing'
+           AND s."externalCustomerId" IS NULL`,
+        [userId]
+      );
+      const row = result.rows[0];
+      if (!row || row.emailTrialReminders === false) return { isHot: false, exportCount: 0 };
+      // Hot = really engaged: >2 exports AND at least one deep signal (X, TrustMRR, or branding)
+      const hasDeepSignal = row.hasX || row.hasTrustMRR || !!row.brandingLogoUrl;
+      const isHot = row.exportCount > 2 && hasDeepSignal;
+      return { isHot, exportCount: row.exportCount };
+    });
+
+    if (hotLeadCheck.isHot) {
+      await step.run("send-hot-lead-discount", async () => {
+        const { proTier, lifetimeTier } = await getPricingTierInfo();
+        const discountCode = process.env.CREEM_DISCOUNT_CODE_25 || "HOTTIGER25";
+        const emailContent = hotLeadDiscountEmail(name || "there", discountCode, 25, {
+          monthlyPrice: proTier.price,
+          lifetimePrice: lifetimeTier.price,
+        });
+        await sendEmail({ to: email, ...emailContent });
+        logger.info(`Sent 25% discount email to hot lead ${email}`);
+      });
+    }
+
+    // 5. Wait 3 more days (10 days after trial end), send second chance if ≤1 export (cold leads)
+    await step.sleep("wait-for-second-chance", "3 days");
+
+    if (!hotLeadCheck.isHot && hotLeadCheck.exportCount <= 1) {
+      const shouldSendSecondChance = await step.run("check-second-chance", async () => {
+        const result = await pool.query(
+          `SELECT s.status, s."externalCustomerId", u."emailTrialReminders"
+           FROM subscription s
+           JOIN "user" u ON u.id = s."userId"
+           WHERE s."userId" = $1
+             AND s.status = 'trialing'
+             AND s."externalCustomerId" IS NULL`,
+          [userId]
+        );
+        const row = result.rows[0];
+        return row && row.emailTrialReminders !== false;
+      });
+
+      if (shouldSendSecondChance) {
+        // Grant second trial automatically + flag it
+        await step.run("grant-second-trial", async () => {
+          const now = new Date();
+          const newTrialEnd = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+          await pool.query(
+            `UPDATE subscription
+             SET plan = 'pro', status = 'trialing',
+                 "trialStart" = $2, "trialEnd" = $3,
+                 "secondTrialAt" = $2, "updatedAt" = NOW()
+             WHERE "userId" = $1`,
+            [userId, now, newTrialEnd]
+          );
+          logger.info(`Granted second trial to ${email}, ends ${newTrialEnd.toISOString()}`);
+        });
+
+        await step.run("send-second-chance", async () => {
+          const emailContent = secondChanceTrialEmail(name || "there");
+          await sendEmail({ to: email, ...emailContent });
+          logger.info(`Sent second chance trial email to ${email}`);
+        });
+      }
     }
 
     return { userId, emailsSent: true };

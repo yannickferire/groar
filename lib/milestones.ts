@@ -143,10 +143,18 @@ async function insertMilestoneNotifications(
   hits: MilestoneHit[]
 ): Promise<void> {
   const userResult = await pool.query(
-    `SELECT email, name, "emailMilestones" FROM "user" WHERE id = $1`,
+    `SELECT u.email, u.name, u."emailMilestones", s.plan, s.status, s."externalCustomerId"
+     FROM "user" u
+     LEFT JOIN subscription s ON s."userId" = u.id
+     WHERE u.id = $1`,
     [userId]
   );
   const user = userResult.rows[0];
+  const isPro = user && (
+    (user.plan === "pro" && user.status === "active") ||
+    (user.plan === "pro" && user.status === "trialing") ||
+    user.plan === "friend"
+  );
 
   // When multiple milestones of the same metric are crossed in one call,
   // only create a notification for the highest one per metric
@@ -233,7 +241,8 @@ async function insertMilestoneNotifications(
           const email = milestoneEmail(
             user.name || "there",
             formattedValue,
-            highest.metric
+            highest.metric,
+            isPro
           );
           await sendEmail({ to: user.email, ...email });
         } catch (e) {
