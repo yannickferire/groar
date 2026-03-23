@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import FeedbackWidget from "@/components/dashboard/FeedbackWidget";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
@@ -105,6 +106,7 @@ export default function DashboardLayout({
           {children}
         </main>
       </SidebarInset>
+      <FeedbackWidget />
     </SidebarProvider>
     </div>
   );

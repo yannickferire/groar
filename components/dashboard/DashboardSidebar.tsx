@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon, Notification03Icon, GiftIcon, SourceCodeSquareIcon } from "@hugeicons/core-free-icons";
+import { AddSquareIcon, Home11Icon, Link01Icon, Clock01Icon, Analytics01Icon, FlashIcon, CrownIcon, SparklesIcon, ChromeIcon, RankingIcon, Notification03Icon, GiftIcon, SourceCodeSquareIcon, RoboticIcon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import UserMenu from "./UserMenu";
@@ -36,7 +36,8 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Connections", href: "/dashboard/connections", icon: Link01Icon, premium: true },
   { label: "History", href: "/dashboard/history", icon: Clock01Icon, premium: true },
   { label: "Notifications", href: "/dashboard/notifications", icon: Notification03Icon },
-  { label: "API", href: "/dashboard/api", icon: SourceCodeSquareIcon, premium: true, comingSoon: true },
+  { label: "Automation", href: "/dashboard/automation", icon: RoboticIcon, premium: true, comingSoon: true },
+  { label: "API", href: "/dashboard/api", icon: SourceCodeSquareIcon, premium: true },
   { label: "Leaderboard", href: "/dashboard/leaderboard", icon: RankingIcon },
 ];
 
@@ -48,7 +49,6 @@ export default function DashboardSidebar() {
   const [trialEnd, setTrialEnd] = useState<string | null>(null);
   const [hasUsedTrial, setHasUsedTrial] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isBetaApiUser, setIsBetaApiUser] = useState(false);
 
   const [pointsToday, setPointsToday] = useState<number | null>(null);
   const [animatingPoints, setAnimatingPoints] = useState<number | null>(null);
@@ -64,8 +64,6 @@ export default function DashboardSidebar() {
         setTrialEnd(data.trialEnd || null);
         setHasUsedTrial(!!data.hasUsedTrial);
         setIsAdmin(!!data.isAdmin);
-        const apiBetaEmails = ["yannick@ferire.com", "victor.petersen2@gmail.com"];
-        if (data.email && apiBetaEmails.includes(data.email)) setIsBetaApiUser(true);
       })
       .catch(() => setUserPlan("free"));
   }, []);
@@ -186,7 +184,7 @@ export default function DashboardSidebar() {
             {/* Other nav items */}
             <SidebarMenu>
               {NAV_ITEMS.map((item) => {
-                if (item.comingSoon && !isBetaApiUser) {
+                if (item.comingSoon) {
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
@@ -237,6 +235,7 @@ export default function DashboardSidebar() {
 
                 const isLeaderboard = item.href === "/dashboard/leaderboard";
                 const isNotifications = item.href === "/dashboard/notifications";
+                const isApi = item.href === "/dashboard/api";
 
                 return (
                   <SidebarMenuItem key={item.href}>
@@ -252,7 +251,7 @@ export default function DashboardSidebar() {
                           strokeWidth={2}
                         />
                         <span className="flex-1">{item.label}</span>
-                        {item.comingSoon && isBetaApiUser && (
+                        {isApi && (
                           <span className={`text-[10px] font-medium text-muted-foreground px-1.5 py-0.5 rounded-full ${isActive(item.href) ? "bg-muted" : "bg-sidebar-accent"}`}>Beta</span>
                         )}
                         {isNotifications && unreadNotifications > 0 && (

@@ -133,7 +133,7 @@ export async function GET() {
         totalUsers: usersResult.rows[0].count,
         totalExports,
         proAccounts: proAccountsResult.rows[0].count,
-        proLifetime: Math.max(0, lifetimeCount.rows[0].count - 2),
+        proLifetime: Math.max(0, lifetimeCount.rows[0].count - 3),
         activeTrials: trialsResult.rows[0].count,
         totalRevenue: Math.round(totalRevenueCents / 100),
         trendDays: TREND_DAYS,

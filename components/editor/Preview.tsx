@@ -166,17 +166,15 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 );
               }
               if (h.type === "quote" && h.text) {
-                const size = isBanner ? "5cqi" : "6.5cqi";
                 return (
-                  <p className="font-bold italic tracking-tight text-center text-balance px-[2%]" style={{ fontSize: size, lineHeight: 1.1 }}>
+                  <p className="font-bold italic tracking-tight text-center text-balance px-[2%]" style={{ fontSize: baseFontSize }}>
                     &ldquo;{h.text}&rdquo;
                   </p>
                 );
               }
               if (h.type === "custom" && h.text) {
-                const size = isBanner ? "5cqi" : "6.5cqi";
                 return (
-                  <p className="font-bold tracking-tight text-center text-balance px-[2%]" style={{ fontSize: size, lineHeight: 1.1 }}>
+                  <p className="font-bold tracking-tight text-center text-balance px-[2%]" style={{ fontSize: baseFontSize }}>
                     {h.text}
                   </p>
                 );
@@ -252,17 +250,15 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 );
               }
               if (h.type === "quote" && h.text) {
-                const size = isBanner ? "5cqi" : `${sq(6.5)}cqi`;
                 return (
-                  <p className="font-bold italic tracking-tight text-center text-balance px-[2%]" style={{ fontSize: size, lineHeight: 1.1 }}>
+                  <p className="font-bold italic tracking-tight text-center text-balance px-[2%]" style={{ fontSize: baseFontSize, marginBottom: isBanner ? "1.5cqi" : "2cqi" }}>
                     &ldquo;{h.text}&rdquo;
                   </p>
                 );
               }
               if (h.type === "custom" && h.text) {
-                const size = isBanner ? "5cqi" : `${sq(6.5)}cqi`;
                 return (
-                  <p className="font-bold tracking-tight text-center text-balance px-[2%]" style={{ fontSize: size, lineHeight: 1.1 }}>
+                  <p className="font-bold tracking-tight text-center text-balance px-[2%]" style={{ fontSize: baseFontSize, marginBottom: isBanner ? "1.5cqi" : "2cqi" }}>
                     {h.text}
                   </p>
                 );

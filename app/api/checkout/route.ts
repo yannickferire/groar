@@ -2,9 +2,9 @@ import { requireAuth } from "@/lib/api-auth";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { PLANS, PlanType } from "@/lib/plans";
-import type { BillingPeriod } from "@/lib/plans";
+import type { ApiTier, BillingPeriod } from "@/lib/plans";
 import { createCheckoutSession as polarCheckout, getPolarProductId } from "@/lib/polar";
-import { createCheckoutSession as creemCheckout, getCreemProductId } from "@/lib/creem";
+import { createCheckoutSession as creemCheckout, getCreemProductId, getCreemApiTierProductId } from "@/lib/creem";
 import { getPostHogClient } from "@/lib/posthog-server";
 
 const PAYMENT_PROVIDER = process.env.PAYMENT_PROVIDER || "creem";
@@ -32,6 +32,54 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
+    const cookieStore = await cookies();
+
+    // ─── API tier checkout ────────────────────────────────────────────
+    const apiTier = body.apiTier as ApiTier | undefined;
+    if (apiTier) {
+      if (apiTier !== "growth" && apiTier !== "scale") {
+        return NextResponse.json({ error: "Invalid API tier" }, { status: 400 });
+      }
+
+      const productId = getCreemApiTierProductId(apiTier);
+      if (!productId) {
+        return NextResponse.json({ error: "API tier product not found" }, { status: 400 });
+      }
+
+      const result = await creemCheckout({
+        productId,
+        successUrl: `${siteUrl}/dashboard/api?checkout=success&apiTier=${apiTier}`,
+        customerEmail: session.user.email && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(session.user.email)
+          ? session.user.email
+          : undefined,
+        metadata: {
+          userId: session.user.id,
+          apiTier,
+          ...(cookieStore.get("datafast_visitor_id")?.value && { datafast_visitor_id: cookieStore.get("datafast_visitor_id")!.value }),
+          ...(cookieStore.get("datafast_session_id")?.value && { datafast_session_id: cookieStore.get("datafast_session_id")!.value }),
+        },
+      });
+
+      if ("error" in result) {
+        return NextResponse.json({ error: result.error }, { status: 500 });
+      }
+
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: session.user.id,
+        event: "checkout_initiated",
+        properties: {
+          api_tier: apiTier,
+          $set: { email: session.user.email, name: session.user.name },
+        },
+      });
+      await posthog.shutdown();
+
+      return NextResponse.json({ checkoutUrl: result.url });
+    }
+
+    // ─── Pro plan checkout ────────────────────────────────────────────
     const planKey = body.plan as PlanType;
     const billingPeriod = (body.billingPeriod as BillingPeriod) || "monthly";
 
@@ -50,8 +98,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
-    const cookieStore = await cookies();
     const result = await createCheckout({
       productId,
       successUrl: `${siteUrl}/dashboard?checkout=success&plan=${planKey}`,

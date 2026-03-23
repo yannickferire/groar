@@ -148,7 +148,17 @@ async function insertMilestoneNotifications(
   );
   const user = userResult.rows[0];
 
+  // When multiple milestones of the same metric are crossed in one call,
+  // only create a notification for the highest one per metric
+  const highestPerMetric = new Map<string, MilestoneHit>();
   for (const hit of hits) {
+    const existing = highestPerMetric.get(hit.metric);
+    if (!existing || hit.milestone > existing.milestone) {
+      highestPerMetric.set(hit.metric, hit);
+    }
+  }
+
+  for (const hit of highestPerMetric.values()) {
     const emoji = randomEmoji();
     const formatted = formatMilestone(hit.milestone);
     const isRevenue = hit.metric === "mrr" || hit.metric === "revenue";

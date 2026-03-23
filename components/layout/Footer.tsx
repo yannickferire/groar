@@ -122,6 +122,9 @@ export default function Footer() {
             <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer" className="-ml-3 -mr-3">
               <img src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" className="h-14 -my-1" />
             </a>
+            <a href="https://ufind.best/products/groar?utm_source=ufind.best" target="_blank" rel="noopener">
+              <img src="https://ufind.best/badges/ufind-best-badge-light.svg" alt="Featured on ufind.best" width="150" className="h-12" />
+            </a>
           </div>
         </div>
       </footer>

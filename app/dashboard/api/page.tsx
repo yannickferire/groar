@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Key01Icon,
@@ -14,12 +14,17 @@ import {
   Cancel01Icon,
   InformationCircleIcon,
   DashboardSquare01Icon,
+  Analytics01Icon,
+  CheckmarkCircle02Icon,
+  Alert02Icon,
+  AlertDiamondIcon,
 } from "@hugeicons/core-free-icons";
-import { Dialog as RadixDialog } from "radix-ui";
+import { Dialog as RadixDialog, VisuallyHidden } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { METRIC_LABELS, type MetricType, type TemplateType } from "@/components/editor/types";
 import ApiTemplateModal from "@/components/ApiTemplateModal";
+import { API_TIERS, API_TIER_ORDER, type ApiTier } from "@/lib/plans";
 
 type ApiKey = {
   id: string;
@@ -90,13 +95,9 @@ function minimalSettings(tplSettings: any): string {
   return btoa(binary);
 }
 
-// Users allowed to access the API page while it's in "coming soon" mode
-const API_BETA_EMAILS = ["yannick@ferire.com", "victor.petersen2@gmail.com"];
-
 function ApiContent() {
   // Plan & loading
   const [isPro, setIsPro] = useState(false);
-  const [isBetaUser, setIsBetaUser] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // API Keys
@@ -108,6 +109,18 @@ function ApiContent() {
   const [rollingKeyId, setRollingKeyId] = useState<string | null>(null);
   const rollDoneRef = useRef<string | null>(null);
 
+  // Usage
+  const [usage, setUsage] = useState<{
+    used: number;
+    limit: number;
+    graceLimit: number;
+    tier: string;
+    tierName: string;
+    nextTier: { tier: string; name: string; limit: number; price: string } | null;
+    resetDate: string;
+    daily: { date: string; count: number }[];
+  } | null>(null);
+
   // Templates
   const [templates, setTemplates] = useState<CardTemplate[]>([]);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
@@ -115,6 +128,13 @@ function ApiContent() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [copiedTemplateId, setCopiedTemplateId] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Plans modal
+  const [showPlansModal, setShowPlansModal] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  // Docs modal
+  const [showDocsModal, setShowDocsModal] = useState(false);
 
   // Modal
   const [modalTemplate, setModalTemplate] = useState<{
@@ -135,14 +155,15 @@ function ApiContent() {
         if (data) {
           const pro = data.plan === "pro" || data.plan === "friend";
           setIsPro(pro);
-          if (data.email && API_BETA_EMAILS.includes(data.email)) setIsBetaUser(true);
           if (pro) {
             Promise.all([
               fetch("/api/user/api-keys").then((r) => r.ok ? r.json() : null),
               fetch("/api/user/card-templates").then((r) => r.ok ? r.json() : null),
-            ]).then(([keysData, tplData]) => {
+              fetch("/api/user/api-usage").then((r) => r.ok ? r.json() : null),
+            ]).then(([keysData, tplData, usageData]) => {
               if (keysData?.keys) setApiKeys(keysData.keys);
               if (tplData?.templates) setTemplates(tplData.templates);
+              if (usageData) setUsage(usageData);
             }).finally(() => setLoading(false));
           } else {
             setLoading(false);
@@ -346,6 +367,64 @@ function ApiContent() {
     return `/api/card?${parts.join("&")}`;
   }, [apiKeys]);
 
+  const handleApiTierCheckout = useCallback(async (tier: "growth" | "scale") => {
+    setCheckoutLoading(tier);
+    try {
+      // If user is already on Growth and wants Scale, use upgrade endpoint
+      if (usage?.tier === "growth" && tier === "scale") {
+        const res = await fetch("/api/billing/upgrade-api-tier", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tier: "scale" }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Refresh usage data to reflect the new tier
+          const usageRes = await fetch("/api/user/api-usage");
+          if (usageRes.ok) setUsage(await usageRes.json());
+          setShowPlansModal(false);
+        }
+      } else {
+        // New checkout (Free → Growth or Free → Scale)
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ apiTier: tier }),
+        });
+        const data = await res.json();
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        }
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setCheckoutLoading(null);
+    }
+  }, [usage?.tier]);
+
+  const handleManageApiSubscription = useCallback(async () => {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/billing/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "api" }),
+      });
+      const data = await res.json();
+      if (data.portalUrl) {
+        window.open(data.portalUrl, "_blank");
+      } else if (data.error) {
+        // Fallback: open Creem support page
+        window.open("mailto:yannick@groar.app?subject=API%20subscription%20management", "_blank");
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setPortalLoading(false);
+    }
+  }, []);
+
   const getTemplateTypeLabel = (tpl: CardTemplate) => {
     const s = typeof tpl.settings === "string" ? JSON.parse(tpl.settings as unknown as string) : tpl.settings;
     const t = (s?.template || "metrics") as TemplateType;
@@ -383,22 +462,6 @@ function ApiContent() {
     );
   }
 
-  // Coming soon — disable page access (except for beta users)
-  if (!isBetaUser) {
-    return (
-      <div className="w-full max-w-3xl mx-auto flex items-center justify-center py-32">
-        <div className="space-y-4 max-w-md text-center">
-          <p className="text-8xl">🐯</p>
-          <h1 className="text-2xl font-heading font-bold">API</h1>
-          <p className="text-muted-foreground">
-            Generate dynamic card images via API.<br />
-            Coming soon.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   if (!isPro) {
     return (
       <div className="w-full max-w-3xl mx-auto">
@@ -429,7 +492,9 @@ function ApiContent() {
         </p>
       </div>
 
-      {/* API Keys */}
+      <div className="space-y-6">
+
+      {/* API Keys & Usage */}
       <section className="rounded-2xl border-fade p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -522,13 +587,159 @@ function ApiContent() {
             ))}
           </div>
         )}
+
+        {/* Usage */}
+        {usage && (() => {
+          const pct = usage.used / usage.limit;
+          const gracePct = usage.used / usage.graceLimit;
+          const now = new Date();
+          const dayOfMonth = now.getDate();
+          const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+          const remainingDays = daysInMonth - dayOfMonth;
+          // Days since first usage, not since start of month
+          const firstUsageDay = usage.daily.length > 0
+            ? new Date(usage.daily[0].date).getUTCDate()
+            : dayOfMonth;
+          const activeDays = Math.max(dayOfMonth - firstUsageDay + 1, 1);
+          const dailyAvg = usage.used / activeDays;
+          const projected = Math.round(usage.used + dailyAvg * remainingDays);
+          const projectedPct = projected / usage.limit;
+
+          const status = gracePct >= 1
+            ? { text: "Paused", color: "text-destructive", icon: AlertDiamondIcon }
+            : pct >= 1
+            ? { text: "Grace period", color: "text-destructive", icon: AlertDiamondIcon }
+            : pct >= 0.8
+            ? { text: "Almost at limit", color: "text-orange-500", icon: Alert02Icon }
+            : projectedPct >= 1.5
+            ? { text: "On track to exceed", color: "text-orange-500", icon: Alert02Icon }
+            : { text: "All good", color: "text-green-500", icon: CheckmarkCircle02Icon };
+
+          return (
+            <div className="space-y-3 pt-2 border-t border-border">
+              <div className="flex items-center gap-2 mt-2">
+                <HugeiconsIcon icon={Analytics01Icon} size={16} strokeWidth={2} />
+                <h3 className="text-sm font-heading font-semibold">Usage</h3>
+                <span className="text-xs text-muted-foreground font-medium px-1.5 py-0.5 rounded bg-muted uppercase">{usage.tierName}</span>
+                <span className={`flex items-center gap-1 text-xs font-medium ${status.color}`}>
+                  <HugeiconsIcon icon={status.icon} size={14} strokeWidth={2} />
+                  {status.text}
+                </span>
+                <span className="ml-auto flex items-center gap-3">
+                  {usage.tier !== "free" && (
+                    <button
+                      type="button"
+                      onClick={handleManageApiSubscription}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer underline hover:no-underline"
+                    >
+                      Manage subscription
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowPlansModal(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer underline hover:no-underline"
+                  >
+                    See plans
+                  </button>
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="text-muted-foreground">
+                      <span className="text-foreground font-medium">{usage.used.toLocaleString()} req</span> / {usage.limit.toLocaleString()}
+                    </span>
+                    {usage.used > 0 && remainingDays > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        ~{projected.toLocaleString()} projected
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Resets {new Date(usage.resetDate + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+                  </span>
+                </div>
+                <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
+                  {/* Projected bar (behind) */}
+                  {usage.used > 0 && remainingDays > 0 && projected > usage.used && (
+                    <div
+                      className={`absolute inset-y-0 left-0 rounded-full ${
+                        projectedPct > 1 ? "bg-orange-500/20" : "bg-primary/20"
+                      }`}
+                      style={{ width: `${Math.min(projectedPct * 100, 100)}%` }}
+                    />
+                  )}
+                  {/* Actual bar (front) */}
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                      pct > 1 ? "bg-destructive" :
+                      pct > 0.8 ? "bg-orange-500" :
+                      "bg-primary"
+                    }`}
+                    style={{ width: `${Math.min(pct * 100, 100)}%` }}
+                  />
+                </div>
+                {/* Grace limit exceeded — API paused */}
+                {gracePct >= 1 && usage.nextTier && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                    <HugeiconsIcon icon={AlertDiamondIcon} size={12} strokeWidth={2} />
+                    API paused — grace buffer exceeded.{" "}
+                    <button type="button" onClick={() => setShowPlansModal(true)} className="underline hover:no-underline cursor-pointer">Upgrade to {usage.nextTier.name} ({usage.nextTier.price})</button> to resume.
+                  </p>
+                )}
+                {gracePct >= 1 && !usage.nextTier && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                    <HugeiconsIcon icon={AlertDiamondIcon} size={12} strokeWidth={2} />
+                    API paused — grace buffer exceeded. Contact us for a custom plan.
+                  </p>
+                )}
+                {/* 100% reached but still in grace buffer */}
+                {pct >= 1 && gracePct < 1 && usage.nextTier && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                    <HugeiconsIcon icon={AlertDiamondIcon} size={12} strokeWidth={2} />
+                    Limit reached — you have a 20% grace buffer before the API pauses.{" "}
+                    <button type="button" onClick={() => setShowPlansModal(true)} className="underline hover:no-underline cursor-pointer">Upgrade to {usage.nextTier.name} ({usage.nextTier.price})</button>
+                  </p>
+                )}
+                {/* 80%+ reached */}
+                {pct >= 0.8 && pct < 1 && usage.nextTier && (
+                  <p className="text-xs text-orange-500 font-medium flex items-center gap-1">
+                    <HugeiconsIcon icon={Alert02Icon} size={12} strokeWidth={2} />
+                    You&apos;ve used {Math.round(pct * 100)}% of your quota.{" "}
+                    <button type="button" onClick={() => setShowPlansModal(true)} className="underline hover:no-underline cursor-pointer">Upgrade to {usage.nextTier.name} ({usage.nextTier.price})</button> to avoid interruption.
+                  </p>
+                )}
+                {/* Projected to exceed by 150%+ */}
+                {pct < 0.8 && projectedPct >= 1.5 && usage.nextTier && (
+                  <p className="text-xs text-orange-500 font-medium flex items-center gap-1">
+                    <HugeiconsIcon icon={Alert02Icon} size={12} strokeWidth={2} />
+                    At this pace you&apos;ll exceed your limit.{" "}
+                    <button type="button" onClick={() => setShowPlansModal(true)} className="underline hover:no-underline cursor-pointer">Consider upgrading to {usage.nextTier.name} ({usage.nextTier.price})</button>.
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </section>
 
       {/* Templates */}
       <section className="rounded-2xl border-fade p-6 space-y-5">
-        <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={DashboardSquare01Icon} size={20} strokeWidth={2} />
-          <h2 className="text-lg font-heading font-semibold">Templates</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon icon={DashboardSquare01Icon} size={20} strokeWidth={2} />
+            <h2 className="text-lg font-heading font-semibold">Templates</h2>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowDocsModal(true)}
+            className="h-8 px-3 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+          >
+            <HugeiconsIcon icon={InformationCircleIcon} size={14} strokeWidth={2} />
+            How it works
+          </Button>
         </div>
 
         <p className="text-sm text-muted-foreground">
@@ -659,76 +870,219 @@ function ApiContent() {
         )}
       </section>
 
-      {/* Documentation */}
-      <section className="rounded-2xl border-fade p-6 space-y-5">
-        <div className="flex items-center gap-2">
-          <HugeiconsIcon icon={InformationCircleIcon} size={20} strokeWidth={2} />
-          <h2 className="text-lg font-heading font-semibold">How it works</h2>
-        </div>
+      </div>
+      {/* ── End single column ── */}
 
-        <div className="space-y-4 text-sm">
-          <div className="text-muted-foreground text-xs space-y-3">
-            <p>
-              <span className="text-foreground font-medium">1. Design your card</span> in the editor and save it as an API template.
-            </p>
-            <p>
-              <span className="text-foreground font-medium">2. Copy the URL</span> from your template above — it contains all your design settings.
-            </p>
-            <p>
-              <span className="text-foreground font-medium">3. Replace the dynamic values</span> (<code className="bg-muted px-1 py-0.5 rounded">v1</code>, <code className="bg-muted px-1 py-0.5 rounded">v2</code>...) with your actual data. The API returns a PNG image.
-            </p>
-          </div>
-
-          <div className="bg-muted/50 border border-border rounded-lg p-3 font-mono text-xs break-all leading-relaxed">
-            <span className="text-green-500">GET</span>{" "}https://groar.app/api/card?key=YOUR_API_KEY&s=...&<span className="text-primary font-semibold">v1=12500</span>&<span className="text-primary font-semibold">v2=350</span>
-          </div>
-
-          <div className="text-muted-foreground text-xs space-y-1">
-            <p>Returns a <strong className="text-foreground">PNG image</strong>. Use it as an <code className="bg-muted px-1 py-0.5 rounded">&lt;img src=&quot;...&quot;&gt;</code> — the image updates every time you call it with new values.</p>
-            <p>Rate limit: <strong className="text-foreground">30 requests/minute</strong> per API key.</p>
-          </div>
-
-          {/* Dynamic params */}
-          <div className="space-y-2">
-            <h3 className="font-medium text-xs">Dynamic parameters</h3>
-            <div className="border border-border rounded-lg overflow-hidden divide-y divide-border text-xs">
-              <ParamRow name="key" required desc="Your API key" />
-              <ParamRow name="s" required desc="Encoded design settings — don't modify, just keep it as-is from your template URL" />
-              <ParamRow name="v1, v2..." desc="Metric values — prefix with + for growth indicator (e.g. v1=+250)" />
-              <ParamRow name="goal" desc="Goal value (progress template only)" />
-              <ParamRow name="a1, a2..." desc="Announcement texts (announcement template only)" />
-              <ParamRow name="e1, e2..." desc="Announcement emojis (announcement template only)" />
+      {/* How it works modal */}
+      <RadixDialog.Root open={showDocsModal} onOpenChange={setShowDocsModal}>
+        <RadixDialog.Portal>
+          <RadixDialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
+          <RadixDialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl rounded-2xl bg-background border border-border p-6 space-y-5 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <RadixDialog.Title className="text-lg font-heading font-semibold">How it works</RadixDialog.Title>
+              <RadixDialog.Close className="text-muted-foreground hover:text-foreground transition-colors">
+                <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} />
+              </RadixDialog.Close>
             </div>
-          </div>
 
-          {/* Overrides */}
-          <div className="space-y-2">
-            <h3 className="font-medium text-xs">Optional overrides</h3>
-            <p className="text-muted-foreground text-xs">
-              Override any visual setting per-request. Use <code className="bg-muted px-1 py-0.5 rounded">bg=random</code>, <code className="bg-muted px-1 py-0.5 rounded">font=random</code>, or <code className="bg-muted px-1 py-0.5 rounded">emoji=random</code> for variety.
-            </p>
-            <div className="border border-border rounded-lg overflow-hidden divide-y divide-border text-xs">
-              <ParamRow name="bg" desc="Background preset ID | &quot;random&quot;" />
-              <ParamRow name="font" desc="bricolage | inter | space-grotesk | dm-mono | averia-serif-libre | dm-serif-display | random" />
-              <ParamRow name="color" desc="Hex color — e.g. %23ffffff | %231a1a1a" />
-              <ParamRow name="size" desc="post | square | banner" />
-              <ParamRow name="heading" desc="Custom heading text" />
-              <ParamRow name="handle" desc="Display name shown top-left — e.g. @username" />
-              <ParamRow name="date" desc="Date label shown top-right — e.g. March 2026" />
-              <ParamRow name="layout" desc="stack | columns (metrics template only)" />
-              <ParamRow name="emoji" desc="Emoji character | random (milestone template only)" />
-              <ParamRow name="branding" desc="true | false — show or hide your logo" />
-              <ParamRow name="watermark" desc="true | false — show or hide the groar.app watermark" />
+            <div className="space-y-4 text-sm">
+              <div className="text-muted-foreground text-xs space-y-3">
+                <p>
+                  <span className="text-foreground font-medium">1. Design your card</span> in the editor and save it as an API template.
+                </p>
+                <p>
+                  <span className="text-foreground font-medium">2. Copy the URL</span> from your template above — it contains all your design settings.
+                </p>
+                <p>
+                  <span className="text-foreground font-medium">3. Replace the dynamic values</span> (<code className="bg-muted px-1 py-0.5 rounded">v1</code>, <code className="bg-muted px-1 py-0.5 rounded">v2</code>...) with your actual data. The API returns a PNG image.
+                </p>
+              </div>
+
+              <div className="bg-muted/50 border border-border rounded-lg p-3 font-mono text-xs break-all leading-relaxed">
+                <span className="text-green-500">GET</span>{" "}https://groar.app/api/card?key=YOUR_API_KEY&s=...&<span className="text-primary font-semibold">v1=12500</span>&<span className="text-primary font-semibold">v2=350</span>
+              </div>
+
+              <div className="text-muted-foreground text-xs space-y-1">
+                <p>Returns a <strong className="text-foreground">PNG image</strong>. Use it as an <code className="bg-muted px-1 py-0.5 rounded">&lt;img src=&quot;...&quot;&gt;</code> — the image updates every time you call it with new values.</p>
+                <p>Rate limit: <strong className="text-foreground">30 requests/minute</strong> per API key.</p>
+              </div>
+
+              {/* Dynamic params */}
+              <div className="space-y-2">
+                <h3 className="font-medium text-xs">Dynamic parameters</h3>
+                <div className="border border-border rounded-lg overflow-hidden divide-y divide-border text-xs">
+                  <ParamRow name="key" required desc="Your API key" />
+                  <ParamRow name="s" required desc="Encoded design settings — don't modify, just keep it as-is from your template URL" />
+                  <ParamRow name="v1, v2..." desc="Metric values — prefix with + for growth indicator (e.g. v1=+250)" />
+                  <ParamRow name="goal" desc="Goal value (progress template only)" />
+                  <ParamRow name="a1, a2..." desc="Announcement texts (announcement template only)" />
+                  <ParamRow name="e1, e2..." desc="Announcement emojis (announcement template only)" />
+                </div>
+              </div>
+
+              {/* Overrides */}
+              <div className="space-y-2">
+                <h3 className="font-medium text-xs">Optional overrides</h3>
+                <p className="text-muted-foreground text-xs">
+                  Override any visual setting per-request. Use <code className="bg-muted px-1 py-0.5 rounded">bg=random</code>, <code className="bg-muted px-1 py-0.5 rounded">font=random</code>, or <code className="bg-muted px-1 py-0.5 rounded">emoji=random</code> for variety.
+                </p>
+                <div className="border border-border rounded-lg overflow-hidden divide-y divide-border text-xs">
+                  <ParamRow name="bg" desc="Background preset ID | &quot;random&quot;" />
+                  <ParamRow name="font" desc="bricolage | inter | space-grotesk | dm-mono | averia-serif-libre | dm-serif-display | random" />
+                  <ParamRow name="color" desc="Hex color — e.g. %23ffffff | %231a1a1a" />
+                  <ParamRow name="size" desc="post | square | banner" />
+                  <ParamRow name="heading" desc="Custom heading text" />
+                  <ParamRow name="handle" desc="Display name shown top-left — e.g. @username" />
+                  <ParamRow name="date" desc="Date label shown top-right — e.g. March 2026" />
+                  <ParamRow name="layout" desc="stack | columns (metrics template only)" />
+                  <ParamRow name="emoji" desc="Emoji character | random (milestone template only)" />
+                  <ParamRow name="branding" desc="true | false — show or hide your logo" />
+                  {usage && usage.tier !== "free" && (
+                    <ParamRow name="watermark" desc="true | false — add the groar.app watermark (off by default)" />
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </RadixDialog.Content>
+        </RadixDialog.Portal>
+      </RadixDialog.Root>
+
+      {/* API Plans modal */}
+      <RadixDialog.Root open={showPlansModal} onOpenChange={setShowPlansModal}>
+        <RadixDialog.Portal>
+          <RadixDialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
+          <RadixDialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl rounded-2xl bg-background border border-border p-6 space-y-5 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <RadixDialog.Title className="text-xl font-heading font-semibold">API Plans</RadixDialog.Title>
+              <RadixDialog.Close className="text-muted-foreground hover:text-foreground transition-colors">
+                <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} />
+              </RadixDialog.Close>
+            </div>
+
+            <p className="text-base text-muted-foreground">
+              Need more requests or want to remove the watermark? Upgrade your API plan.
+            </p>
+
+            <div className="space-y-3">
+              {API_TIER_ORDER.filter(t => t !== "free").map((tierKey) => {
+                const tier = API_TIERS[tierKey];
+                const isCurrent = usage?.tier === tierKey;
+                const isNextTier = usage?.nextTier?.tier === tierKey;
+                const isEnterprise = tierKey === "enterprise";
+                const features: string[] = tierKey === "growth"
+                  ? ["5,000 requests/month", "No watermark", "30 req/min rate limit"]
+                  : tierKey === "scale"
+                  ? ["Everything in Growth", "50,000 requests/month", "50 req/min rate limit", "Priority support"]
+                  : ["Let's talk about it"];
+
+                return (
+                  <div
+                    key={tierKey}
+                    className={`relative p-4 rounded-xl ${
+                      isCurrent
+                        ? "bg-foreground text-background"
+                        : isNextTier
+                        ? "bg-sidebar ring-2 ring-primary"
+                        : "bg-sidebar"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-heading font-bold">{tier.name}</h3>
+                          {isEnterprise ? (
+                            <span className={`text-sm ${isCurrent ? "text-background/60" : "text-muted-foreground"}`}>Custom pricing</span>
+                          ) : (
+                            <span className="flex items-baseline gap-0.5">
+                              <span className="text-base font-heading font-extrabold">${tier.priceValue}</span>
+                              <span className={`text-xs ${isCurrent ? "text-background/60" : "text-muted-foreground"}`}>/mo</span>
+                            </span>
+                          )}
+                          {isCurrent && (
+                            <span className="bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-full">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                        <ul className={`mt-2 space-y-1.5 text-sm ${isCurrent ? "text-background/70" : "text-muted-foreground"}`}>
+                          {features.map((f) => (
+                            <li key={f} className="flex items-center gap-1.5">
+                              <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} strokeWidth={2} className={isCurrent ? "text-background/50" : "text-primary"} />
+                              {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="shrink-0">
+                        {isEnterprise ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-sm"
+                            asChild
+                          >
+                            <a href="mailto:yannick@groar.app?subject=Enterprise%20API%20plan">Contact us</a>
+                          </Button>
+                        ) : isCurrent ? (
+                          <Button
+                            variant="defaultReverse"
+                            size="sm"
+                            className="text-sm"
+                            disabled
+                          >
+                            Current plan
+                          </Button>
+                        ) : (
+                          <Button
+                            variant={isNextTier ? "default" : "outline"}
+                            size="sm"
+                            className="text-sm"
+                            disabled={checkoutLoading === tierKey}
+                            onClick={() => handleApiTierCheckout(tierKey as "growth" | "scale")}
+                          >
+                            {checkoutLoading === tierKey ? (
+                              <HugeiconsIcon icon={Loading03Icon} size={14} className="animate-spin" />
+                            ) : usage?.tier === "growth" && tierKey === "scale" ? (
+                              "Upgrade to Scale"
+                            ) : (
+                              `Upgrade — ${tier.price}`
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {usage && usage.tier !== "free" && (
+              <div className="text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-sm text-muted-foreground"
+                  disabled={portalLoading}
+                  onClick={handleManageApiSubscription}
+                >
+                  {portalLoading ? (
+                    <HugeiconsIcon icon={Loading03Icon} size={14} className="animate-spin" />
+                  ) : (
+                    "Manage subscription"
+                  )}
+                </Button>
+              </div>
+            )}
+          </RadixDialog.Content>
+        </RadixDialog.Portal>
+      </RadixDialog.Root>
 
       {/* Preview lightbox */}
       <RadixDialog.Root open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
         <RadixDialog.Portal>
           <RadixDialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
           <RadixDialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-8" onClick={() => setPreviewUrl(null)}>
+            <VisuallyHidden.Root><RadixDialog.Title>Template preview</RadixDialog.Title></VisuallyHidden.Root>
             {previewUrl && (
               <img
                 src={previewUrl}

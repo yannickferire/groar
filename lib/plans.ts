@@ -8,6 +8,7 @@ import {
   Image01Icon,
   Layout01Icon,
   ChromeIcon,
+  SourceCodeSquareIcon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 
@@ -71,13 +72,44 @@ export const PLAN_LIMITS = Object.fromEntries(
 
 export const PLAN_ORDER: PlanType[] = ["free", "friend", "pro"];
 
-export const PRO_FEATURES: { icon: IconSvgElement; title: string }[] = [
+export const PRO_FEATURES: { icon: IconSvgElement; title: string; info?: string }[] = [
   { icon: Layout01Icon, title: "All templates unlocked" },
   { icon: Image01Icon, title: "Full background library" },
   { icon: Setting06Icon, title: "Custom branding & no watermark" },
   { icon: Clock01Icon, title: "Export history & re-import" },
   { icon: ChromeIcon, title: "Chrome extension (coming soon)" },
+  { icon: SourceCodeSquareIcon, title: "API access — 500 req/month free", info: "api-pricing" },
 ];
+
+export type ApiTier = "free" | "growth" | "scale" | "enterprise";
+
+export const API_TIERS: Record<ApiTier, { name: string; limit: number; price: string; priceValue: number; watermark: boolean; gracePercent: number; rateLimit: number }> = {
+  free:       { name: "Free",       limit: 500,    price: "Free",      priceValue: 0,  watermark: true,  gracePercent: 20, rateLimit: 30 },
+  growth:     { name: "Growth",     limit: 5_000,  price: "$9/mo",     priceValue: 9,  watermark: false, gracePercent: 20, rateLimit: 30 },
+  scale:      { name: "Scale",      limit: 50_000, price: "$29/mo",    priceValue: 29, watermark: false, gracePercent: 20, rateLimit: 50 },
+  enterprise: { name: "Enterprise", limit: 500_000, price: "Custom",   priceValue: 0,  watermark: false, gracePercent: 20, rateLimit: 100 },
+};
+
+export const API_TIER_ORDER: ApiTier[] = ["free", "growth", "scale", "enterprise"];
+
+/** Get the next upgrade tier, or null if already at max */
+export function getNextApiTier(current: ApiTier): ApiTier | null {
+  const idx = API_TIER_ORDER.indexOf(current);
+  return idx < API_TIER_ORDER.length - 1 ? API_TIER_ORDER[idx + 1] : null;
+}
+
+/** Get API limit including the grace buffer (limit * 1.2) */
+export function getApiGraceLimit(tier: ApiTier): number {
+  const t = API_TIERS[tier];
+  return Math.ceil(t.limit * (1 + t.gracePercent / 100));
+}
+
+export const API_PRICING_TIERS = [
+  { requests: "500",     price: "Free",    label: "Included in Pro" },
+  { requests: "5,000",   price: "$9/mo",   label: "Growth" },
+  { requests: "50,000",  price: "$29/mo",  label: "Scale" },
+  { requests: "500,000+", price: "Custom", label: "Enterprise" },
+] as const;
 
 export const PRO_CHECKS: string[] = [
   "No watermark",

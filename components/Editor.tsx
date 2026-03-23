@@ -757,7 +757,27 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         toast.error(err.error || "Failed to save template");
         return;
       }
-      toast.success("Template saved");
+      toast.custom((id) => (
+        <div className="bg-background/80 backdrop-blur-xl border border-border/50 rounded-2xl p-3 md:p-5 shadow-lg max-w-[calc(100vw-2rem)] w-90 flex flex-col gap-2 md:gap-3 font-[DM_Mono,monospace]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <svg className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span className="text-sm md:text-base font-semibold">Template saved!</span>
+            </div>
+            <button onClick={() => toast.dismiss(id)} className="text-muted-foreground/60 hover:text-foreground transition-colors p-1 -m-1">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <a
+            href="/dashboard/api"
+            className="w-full flex items-center justify-center gap-2 bg-foreground text-background rounded-xl px-4 py-2 md:py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            View API integration
+          </a>
+        </div>
+      ), { duration: 5000 });
     } catch {
       toast.error("Failed to save template");
     }

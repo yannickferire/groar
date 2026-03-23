@@ -1,10 +1,11 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, StarIcon, Loading03Icon, MinusSignIcon, SparklesIcon, InformationCircleIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
-import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, LIFETIME_FINAL_PRICE, LIFETIME_PRICING_TIERS, ProTierInfo, LifetimeTierInfo } from "@/lib/plans";
+import { PLANS, PlanType, PLAN_ORDER, PRO_FEATURES, PRO_CHECKS, BillingPeriod, LIFETIME_FINAL_PRICE, LIFETIME_PRICING_TIERS, API_PRICING_TIERS, ProTierInfo, LifetimeTierInfo } from "@/lib/plans";
 import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
@@ -193,7 +194,29 @@ function ProCard({
                   <div className="w-8 h-8 rounded-lg bg-background/10 flex items-center justify-center shrink-0">
                     <HugeiconsIcon icon={feature.icon} size={16} strokeWidth={1.5} className="text-primary" />
                   </div>
-                  <p className="text-sm font-medium leading-tight text-muted">{feature.title}</p>
+                  <p className="text-sm font-medium leading-tight text-muted flex items-center gap-1.5">
+                    {feature.title}
+                    {feature.info === "api-pricing" && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="text-background/40 hover:text-background/70 transition-colors">
+                            <HugeiconsIcon icon={InformationCircleIcon} size={14} strokeWidth={1.5} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" sideOffset={8} hideArrow className="bg-background text-foreground border border-border shadow-lg rounded-xl px-4 py-3 max-w-[260px]">
+                          <p className="text-xs mb-2">Generate visuals automatically for your own projects</p>
+                          <div className="space-y-1.5">
+                            {API_PRICING_TIERS.map((tier) => (
+                              <div key={tier.requests} className="flex items-center justify-between gap-4 text-xs">
+                                <span className="text-muted-foreground">{tier.requests} req/mo</span>
+                                <span className="font-medium">{tier.price}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </p>
                 </div>
               ))}
             </div>

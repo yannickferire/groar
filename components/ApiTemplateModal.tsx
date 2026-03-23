@@ -151,7 +151,6 @@ export default function ApiTemplateModal({ open, onOpenChange, template, setting
       fixed.push({ key: "emojiCount", value: String(settings.milestoneEmojiCount ?? 3), label: "Number of emojis — 0 to 10" });
     }
     fixed.push({ key: "branding", value: "true", label: "true | false — show or hide your logo" });
-    fixed.push({ key: "watermark", value: "true", label: "true | false — show or hide the groar.app watermark" });
 
     // Build URL: key + s + dynamic value overrides
     const urlParams = [

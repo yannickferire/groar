@@ -178,6 +178,70 @@ export function newTrialNotificationEmail(userName: string, userEmail: string) {
   };
 }
 
+export function newFeedbackNotificationEmail(userName: string, userEmail: string, type: string, message: string, page: string | null) {
+  const typeLabel = type === "bug" ? "Bug" : type === "feature" ? "Feature request" : "Feedback";
+  return {
+    subject: `🐯 New ${typeLabel.toLowerCase()} from ${userName}`,
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">New ${typeLabel}</h1>
+      <ul style="margin:12px 0;padding-left:20px;">
+        <li><strong>From:</strong> ${userName} (${userEmail})</li>
+        <li><strong>Type:</strong> ${typeLabel}</li>
+        ${page ? `<li><strong>Page:</strong> ${page}</li>` : ""}
+      </ul>
+      <div style="background:#f3f4f6;border-radius:8px;padding:16px;margin:16px 0;font-size:14px;white-space:pre-wrap;">${message}</div>
+    `),
+  };
+}
+
+// ─── API quota notification emails ───
+
+export function apiQuota80Email(name: string, tierName: string, used: number, limit: number) {
+  const firstName = name.split(" ")[0] || name;
+  const pct = Math.round((used / limit) * 100);
+  return {
+    subject: `You've used ${pct}% of your API quota`,
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Heads up ${firstName},</h1>
+      <p>You've used <strong>${used.toLocaleString()} of ${limit.toLocaleString()}</strong> API requests this month on your <strong>${tierName}</strong> plan (${pct}%).</p>
+      <p>If you're approaching your limit, consider upgrading to avoid any interruption:</p>
+      ${cta("View API plans", `${SITE_URL}/dashboard/api`)}
+      <p style="color:#6b7280;font-size:14px;">You'll receive another notice if you hit 100%.</p>
+      <p>— Yannick</p>
+    `),
+  };
+}
+
+export function apiQuota100Email(name: string, tierName: string, used: number, limit: number) {
+  const firstName = name.split(" ")[0] || name;
+  return {
+    subject: `You've reached your API quota`,
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
+      <p>You've hit <strong>${used.toLocaleString()} / ${limit.toLocaleString()}</strong> API requests on your <strong>${tierName}</strong> plan.</p>
+      <p>We're giving you a <strong>20% grace buffer</strong> (up to ${Math.ceil(limit * 1.2).toLocaleString()} requests) so you have time to upgrade or wait for the monthly reset. After that, requests will be paused.</p>
+      ${cta("Upgrade now", `${SITE_URL}/dashboard/api`)}
+      <p style="color:#6b7280;font-size:14px;">Need help? Just reply to this email.</p>
+      <p>— Yannick</p>
+    `),
+  };
+}
+
+export function apiQuota120Email(name: string, tierName: string, used: number, limit: number) {
+  const firstName = name.split(" ")[0] || name;
+  return {
+    subject: `Your API requests are paused`,
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Hey ${firstName},</h1>
+      <p>You've exceeded your grace buffer with <strong>${used.toLocaleString()} / ${limit.toLocaleString()}</strong> API requests on your <strong>${tierName}</strong> plan.</p>
+      <p>Your API requests are <strong>paused</strong> until the start of your next billing cycle, or until you upgrade to a higher tier.</p>
+      ${cta("Upgrade to resume", `${SITE_URL}/dashboard/api`)}
+      <p style="color:#6b7280;font-size:14px;">Questions? Just reply to this email.</p>
+      <p>— Yannick</p>
+    `),
+  };
+}
+
 // ─── Helpers ───
 
 function cta(text: string, href: string) {

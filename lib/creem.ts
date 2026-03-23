@@ -28,8 +28,18 @@ const CREEM_PRODUCT_IDS: Record<string, string | undefined> = {
   "pro:lifetime": process.env.CREEM_PRODUCT_ID_PRO_LIFETIME,
 };
 
+// API tier product IDs (Creem)
+const CREEM_API_TIER_PRODUCT_IDS: Record<string, string | undefined> = {
+  growth: process.env.CREEM_PRODUCT_ID_API_GROWTH,
+  scale: process.env.CREEM_PRODUCT_ID_API_SCALE,
+};
+
 export function getCreemProductId(plan: "pro", billingPeriod: BillingPeriod = "monthly"): string | null {
   return CREEM_PRODUCT_IDS[`${plan}:${billingPeriod}`] || null;
+}
+
+export function getCreemApiTierProductId(tier: "growth" | "scale"): string | null {
+  return CREEM_API_TIER_PRODUCT_IDS[tier] || null;
 }
 
 // Derive billing period from Creem product ID
@@ -74,6 +84,22 @@ export async function createPortalSession(customerId: string): Promise<{ url: st
   } catch (error) {
     console.error("Creem portal error:", error);
     return { error: "Failed to create portal session" };
+  }
+}
+
+// Upgrade an existing subscription to a new product (with proration)
+export async function upgradeSubscription(subscriptionId: string, newProductId: string): Promise<{ success: true } | { error: string }> {
+  try {
+    const creem = getCreem();
+    await creem.subscriptions.upgrade({
+      subscriptionId,
+      productId: newProductId,
+      updateBehavior: "proration-charge-immediately",
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Creem upgrade error:", error);
+    return { error: "Failed to upgrade subscription" };
   }
 }
 

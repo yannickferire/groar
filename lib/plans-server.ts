@@ -2,7 +2,7 @@
 // This file should only be imported in server components and API routes
 
 import { pool } from "./db";
-import { PLANS, PlanType, PRO_PRICING_TIERS, LIFETIME_PRICING_TIERS, TRIAL_DURATION_DAYS } from "./plans";
+import { PLANS, PlanType, PRO_PRICING_TIERS, LIFETIME_PRICING_TIERS, TRIAL_DURATION_DAYS, type ApiTier } from "./plans";
 import { getStartOfWeek } from "./week";
 
 // Get user plan from database (accounts for trial expiration)
@@ -212,6 +212,142 @@ export async function resolveUserId(userId: string | undefined, email: string): 
     [email]
   );
   return result.rows[0]?.id ?? null;
+}
+
+// ─── API tier subscription ─────────────────────────────────────────────────
+
+/** Get user's API tier from the api_subscription table */
+export async function getUserApiTierFromDB(userId: string): Promise<ApiTier> {
+  try {
+    const result = await pool.query(
+      `SELECT tier, status, "currentPeriodEnd" FROM api_subscription WHERE "userId" = $1`,
+      [userId]
+    );
+    const row = result.rows[0];
+    if (!row) return "free";
+
+    // Canceled with expired period → free
+    if (row.status === "canceled" && row.currentPeriodEnd && new Date(row.currentPeriodEnd) <= new Date()) {
+      return "free";
+    }
+
+    const tier = row.tier as ApiTier;
+    if (tier === "growth" || tier === "scale" || tier === "enterprise") return tier;
+    return "free";
+  } catch (error) {
+    console.error("Error fetching user API tier:", error);
+    return "free";
+  }
+}
+
+/** Get full API subscription details (for portal/upgrade logic) */
+export async function getUserApiSubscription(userId: string) {
+  try {
+    const result = await pool.query(
+      `SELECT tier, status, "externalId", "externalCustomerId", "currentPeriodStart", "currentPeriodEnd"
+       FROM api_subscription WHERE "userId" = $1`,
+      [userId]
+    );
+    return result.rows[0] || null;
+  } catch (error) {
+    console.error("Error fetching user API subscription:", error);
+    return null;
+  }
+}
+
+/** Set user's API tier subscription */
+export async function setUserApiTier(
+  userId: string,
+  tier: ApiTier,
+  options?: {
+    externalId?: string;
+    externalCustomerId?: string;
+    currentPeriodStart?: Date;
+    currentPeriodEnd?: Date;
+  }
+): Promise<void> {
+  try {
+    await pool.query(
+      `INSERT INTO api_subscription ("userId", tier, status, "externalId", "externalCustomerId", "currentPeriodStart", "currentPeriodEnd", "createdAt", "updatedAt")
+       VALUES ($1, $2, 'active', $3, $4, $5, $6, NOW(), NOW())
+       ON CONFLICT ("userId")
+       DO UPDATE SET
+         tier = $2,
+         status = 'active',
+         "externalId" = COALESCE($3, api_subscription."externalId"),
+         "externalCustomerId" = COALESCE($4, api_subscription."externalCustomerId"),
+         "currentPeriodStart" = COALESCE($5, api_subscription."currentPeriodStart"),
+         "currentPeriodEnd" = COALESCE($6, api_subscription."currentPeriodEnd"),
+         "updatedAt" = NOW()`,
+      [userId, tier, options?.externalId || null, options?.externalCustomerId || null, options?.currentPeriodStart || null, options?.currentPeriodEnd || null]
+    );
+  } catch (error) {
+    console.error("Error setting user API tier:", error);
+    throw error;
+  }
+}
+
+/** Cancel user's API tier subscription */
+export async function cancelUserApiTier(userId: string): Promise<void> {
+  try {
+    await pool.query(
+      `UPDATE api_subscription SET status = 'canceled', "updatedAt" = NOW() WHERE "userId" = $1`,
+      [userId]
+    );
+  } catch (error) {
+    console.error("Error canceling API tier:", error);
+    throw error;
+  }
+}
+
+/** Revert user's API tier to free */
+export async function revertUserApiTier(userId: string): Promise<void> {
+  try {
+    await pool.query(
+      `UPDATE api_subscription SET tier = 'free', status = 'active', "updatedAt" = NOW() WHERE "userId" = $1`,
+      [userId]
+    );
+  } catch (error) {
+    console.error("Error reverting API tier:", error);
+    throw error;
+  }
+}
+
+/** Check and update quota notification threshold. Returns the threshold that was just crossed (80, 100, 120) or null if no new threshold. */
+export async function checkAndUpdateQuotaThreshold(
+  userId: string,
+  used: number,
+  limit: number
+): Promise<80 | 100 | 120 | null> {
+  // Determine current threshold
+  const pct = (used / limit) * 100;
+  let currentThreshold: 0 | 80 | 100 | 120 = 0;
+  if (pct >= 120) currentThreshold = 120;
+  else if (pct >= 100) currentThreshold = 100;
+  else if (pct >= 80) currentThreshold = 80;
+
+  if (currentThreshold === 0) return null;
+
+  try {
+    const currentMonth = new Date().toISOString().slice(0, 7) + "-01"; // first of month
+    // Update only if this is a new (higher) threshold for this month
+    const result = await pool.query(
+      `UPDATE api_subscription
+       SET "notifiedThreshold" = $2, "notifiedMonth" = $3::date, "updatedAt" = NOW()
+       WHERE "userId" = $1
+         AND (
+           "notifiedMonth" IS NULL
+           OR "notifiedMonth" < $3::date
+           OR "notifiedThreshold" < $2
+         )`,
+      [userId, currentThreshold, currentMonth]
+    );
+    // If rowCount > 0, we just crossed a new threshold
+    return (result.rowCount ?? 0) > 0 ? currentThreshold : null;
+  } catch (error) {
+    console.error("Error checking quota threshold:", error);
+    return null;
+  }
 }
 
 // Cancel user subscription (set status to canceled, keep plan until period end)

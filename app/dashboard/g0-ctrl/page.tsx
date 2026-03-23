@@ -294,6 +294,9 @@ export default function AdminPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/g0-ctrl/feedback">Feedback</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
             <Link href="/dashboard/g0-ctrl/exports">Export Debug</Link>
           </Button>
           <Button variant="outline" size="sm" asChild>

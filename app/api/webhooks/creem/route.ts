@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { setUserPlan, cancelUserSubscription, getUserSubscription, resolveUserId } from "@/lib/plans-server";
-import { getCreemProductId, getBillingPeriodFromProductId, verifyWebhookSignature } from "@/lib/creem";
+import { setUserPlan, cancelUserSubscription, getUserSubscription, resolveUserId, setUserApiTier, cancelUserApiTier, revertUserApiTier } from "@/lib/plans-server";
+import { getCreemProductId, getBillingPeriodFromProductId, verifyWebhookSignature, getCreemApiTierProductId } from "@/lib/creem";
 import { getPostHogClient } from "@/lib/posthog-server";
 import { pool } from "@/lib/db";
 import { sendEmail, subscriptionConfirmedEmail } from "@/lib/email";
@@ -59,6 +59,13 @@ function getPlanFromProductId(productId: string): "pro" | null {
   return null;
 }
 
+// Map Creem product IDs to API tiers
+function getApiTierFromProductId(productId: string): "growth" | "scale" | null {
+  if (productId === getCreemApiTierProductId("growth")) return "growth";
+  if (productId === getCreemApiTierProductId("scale")) return "scale";
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get("creem-signature") || "";
@@ -91,13 +98,6 @@ export async function POST(request: NextRequest) {
         const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
 
         const productId = (product?.id ?? "") as string;
-        const plan = getPlanFromProductId(productId);
-        if (!plan) {
-          console.log("Checkout for non-plan product:", productId);
-          break;
-        }
-
-        const billingPeriod = getBillingPeriodFromProductId(productId);
         const customerEmail = (customer?.email ?? "") as string;
         const customerId = (customer?.id ?? "") as string;
         const userId = await resolveUserId(metadata.userId, customerEmail);
@@ -117,11 +117,62 @@ export async function POST(request: NextRequest) {
               [customerEmail, userId]
             );
           } catch (emailErr: unknown) {
-            // Unique constraint violation — email already used by another account
             console.warn("Creem: could not update user email (likely duplicate):", (emailErr as Error).message);
           }
         }
 
+        // ─── API tier checkout ──────────────────────────────────────
+        const apiTier = getApiTierFromProductId(productId);
+        if (apiTier) {
+          await setUserApiTier(userId, apiTier, {
+            externalId,
+            externalCustomerId: customerId,
+            currentPeriodStart: subscription?.currentPeriodStartDate
+              ? new Date(subscription.currentPeriodStartDate as string)
+              : undefined,
+            currentPeriodEnd: subscription?.currentPeriodEndDate
+              ? new Date(subscription.currentPeriodEndDate as string)
+              : undefined,
+          });
+          console.log(`Creem checkout: set API tier ${apiTier} for user ${userId}`);
+
+          const posthog = getPostHogClient();
+          posthog.capture({
+            distinctId: userId,
+            event: "api_tier_activated",
+            properties: { api_tier: apiTier, provider: "creem" },
+          });
+          await posthog.shutdown();
+
+          // Track revenue for API tier
+          const amountCents = (order?.amount ?? order?.amountPaid ?? 0) as number;
+          if (amountCents > 0) {
+            await pool.query(
+              `INSERT INTO counter (key, value) VALUES ('total_revenue_cents', $1)
+               ON CONFLICT (key) DO UPDATE SET value = counter.value + $1`,
+              [amountCents]
+            );
+            const orderCurrency = ((order?.currency ?? "USD") as string).toUpperCase();
+            reportToDataFast({
+              amount: amountCents / 100,
+              currency: orderCurrency,
+              transactionId: externalId,
+              datafastVisitorId: metadata.datafast_visitor_id,
+              email: customerEmail,
+              customerId,
+            });
+          }
+          break;
+        }
+
+        // ─── Pro plan checkout ──────────────────────────────────────
+        const plan = getPlanFromProductId(productId);
+        if (!plan) {
+          console.log("Checkout for unknown product:", productId);
+          break;
+        }
+
+        const billingPeriod = getBillingPeriodFromProductId(productId);
         await setUserPlan(userId, plan, {
           externalId,
           externalCustomerId: customerId,
@@ -191,13 +242,45 @@ export async function POST(request: NextRequest) {
         const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
 
         const productId = (product?.id ?? "") as string;
+        const customerEmail = (customer?.email ?? "") as string;
+        const userId = await resolveUserId(metadata.userId, customerEmail);
+        if (!userId) break;
+
+        // ─── API tier renewal ─────────────────────────────────────
+        const paidApiTier = getApiTierFromProductId(productId);
+        if (paidApiTier) {
+          await setUserApiTier(userId, paidApiTier, {
+            externalId: data.id as string,
+            externalCustomerId: (customer?.id ?? "") as string,
+            currentPeriodStart: data.currentPeriodStartDate
+              ? new Date(data.currentPeriodStartDate as string)
+              : undefined,
+            currentPeriodEnd: data.currentPeriodEndDate
+              ? new Date(data.currentPeriodEndDate as string)
+              : undefined,
+          });
+          console.log(`Creem subscription.paid: updated API tier ${paidApiTier} for user ${userId}`);
+
+          const paidAmountCents = (data.amount ?? 0) as number;
+          if (paidAmountCents > 0) {
+            const paidCurrency = ((data.currency ?? "USD") as string).toUpperCase();
+            reportToDataFast({
+              amount: paidAmountCents / 100,
+              currency: paidCurrency,
+              transactionId: data.id as string,
+              email: customerEmail,
+              customerId: (customer?.id ?? "") as string,
+              renewal: true,
+            });
+          }
+          break;
+        }
+
+        // ─── Pro plan renewal ─────────────────────────────────────
         const plan = getPlanFromProductId(productId);
         if (!plan) break;
 
         const billingPeriod = getBillingPeriodFromProductId(productId);
-        const customerEmail = (customer?.email ?? "") as string;
-        const userId = await resolveUserId(metadata.userId, customerEmail);
-        if (!userId) break;
 
         const existing = await getUserSubscription(userId);
         const isNewActivation = !existing || existing.externalId !== (data.id as string) || existing.status !== "active";
@@ -243,19 +326,28 @@ export async function POST(request: NextRequest) {
 
       case "subscription.canceled":
       case "subscription.scheduled_cancel": {
+        const product = data.product as Record<string, unknown> | undefined;
         const customer = data.customer as Record<string, unknown> | undefined;
         const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
         const customerEmail = (customer?.email ?? "") as string;
         const userId = await resolveUserId(metadata.userId, customerEmail);
 
         if (userId) {
-          await cancelUserSubscription(userId);
-          console.log(`Creem: marked subscription as canceled for user ${userId}`);
+          const cancelProductId = (product?.id ?? "") as string;
+          const cancelApiTier = getApiTierFromProductId(cancelProductId);
+
+          if (cancelApiTier) {
+            await cancelUserApiTier(userId);
+            console.log(`Creem: marked API tier subscription as canceled for user ${userId}`);
+          } else {
+            await cancelUserSubscription(userId);
+            console.log(`Creem: marked subscription as canceled for user ${userId}`);
+          }
 
           const posthog = getPostHogClient();
           posthog.capture({
             distinctId: userId,
-            event: "subscription_canceled",
+            event: cancelApiTier ? "api_tier_canceled" : "subscription_canceled",
             properties: { subscription_id: data.id as string, provider: "creem" },
           });
           await posthog.shutdown();
@@ -266,14 +358,69 @@ export async function POST(request: NextRequest) {
       case "subscription.expired":
       case "subscription.paused": {
         // Revoke access
+        const product = data.product as Record<string, unknown> | undefined;
         const customer = data.customer as Record<string, unknown> | undefined;
         const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
         const customerEmail = (customer?.email ?? "") as string;
         const userId = await resolveUserId(metadata.userId, customerEmail);
 
         if (userId) {
-          await setUserPlan(userId, "free");
-          console.log(`Creem: reverted user ${userId} to free plan (${event.eventType})`);
+          const expiredProductId = (product?.id ?? "") as string;
+          const expiredApiTier = getApiTierFromProductId(expiredProductId);
+
+          if (expiredApiTier) {
+            await revertUserApiTier(userId);
+            console.log(`Creem: reverted user ${userId} API tier to free (${event.eventType})`);
+          } else {
+            await setUserPlan(userId, "free");
+            console.log(`Creem: reverted user ${userId} to free plan (${event.eventType})`);
+          }
+        }
+        break;
+      }
+
+      case "subscription.active":
+      case "subscription.update": {
+        // Subscription updated (e.g. tier upgrade via subscriptions.upgrade)
+        const product = data.product as Record<string, unknown> | undefined;
+        const customer = data.customer as Record<string, unknown> | undefined;
+        const metadata = (data.metadata ?? {}) as Record<string, string | undefined>;
+        const productId = (product?.id ?? "") as string;
+        const customerEmail = (customer?.email ?? "") as string;
+        const userId = await resolveUserId(metadata.userId, customerEmail);
+        if (!userId) break;
+
+        const updatedApiTier = getApiTierFromProductId(productId);
+        if (updatedApiTier) {
+          await setUserApiTier(userId, updatedApiTier, {
+            externalId: data.id as string,
+            externalCustomerId: (customer?.id ?? "") as string,
+            currentPeriodStart: data.currentPeriodStartDate
+              ? new Date(data.currentPeriodStartDate as string)
+              : undefined,
+            currentPeriodEnd: data.currentPeriodEndDate
+              ? new Date(data.currentPeriodEndDate as string)
+              : undefined,
+          });
+          console.log(`Creem ${event.eventType}: updated API tier to ${updatedApiTier} for user ${userId}`);
+        } else {
+          // Pro plan update
+          const plan = getPlanFromProductId(productId);
+          if (plan) {
+            const billingPeriod = getBillingPeriodFromProductId(productId);
+            await setUserPlan(userId, plan, {
+              externalId: data.id as string,
+              externalCustomerId: (customer?.id ?? "") as string,
+              billingPeriod,
+              currentPeriodStart: data.currentPeriodStartDate
+                ? new Date(data.currentPeriodStartDate as string)
+                : undefined,
+              currentPeriodEnd: data.currentPeriodEndDate
+                ? new Date(data.currentPeriodEndDate as string)
+                : undefined,
+            });
+            console.log(`Creem ${event.eventType}: updated plan ${plan} for user ${userId}`);
+          }
         }
         break;
       }

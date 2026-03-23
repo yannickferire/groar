@@ -7,6 +7,10 @@ import { AspectRatioType } from "@/components/editor/types";
 import { pool } from "@/lib/db";
 import sharp from "sharp";
 import { METRIC_ICONS } from "@/lib/metric-icons";
+import { API_TIERS, getApiGraceLimit } from "@/lib/plans";
+import type { ApiTier } from "@/lib/plans";
+import { getUserApiTierFromDB, checkAndUpdateQuotaThreshold } from "@/lib/plans-server";
+import { sendEmail, apiQuota80Email, apiQuota100Email, apiQuota120Email } from "@/lib/email";
 
 // ─── Font loading ───────────────────────────────────────────────────────────
 
@@ -148,37 +152,79 @@ function fmtMetric(type: string, value: number, abbreviate: boolean, prefix?: st
 
 // ─── Auth & rate limiting ───────────────────────────────────────────────────
 
-const keyCache = new Map<string, { valid: boolean; ts: number }>();
+const keyCache = new Map<string, { valid: boolean; userId: string | null; ts: number }>();
 const KEY_CACHE_TTL = 5 * 60 * 1000;
 
-async function isValidKey(key: string | null): Promise<boolean> {
-  if (!key || !key.startsWith("groar_")) return false;
+async function validateAndTrackKey(key: string | null, skipTracking = false): Promise<{ valid: boolean; userId: string | null }> {
+  if (!key || !key.startsWith("groar_")) return { valid: false, userId: null };
   const cached = keyCache.get(key);
-  if (cached && Date.now() - cached.ts < KEY_CACHE_TTL) return cached.valid;
+  if (cached && Date.now() - cached.ts < KEY_CACHE_TTL) {
+    if (!skipTracking && cached.valid && cached.userId) {
+      pool.query(
+        `INSERT INTO api_usage_daily ("userId", date, count) VALUES ($1, CURRENT_DATE, 1)
+         ON CONFLICT ("userId", date) DO UPDATE SET count = api_usage_daily.count + 1`,
+        [cached.userId]
+      ).catch((err) => console.error("Failed to track daily usage:", err));
+    }
+    return { valid: cached.valid, userId: cached.userId };
+  }
   try {
     const result = await pool.query(
-      `UPDATE api_key SET "lastUsedAt" = NOW(), "requestCount" = "requestCount" + 1 WHERE key = $1 AND enabled = true RETURNING id`,
+      `UPDATE api_key SET "lastUsedAt" = NOW(), "requestCount" = "requestCount" + 1 WHERE key = $1 AND enabled = true RETURNING id, "userId"`,
       [key]
     );
     const valid = result.rows.length > 0;
-    keyCache.set(key, { valid, ts: Date.now() });
-    return valid;
+    const userId = valid ? result.rows[0].userId : null;
+    keyCache.set(key, { valid, userId, ts: Date.now() });
+    // Track daily usage (fire-and-forget) — skip for internal requests
+    if (!skipTracking && valid && userId) {
+      pool.query(
+        `INSERT INTO api_usage_daily ("userId", date, count) VALUES ($1, CURRENT_DATE, 1)
+         ON CONFLICT ("userId", date) DO UPDATE SET count = api_usage_daily.count + 1`,
+        [userId]
+      ).catch((err) => console.error("Failed to track daily usage:", err));
+    }
+    return { valid, userId };
   } catch {
-    return false;
+    return { valid: false, userId: null };
   }
 }
 
-const RATE_LIMIT = 30;
 const RATE_WINDOW = 60 * 1000;
 const rateWindows = new Map<string, number[]>();
 
-function checkRateLimit(key: string): boolean {
+function checkRateLimit(key: string, limit: number): boolean {
   const now = Date.now();
   const recent = (rateWindows.get(key) || []).filter((t) => now - t < RATE_WINDOW);
-  if (recent.length >= RATE_LIMIT) return false;
+  if (recent.length >= limit) return false;
   recent.push(now);
   rateWindows.set(key, recent);
   return true;
+}
+
+// ─── Monthly usage enforcement ──────────────────────────────────────────────
+
+/** Get user's API tier from DB */
+async function getUserApiTier(userId: string): Promise<ApiTier> {
+  return getUserApiTierFromDB(userId);
+}
+
+/** Check if user has exceeded their grace limit (limit + 20%) */
+async function checkMonthlyUsage(userId: string): Promise<{ allowed: boolean; used: number; limit: number; graceLimit: number; tier: ApiTier }> {
+  const tier = await getUserApiTier(userId);
+  const limit = API_TIERS[tier].limit;
+  const graceLimit = getApiGraceLimit(tier);
+
+  const result = await pool.query(
+    `SELECT COALESCE(SUM(count), 0)::int AS total
+     FROM api_usage_daily
+     WHERE "userId" = $1
+       AND date >= date_trunc('month', CURRENT_DATE)`,
+    [userId]
+  );
+  const used = result.rows[0].total;
+
+  return { allowed: used < graceLimit, used, limit, graceLimit, tier };
 }
 
 // ─── Icon rendering (Hugeicons → inline SVG for Satori) ─────────────────────
@@ -454,13 +500,57 @@ function parseMetrics(params: URLSearchParams): { type: string; value: number; p
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
 
-  // Auth
+  // Auth — skip usage tracking for internal dashboard requests
   const key = params.get("key");
-  if (!(await isValidKey(key))) {
+  const referer = request.headers.get("referer") || "";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
+  const isInternal = referer.startsWith(siteUrl) || referer.startsWith("http://localhost");
+  const authResult = await validateAndTrackKey(key, isInternal);
+  if (!authResult.valid) {
     return new Response(JSON.stringify({ error: "Invalid API key" }), { status: 401, headers: { "Content-Type": "application/json" } });
   }
-  if (!checkRateLimit(key!)) {
-    return new Response(JSON.stringify({ error: "Rate limit exceeded (30 requests/minute)" }), { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "60" } });
+  // Monthly usage check (grace buffer = limit + 20%)
+  const usageCheck = await checkMonthlyUsage(authResult.userId!);
+
+  // Rate limit per minute (tier-dependent) — skip for internal requests
+  if (!isInternal) {
+    const tierRateLimit = API_TIERS[usageCheck.tier].rateLimit;
+    if (!checkRateLimit(key!, tierRateLimit)) {
+      return new Response(JSON.stringify({ error: `Rate limit exceeded (${tierRateLimit} requests/minute)` }), { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "60" } });
+    }
+
+    if (!usageCheck.allowed) {
+      return new Response(JSON.stringify({
+        error: "Monthly API limit exceeded",
+        used: usageCheck.used,
+        limit: usageCheck.limit,
+        graceLimit: usageCheck.graceLimit,
+        tier: usageCheck.tier,
+        upgrade: "https://groar.app/dashboard/api",
+      }), { status: 429, headers: { "Content-Type": "application/json" } });
+    }
+  }
+
+  // ── Quota notifications (fire & forget) ────────────────────────────────────
+  if (!isInternal && usageCheck.limit > 0) {
+    checkAndUpdateQuotaThreshold(authResult.userId!, usageCheck.used, usageCheck.limit)
+      .then(async (threshold) => {
+        if (!threshold) return;
+        // Look up user email & name
+        const userRow = await pool.query(
+          `SELECT name, email FROM "user" WHERE id = $1`,
+          [authResult.userId]
+        );
+        const user = userRow.rows[0];
+        if (!user?.email) return;
+        const tierName = API_TIERS[usageCheck.tier].name;
+        const emailData =
+          threshold === 80 ? apiQuota80Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit)
+          : threshold === 100 ? apiQuota100Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit)
+          : apiQuota120Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit);
+        await sendEmail({ to: user.email, ...emailData });
+      })
+      .catch((err) => console.error("Quota notification error:", err));
   }
 
   // ── Resolve settings ──────────────────────────────────────────────────────
@@ -504,7 +594,11 @@ export async function GET(request: NextRequest) {
   const brandingParam = params.get("branding");
   const showLogo = brandingParam !== "false" && brandingParam !== "0";
   const watermarkParam = params.get("watermark");
-  const showWatermark = watermarkParam !== "false" && watermarkParam !== "0";
+  // Free tier: watermark always on, paid tiers: watermark off by default (opt-in)
+  const forceWatermark = API_TIERS[usageCheck.tier].watermark;
+  const showWatermark = forceWatermark
+    ? true
+    : watermarkParam === "true" || watermarkParam === "1";
 
   // Random support
   const imageBackgrounds = BACKGROUNDS.filter(b => b.image);
