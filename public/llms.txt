@@ -22,6 +22,18 @@ Create scroll-stopping visuals from your growth data — followers, MRR, GitHub 
 - **Progress**: show progress toward a goal
 - **List**: announce features or updates
 
+## API
+
+Generate card images programmatically. Design in the editor, save as API template, call the endpoint with dynamic values — get a PNG back.
+
+- **Endpoint**: `GET /api/card?key=YOUR_API_KEY&s=TEMPLATE_SETTINGS&v1=VALUE`
+- Returns a PNG image
+- Free tier: 500 calls/month (included with Pro)
+- Growth: 5,000 calls/month ($9/mo)
+- Scale: 50,000 calls/month ($29/mo)
+- Enterprise: 500,000+ calls/month (custom pricing)
+- Use cases: automated social posts, live stats in README, dashboards, reports
+
 ## Key Features
 
 - 25+ curated backgrounds + solid color option
@@ -52,6 +64,7 @@ Create scroll-stopping visuals from your growth data — followers, MRR, GitHub 
 ## Links
 
 - Website: https://groar.app
+- API: https://groar.app/dashboard/api
 - Compare: https://groar.app/vs
 - Comparisons: https://groar.app/vs/screenshots, https://groar.app/vs/canva, https://groar.app/vs/piktochart, https://groar.app/vs/image-charts, https://groar.app/vs/spreadsheets, https://groar.app/vs/build-in-public
 - Leaderboard: https://groar.app/public

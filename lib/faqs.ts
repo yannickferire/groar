@@ -27,4 +27,8 @@ export const faqs = [
     question: "Can I connect multiple accounts?",
     answer: "Yes! The Pro plan lets you connect your X account to auto-import your metrics directly into the editor.",
   },
+  {
+    question: "Does GROAR have an API?",
+    answer: "Yes! The GROAR API lets you generate card images programmatically. Design your card in the editor, save it as an API template, and call the endpoint with your dynamic values — you get back a PNG image. Perfect for automating social posts, embedding live stats in your README, or integrating with any tool. Pro users get 500 free API calls/month, with paid plans up to 50,000+/month.",
+  },
 ];

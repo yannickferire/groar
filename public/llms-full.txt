@@ -232,6 +232,68 @@ Monthly pricing also increases with lifetime tiers: $5 → $6 → $7 → $8 → 
 
 ---
 
+## API
+
+Groar offers a REST API to generate card images programmatically. Users design their card visually in the editor, save it as an API template, then call the endpoint with dynamic values to get a PNG image back.
+
+### How It Works
+
+1. Design a card in the visual editor
+2. Save it as an API template (stores layout, background, font, colors, metric types)
+3. Call the API endpoint with your API key and dynamic values
+4. Receive a PNG image
+
+### Endpoint
+
+`GET /api/card`
+
+**Required parameters:**
+- `key` — Your API key (generated in the dashboard)
+- `s` — Base64-encoded template settings (generated when saving a template)
+
+**Dynamic value parameters (depend on template type):**
+- **Metrics template**: `v1`, `v2`, `v3`... — values for each metric slot. Prefix with `+` for growth indicator (e.g. `v1=+250`)
+- **Milestone template**: `v1` — the milestone value
+- **Progress template**: `v1` — current value, `goal` — target value
+- **Announcement template**: `a1`, `a2`... — text for each item, `e1`, `e2`... — emoji for each item
+
+**Optional override parameters:**
+- `bg` — Background preset ID or "random"
+- `font` — bricolage | inter | space-grotesk | dm-mono | averia-serif-libre | dm-serif-display | random
+- `color` — Hex text color (e.g. `%23ffffff`)
+- `size` — post | square | banner
+- `handle` — Display name shown top-left
+- `heading` — Custom heading text
+- `date` — Date label shown top-right
+- `layout` — stack | columns (metrics template only)
+- `emoji` — Emoji character or "random" (milestone template only)
+- `emojiCount` — 0-10 (milestone template only)
+- `watermark` — true | false (paid tiers only, off by default)
+- `branding` — true | false (show/hide logo)
+
+### API Tiers & Pricing
+
+| Tier | Monthly Limit | Rate Limit | Price | Watermark |
+|------|--------------|------------|-------|-----------|
+| Free | 500 | 30 req/min | Included with Pro | Forced |
+| Growth | 5,000 | 30 req/min | $9/mo | Off (opt-in) |
+| Scale | 50,000 | 50 req/min | $29/mo | Off (opt-in) |
+| Enterprise | 500,000+ | 100 req/min | Custom | Off (opt-in) |
+
+- All Pro users (monthly or lifetime) get the Free API tier (500 calls/month) included
+- 20% grace buffer on all limits before hard block
+- Email notifications at 80%, 100%, and 120% usage
+- API keys can be created, renamed, revoked, and regenerated from the dashboard
+
+### Use Cases
+- Automated social media posts with live stats
+- Embed dynamic stats cards in GitHub READEs or documentation
+- Dashboard widgets and reports
+- Scheduled milestone announcements
+- Integration with AI agents and automation tools
+
+---
+
 ## Integrations
 
 ### X (Twitter)
@@ -281,6 +343,7 @@ Monthly pricing also increases with lifetime tiers: $5 → $6 → $7 → $8 → 
 ## Links
 
 - Website: https://groar.app
+- API: https://groar.app/dashboard/api
 - Compare: https://groar.app/vs
 - Comparisons: https://groar.app/vs/screenshots, https://groar.app/vs/canva, https://groar.app/vs/piktochart, https://groar.app/vs/image-charts, https://groar.app/vs/spreadsheets, https://groar.app/vs/build-in-public
 - Leaderboard: https://groar.app/public

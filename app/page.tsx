@@ -85,6 +85,7 @@ const jsonLd = {
     "No watermark",
     "Multi-account support",
     "Brand presets per client",
+    "API for programmatic card generation",
   ],
   screenshot: "https://groar.app/og-image.png",
   author: {
