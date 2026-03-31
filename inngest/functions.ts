@@ -13,7 +13,7 @@ export const dailyAnalyticsFetch = inngest.createFunction(
     name: "Daily X Analytics Fetch",
     retries: 3,
   },
-  { cron: "30 14 * * *" }, // TEMP: 14:30 UTC for testing
+  { cron: "0 15 * * *" }, // TEMP: 15:00 UTC (17h CET) for testing
   async ({ step, logger }) => {
     const accounts = await step.run("get-all-accounts", async () => {
       return await getAllXAccounts();
@@ -32,7 +32,7 @@ export const dailyAnalyticsFetch = inngest.createFunction(
 
     for (const account of accounts) {
       const result = await step.run(
-        `fetch-account-${account.id}`,
+        `fetch-${account.email || account.id}`,
         async () => {
           try {
             const fetchResult = await fetchAccountAnalytics(

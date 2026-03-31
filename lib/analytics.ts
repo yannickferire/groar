@@ -259,10 +259,11 @@ export async function fetchAccountAnalytics(
       }
 
       // Check scheduled auto-posts (daily/weekly) for X metrics
+      const autoPostDebug: Record<string, unknown> = {};
       try {
-        await checkScheduledAutoPost(userId, "followers", userResult.public_metrics.followers_count);
+        autoPostDebug.followers = await checkScheduledAutoPost(userId, "followers", userResult.public_metrics.followers_count);
       } catch (e) {
-        console.error("Scheduled auto-post (followers) error:", e);
+        autoPostDebug.followers = { error: String(e) };
       }
 
       // Check scheduled auto-posts for MRR/revenue using latest TrustMRR data from DB
@@ -275,12 +276,25 @@ export async function fetchAccountAnalytics(
         if (tmrr.rows[0]) {
           const mrr = Math.floor(tmrr.rows[0].mrrCents / 100);
           const revenue = Math.floor(tmrr.rows[0].revenueTotalCents / 100);
-          if (mrr > 0) await checkScheduledAutoPost(userId, "mrr", mrr);
-          if (revenue > 0) await checkScheduledAutoPost(userId, "revenue", revenue);
+          if (mrr > 0) autoPostDebug.mrr = await checkScheduledAutoPost(userId, "mrr", mrr);
+          if (revenue > 0) autoPostDebug.revenue = await checkScheduledAutoPost(userId, "revenue", revenue);
+        } else {
+          autoPostDebug.trustmrr = "no_snapshot";
         }
       } catch (e) {
-        console.error("Scheduled auto-post (mrr/revenue) error:", e);
+        autoPostDebug.mrr_revenue = { error: String(e) };
       }
+
+      return {
+        accountId: accountDbId,
+        username: userResult.username,
+        success: true,
+        metrics: {
+          followers: userResult.public_metrics.followers_count,
+          followersGained,
+        },
+        autoPost: autoPostDebug,
+      };
     }
   }
 

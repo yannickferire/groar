@@ -716,26 +716,20 @@ export async function checkScheduledAutoPost(
   userId: string,
   metric: AutoPostMetric,
   currentValue: number
-): Promise<void> {
-  console.log(`[auto-post] checkScheduledAutoPost called: userId=${userId}, metric=${metric}, value=${currentValue}`);
-
+): Promise<{ skipped?: string; posted?: boolean; automations?: unknown[] }> {
   // Only Pro users can auto-post
   if (!(await isProUser(userId))) {
-    console.log(`[auto-post] Skipped: user ${userId} is not Pro`);
-    return;
+    return { skipped: "not_pro" };
   }
 
   // Check credits
   if (!(await hasEnoughCredits(userId, CREDIT_COST_POST))) {
-    console.log(`[auto-post] Skipped: no credits left for user ${userId}`);
-    return;
+    return { skipped: "no_credits" };
   }
 
   // Only run automations scheduled for the current UTC hour
   const currentUtcHour = new Date().getUTCHours();
   const currentUtcDay = (new Date().getUTCDay() + 6) % 7; // 0=Mon, 6=Sun (matching our scheduleDay)
-
-  console.log(`[auto-post] currentUtcHour=${currentUtcHour}, currentUtcDay=${currentUtcDay}`);
 
   const result = await pool.query(
     `SELECT id, metric, trigger, "cardTemplate", goal, "tweetTemplate", "visualSettings", "startDay", "startDate", "scheduleHour", "scheduleDay"
@@ -746,37 +740,33 @@ export async function checkScheduledAutoPost(
     [userId, metric, currentUtcHour]
   );
 
-  console.log(`[auto-post] Found ${result.rows.length} matching automations for metric=${metric}, hour=${currentUtcHour}`);
   if (result.rows.length === 0) {
-    // Debug: check what automations exist for this user
+    // Debug: return what automations exist for this user
     const allAutos = await pool.query(
       `SELECT id, metric, trigger, enabled, "scheduleHour", "scheduleDay"
        FROM automation WHERE "userId" = $1 AND trigger != 'milestone'`,
       [userId]
     );
-    console.log(`[auto-post] All non-milestone automations for user:`, JSON.stringify(allAutos.rows));
-    return;
+    return { skipped: `no_matching_automations (hour=${currentUtcHour}, metric=${metric})`, automations: allAutos.rows };
   }
 
   const account = await getXAccount(userId);
-  if (!account || !hasWriteScope(account.scope)) return;
+  if (!account || !hasWriteScope(account.scope)) {
+    return { skipped: account ? "no_write_scope" : "no_x_account" };
+  }
 
   for (const row of result.rows) {
     const auto: AutomationRow = row;
 
-    console.log(`[auto-post] Checking automation ${auto.id}: trigger=${auto.trigger}, scheduleHour=${auto.scheduleHour}, scheduleDay=${auto.scheduleDay}`);
-
     // For weekly automations, check if today is the scheduled day
     if (auto.trigger === "weekly" && auto.scheduleDay != null && auto.scheduleDay !== currentUtcDay) {
-      console.log(`[auto-post] Skipped automation ${auto.id}: wrong day (scheduleDay=${auto.scheduleDay}, today=${currentUtcDay})`);
       continue;
     }
 
     // Check cooldown: ensure we haven't already posted for this automation in this time slot
     const requiredHours = FREQUENCY_HOURS[auto.trigger as Exclude<AutoPostTrigger, "milestone">];
     if (!(await canScheduledPostNow(userId, auto.id, requiredHours))) {
-      console.log(`[auto-post] Skipped automation ${auto.id}: cooldown not elapsed (required ${requiredHours}h)`);
-      continue;
+      return { skipped: `cooldown (automation=${auto.id}, required=${requiredHours}h)` };
     }
 
     const dayNumber = calculateDayNumber(auto.startDay, auto.startDate, auto.trigger);
@@ -801,12 +791,8 @@ export async function checkScheduledAutoPost(
        ORDER BY "postedAt" DESC LIMIT 1`,
       [auto.id]
     );
-    if (lastPost.rows.length > 0) {
-      console.log(`[auto-post] Last posted milestone=${lastPost.rows[0].milestone} (type=${typeof lastPost.rows[0].milestone}), current primaryValue=${primaryValue} (type=${typeof primaryValue})`);
-    }
     if (lastPost.rows.length > 0 && lastPost.rows[0].milestone === primaryValue) {
-      console.log(`[auto-post] Skipped automation ${auto.id}: value unchanged at ${primaryValue}`);
-      continue;
+      return { skipped: `value_unchanged (automation=${auto.id}, value=${primaryValue}, lastPosted=${lastPost.rows[0].milestone}, types=${typeof primaryValue}/${typeof lastPost.rows[0].milestone})` };
     }
 
     const tweetText = buildTweetText(primaryMetric, auto.trigger, auto.tweetTemplate, primaryValue, primaryValue, auto.goal || undefined, dayNumber);
@@ -817,8 +803,9 @@ export async function checkScheduledAutoPost(
     if (!freshAccount || !hasWriteScope(freshAccount.scope)) break;
 
     await executePost(userId, auto.id, metric, auto.trigger, primaryValue, tweetText, imageBuffer, freshAccount);
-    break; // One post per automation per cycle
+    return { posted: true };
   }
+  return { skipped: "all_automations_filtered" };
 }
 
 // ─── Test trigger (bypasses schedule, still deducts credits) ─────────

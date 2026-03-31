@@ -98,7 +98,7 @@ type AutoPostStats = {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-const SCHEDULE_HOURS_UTC = [1, 7, 13, 14, 19];
+const SCHEDULE_HOURS_UTC = [1, 7, 13, 15, 19];
 
 function closestScheduleHour(hour: number): number {
   return SCHEDULE_HOURS_UTC.reduce((prev, curr) =>
@@ -111,7 +111,7 @@ function getNextScheduledDate(trigger: "daily" | "weekly", scheduleHour: number,
   const now = new Date();
   const target = new Date(now);
   const hour = closestScheduleHour(scheduleHour);
-  target.setUTCHours(hour, hour === 14 ? 30 : 0, 0, 0);
+  target.setUTCHours(hour, 0, 0, 0);
   if (trigger === "weekly") {
     const currentDay = (now.getUTCDay() + 6) % 7; // Mon=0...Sun=6
     let daysUntil = scheduleDay - currentDay;
