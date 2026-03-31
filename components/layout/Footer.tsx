@@ -27,7 +27,7 @@ export default function Footer() {
                 <Link href="/pricing" className="hover:text-foreground transition-colors">
                   Pricing
                 </Link>
-                <Link href="/public" className="hover:text-foreground transition-colors">
+                <Link href="/leaderboard" className="hover:text-foreground transition-colors">
                   Leaderboard
                 </Link>
                 <Link href="/wall" className="hover:text-foreground transition-colors">

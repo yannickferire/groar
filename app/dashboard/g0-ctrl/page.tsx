@@ -298,6 +298,9 @@ export default function AdminPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild>
+            <Link href="/dashboard/g0-ctrl/sales">Sales</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
             <Link href="/dashboard/g0-ctrl/funnel">Funnel</Link>
           </Button>
           <Button variant="outline" size="sm" asChild>

@@ -16,11 +16,11 @@ export const metadata: Metadata = {
   title: "Leaderboard",
   description: "See who's leading the GROAR community leaderboard. Export visuals, log in daily, and climb the ranks.",
   keywords: ["creator leaderboard", "build in public community", "indie hacker leaderboard", "growth community ranking"],
-  alternates: { canonical: "/public" },
+  alternates: { canonical: "/leaderboard" },
   openGraph: {
     title: "Leaderboard — GROAR",
     description: "See who's leading the GROAR community leaderboard. Export visuals, log in daily, and climb the ranks.",
-    url: `${siteUrl}/public`,
+    url: `${siteUrl}/leaderboard`,
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
@@ -30,7 +30,7 @@ const breadcrumbJsonLd = {
   "@type": "BreadcrumbList",
   itemListElement: [
     { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
-    { "@type": "ListItem", position: 2, name: "Leaderboard", item: `${siteUrl}/public` },
+    { "@type": "ListItem", position: 2, name: "Leaderboard", item: `${siteUrl}/leaderboard` },
   ],
 };
 
@@ -46,6 +46,43 @@ const faqJsonLd = {
     },
   })),
 };
+
+async function getFastestBuyers() {
+  try {
+    const result = await pool.query(
+      `SELECT
+        u.name, u.image, u."xUsername",
+        EXTRACT(EPOCH FROM (s."updatedAt" - s."trialStart"))::int as "secondsToBuy",
+        tmrr."startupName",
+        tmrr.website AS "startupWebsite"
+      FROM "user" u
+      JOIN subscription s ON s."userId" = u.id
+      LEFT JOIN LATERAL (
+        SELECT "startupName", website FROM trustmrr_snapshot
+        WHERE "userId" = u.id AND "startupName" IS NOT NULL
+        ORDER BY date DESC, "createdAt" DESC LIMIT 1
+      ) tmrr ON true
+      WHERE s."externalCustomerId" IS NOT NULL
+        AND s.plan = 'pro'
+        AND s."billingPeriod" = 'lifetime'
+        AND s."trialStart" IS NOT NULL
+        AND u.id != $1
+      ORDER BY (s."updatedAt" - s."trialStart") ASC
+      LIMIT 3`,
+      [ADMIN_USER_ID]
+    );
+    return result.rows.map((r) => ({
+      name: r.name as string | null,
+      image: r.image as string | null,
+      xUsername: r.xUsername as string | null,
+      secondsToBuy: r.secondsToBuy as number,
+      startupWebsite: r.startupWebsite as string | null,
+    }));
+  } catch (error) {
+    console.error("Fastest buyers SSR error:", error);
+    return [];
+  }
+}
 
 async function getLeaderboard() {
   try {
@@ -86,7 +123,10 @@ async function getLeaderboard() {
 export const revalidate = 300; // revalidate every 5 minutes
 
 export default async function PublicLeaderboardPage() {
-  const leaderboard = await getLeaderboard();
+  const [leaderboard, fastestBuyers] = await Promise.all([
+    getLeaderboard(),
+    getFastestBuyers(),
+  ]);
 
   return (
     <div className="flex flex-col min-h-screen px-4">
@@ -112,7 +152,7 @@ export default async function PublicLeaderboardPage() {
         </FadeInView>
 
         <div className="w-full max-w-5xl -mt-6">
-          <PublicLeaderboardClient initialLeaderboard={leaderboard} />
+          <PublicLeaderboardClient initialLeaderboard={leaderboard} fastestBuyers={fastestBuyers} />
         </div>
 
         <div className="w-full max-w-3xl">

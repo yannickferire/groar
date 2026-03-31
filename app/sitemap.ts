@@ -68,7 +68,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: `${siteUrl}/public`,
+      url: `${siteUrl}/leaderboard`,
       lastModified: lastUpdated,
       changeFrequency: "daily",
       priority: 0.7,

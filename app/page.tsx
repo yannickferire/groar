@@ -11,6 +11,8 @@ import HowItWorks from "@/components/HowItWorks";
 import ProofSection from "@/components/ProofSection";
 import MadeBy from "@/components/MadeBy";
 import DataFastFunnel from "@/components/DataFastFunnel";
+import CommunityHighlights from "@/components/CommunityHighlights";
+import { Suspense } from "react";
 import { faqs } from "@/lib/faqs";
 
 const Testimonials = dynamic(() => import("@/components/Testimonials"));
@@ -95,7 +97,7 @@ const jsonLd = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <script
@@ -121,6 +123,9 @@ export default function Home() {
         <MadeBy />
         <Testimonials />
         <Pricing />
+        <Suspense>
+          <CommunityHighlights />
+        </Suspense>
         <section className="max-w-3xl mx-auto w-full mt-4 px-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Frequently asked questions</h2>
           <VsFaq faqs={faqs} />

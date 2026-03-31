@@ -47,6 +47,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/public",
+        destination: "/leaderboard",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
