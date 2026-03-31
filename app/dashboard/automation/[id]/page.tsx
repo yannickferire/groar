@@ -95,10 +95,9 @@ const ALL_TEMPLATE_VARIABLES = [
 const SCHEDULE_HOURS_UTC = [1, 7, 13, 15, 19];
 
 /** Convert UTC hour to local hour string (e.g. "9:00 AM") */
-/** Convert UTC hour to local hour string (e.g. "9:00 AM") */
 function utcHourToLocal(utcHour: number): string {
   const d = new Date();
-  d.setUTCHours(utcHour, 0, 0, 0);
+  d.setUTCHours(utcHour, utcHour === 15 ? 30 : 0, 0, 0);
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 

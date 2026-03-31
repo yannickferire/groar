@@ -763,11 +763,7 @@ export async function checkScheduledAutoPost(
       continue;
     }
 
-    // Check cooldown: ensure we haven't already posted for this automation in this time slot
-    const requiredHours = FREQUENCY_HOURS[auto.trigger as Exclude<AutoPostTrigger, "milestone">];
-    if (!(await canScheduledPostNow(userId, auto.id, requiredHours))) {
-      return { skipped: `cooldown (automation=${auto.id}, required=${requiredHours}h)` };
-    }
+    // No cooldown — credits already limit posting frequency
 
     const dayNumber = calculateDayNumber(auto.startDay, auto.startDate, auto.trigger);
     const allMetrics = parseMetrics(auto.metric);

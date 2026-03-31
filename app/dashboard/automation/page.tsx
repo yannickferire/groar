@@ -111,7 +111,7 @@ function getNextScheduledDate(trigger: "daily" | "weekly", scheduleHour: number,
   const now = new Date();
   const target = new Date(now);
   const hour = closestScheduleHour(scheduleHour);
-  target.setUTCHours(hour, 0, 0, 0);
+  target.setUTCHours(hour, hour === 15 ? 30 : 0, 0, 0);
   if (trigger === "weekly") {
     const currentDay = (now.getUTCDay() + 6) % 7; // Mon=0...Sun=6
     let daysUntil = scheduleDay - currentDay;
