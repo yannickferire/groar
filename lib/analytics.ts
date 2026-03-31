@@ -217,14 +217,18 @@ export async function fetchAccountAnalytics(
       }
 
       // Process any queued milestone posts whose schedule hour matches
-      processQueuedPosts(userId).catch((e) =>
-        console.error("Queued auto-post error:", e)
-      );
+      try {
+        await processQueuedPosts(userId);
+      } catch (e) {
+        console.error("Queued auto-post error:", e);
+      }
 
       // Check scheduled auto-posts (daily/weekly/monthly) for X metrics
-      checkScheduledAutoPost(userId, "followers", userResult.public_metrics.followers_count).catch((e) =>
-        console.error("Scheduled auto-post (followers) error:", e)
-      );
+      try {
+        await checkScheduledAutoPost(userId, "followers", userResult.public_metrics.followers_count);
+      } catch (e) {
+        console.error("Scheduled auto-post (followers) error:", e);
+      }
     }
   }
 

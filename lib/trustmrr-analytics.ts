@@ -140,28 +140,38 @@ export async function fetchTrustMRRForUser(
 
   // Check revenue milestones (convert cents to dollars)
   if (previousSnapshot) {
-    checkRevenueMilestones(
-      userId,
-      Math.floor(previousSnapshot.mrrCents / 100),
-      Math.floor(startup.revenue.mrrCents / 100),
-      Math.floor(previousSnapshot.revenueTotalCents / 100),
-      Math.floor(startup.revenue.totalCents / 100),
-      previousSnapshot.customers || 0,
-      startup.customers || 0
-    ).catch((e) => console.error("Failed to check revenue milestones:", e));
+    try {
+      await checkRevenueMilestones(
+        userId,
+        Math.floor(previousSnapshot.mrrCents / 100),
+        Math.floor(startup.revenue.mrrCents / 100),
+        Math.floor(previousSnapshot.revenueTotalCents / 100),
+        Math.floor(startup.revenue.totalCents / 100),
+        previousSnapshot.customers || 0,
+        startup.customers || 0
+      );
+    } catch (e) {
+      console.error("Failed to check revenue milestones:", e);
+    }
 
     // Process any queued milestone posts whose schedule hour matches
-    processQueuedPosts(userId).catch((e) =>
-      console.error("Queued auto-post error:", e)
-    );
+    try {
+      await processQueuedPosts(userId);
+    } catch (e) {
+      console.error("Queued auto-post error:", e);
+    }
 
     // Check scheduled auto-posts (daily/weekly/monthly) for revenue metrics
-    checkScheduledAutoPost(userId, "mrr", Math.floor(startup.revenue.mrrCents / 100)).catch((e) =>
-      console.error("Scheduled auto-post (mrr) error:", e)
-    );
-    checkScheduledAutoPost(userId, "revenue", Math.floor(startup.revenue.totalCents / 100)).catch((e) =>
-      console.error("Scheduled auto-post (revenue) error:", e)
-    );
+    try {
+      await checkScheduledAutoPost(userId, "mrr", Math.floor(startup.revenue.mrrCents / 100));
+    } catch (e) {
+      console.error("Scheduled auto-post (mrr) error:", e);
+    }
+    try {
+      await checkScheduledAutoPost(userId, "revenue", Math.floor(startup.revenue.totalCents / 100));
+    } catch (e) {
+      console.error("Scheduled auto-post (revenue) error:", e);
+    }
   }
 
   return {
