@@ -24,6 +24,7 @@ export type FetchResult = {
     followers: number;
     followersGained: number;
   };
+  autoPost?: Record<string, unknown>;
 };
 
 // Update tokens in database after refresh
