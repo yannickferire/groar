@@ -4,11 +4,11 @@
 
 import {
   Setting06Icon,
-  Clock01Icon,
   Image01Icon,
   Layout01Icon,
   ChromeIcon,
   SourceCodeSquareIcon,
+  RoboticIcon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 
@@ -18,10 +18,10 @@ export const PLANS = {
     subtitle: "for hobby growers",
     price: 0,
     maxConnectionsPerProvider: 0,
-    maxExportsPerWeek: 1,
+    maxExportsPerWeek: 3,
     features: [
       "Full access to the editor",
-      "1 export per week",
+      "3 exports per week",
       "5 backgrounds included",
       "Metric template",
     ],
@@ -40,6 +40,7 @@ export const PLANS = {
       "Unlimited backgrounds",
       "No watermark",
       "Connect your X account",
+      "Auto-post on X",
     ],
   },
   friend: {
@@ -76,8 +77,8 @@ export const PRO_FEATURES: { icon: IconSvgElement; title: string; info?: string 
   { icon: Layout01Icon, title: "All templates unlocked" },
   { icon: Image01Icon, title: "Full background library" },
   { icon: Setting06Icon, title: "Custom branding & no watermark" },
-  { icon: Clock01Icon, title: "Export history & re-import" },
   { icon: ChromeIcon, title: "Chrome extension (coming soon)" },
+  { icon: RoboticIcon, title: "Auto-post milestones on X" },
   { icon: SourceCodeSquareIcon, title: "API access — 500 req/month free", info: "api-pricing" },
 ];
 
@@ -112,7 +113,7 @@ export const API_PRICING_TIERS = [
 ] as const;
 
 export const PRO_CHECKS: string[] = [
-  "No watermark",
+  "Export history & re-import",
   "Unlimited exports",
 ];
 

@@ -7,6 +7,7 @@ import {
   refreshAccessToken,
 } from "@/lib/x-api";
 import { checkMilestones } from "@/lib/milestones";
+import { checkScheduledAutoPost, processQueuedPosts } from "@/lib/auto-post";
 
 export type FetchType = "auto" | "manual";
 
@@ -214,6 +215,16 @@ export async function fetchAccountAnalytics(
       } catch (e) {
         console.error("Milestone check failed:", e);
       }
+
+      // Process any queued milestone posts whose schedule hour matches
+      processQueuedPosts(userId).catch((e) =>
+        console.error("Queued auto-post error:", e)
+      );
+
+      // Check scheduled auto-posts (daily/weekly/monthly) for X metrics
+      checkScheduledAutoPost(userId, "followers", userResult.public_metrics.followers_count).catch((e) =>
+        console.error("Scheduled auto-post (followers) error:", e)
+      );
     }
   }
 

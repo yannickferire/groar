@@ -3,12 +3,20 @@
 import { useCallback } from "react";
 import { Toaster as SonnerToaster, toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Tick01Icon, Alert01Icon } from "@hugeicons/core-free-icons";
+import { Tick01Icon, Alert01Icon, InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 function SuccessIcon() {
   return (
     <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
       <HugeiconsIcon icon={Tick01Icon} size={14} strokeWidth={2.5} className="text-primary" />
+    </div>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <div className="w-6 h-6 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+      <HugeiconsIcon icon={InformationCircleIcon} size={14} strokeWidth={2.5} className="text-amber-500" />
     </div>
   );
 }
@@ -24,9 +32,10 @@ function ErrorIcon() {
 export function Toaster() {
   return (
     <SonnerToaster
-      position="bottom-right"
+      position="bottom-center"
       icons={{
         success: <SuccessIcon />,
+        info: <InfoIcon />,
         error: <ErrorIcon />,
       }}
       toastOptions={{
@@ -40,7 +49,7 @@ export function Toaster() {
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
         } as React.CSSProperties,
-        className: "font-sans text-base font-medium !w-auto",
+        className: "font-sans text-base font-medium !w-auto !gap-3",
       }}
     />
   );

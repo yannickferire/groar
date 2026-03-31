@@ -17,6 +17,35 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Groar Community Wall",
+  description:
+    "A gallery of growth visuals created by the Groar community — follower milestones, MRR updates, and analytics cards shared by founders and creators.",
+  url: `${siteUrl}/wall`,
+  isPartOf: {
+    "@type": "WebSite",
+    name: "Groar",
+    url: siteUrl,
+  },
+  breadcrumb: {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Community Wall", item: `${siteUrl}/wall` },
+    ],
+  },
+};
+
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {children}
+    </>
+  );
 }

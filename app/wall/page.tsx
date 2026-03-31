@@ -78,7 +78,7 @@ function WallCard({ exp, priority = false }: { exp: CommunityExport; priority?: 
         <div className="flex items-center justify-between mt-1.5 px-1">
           <span className="text-[11px] text-muted-foreground flex items-center gap-1">
             {exp.userImage && (
-              <Image src={exp.userImage} alt="" width={16} height={16} className="w-4 h-4 rounded-full" />
+              <Image src={exp.userImage} alt={`${exp.xUsername ? `@${exp.xUsername}` : exp.userName || "Creator"} profile`} width={16} height={16} className="w-4 h-4 rounded-full" />
             )}
             {exp.xUsername ? `@${exp.xUsername}` : exp.userName}
           </span>

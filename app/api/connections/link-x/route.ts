@@ -2,27 +2,32 @@ import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { getUserPlanFromDB } from "@/lib/plans-server";
 import { PLAN_LIMITS } from "@/lib/plans";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
 // Twitter OAuth 2.0 with PKCE — custom flow to allow same X account on multiple Groar accounts
-export async function POST() {
+export async function POST(request: NextRequest) {
   const { session, response } = await requireAuth();
   if (response) return response;
+
+  // Optional returnTo path (e.g. /dashboard/automation)
+  const body = await request.json().catch(() => ({}));
+  const returnTo = typeof body.returnTo === "string" ? body.returnTo : null;
 
   const plan = await getUserPlanFromDB(session.user.id);
   if (plan === "free") {
     return NextResponse.json({ error: "Premium feature" }, { status: 403 });
   }
 
-  // Check connection limit
-  const countResult = await pool.query(
+  // Check connection limit — skip if user already has an account (reconnect to update scopes)
+  const existingResult = await pool.query(
     `SELECT COUNT(*) FROM account WHERE "userId" = $1 AND "providerId" = 'twitter'`,
     [session.user.id]
   );
-  const currentCount = parseInt(countResult.rows[0].count);
+  const currentCount = parseInt(existingResult.rows[0].count);
+  const isReconnect = currentCount > 0;
   const maxConnections = PLAN_LIMITS[plan].maxConnectionsPerProvider;
-  if (currentCount >= maxConnections) {
+  if (!isReconnect && currentCount >= maxConnections) {
     return NextResponse.json(
       { error: `Connection limit reached (${maxConnections})` },
       { status: 400 }
@@ -39,7 +44,7 @@ export async function POST() {
   // State includes userId + random token for CSRF protection
   const stateToken = crypto.randomBytes(16).toString("hex");
   const state = Buffer.from(
-    JSON.stringify({ userId: session.user.id, token: stateToken })
+    JSON.stringify({ userId: session.user.id, token: stateToken, returnTo })
   ).toString("base64url");
 
   // Store code_verifier and state in DB (temporary, cleaned up on callback)
@@ -52,7 +57,7 @@ export async function POST() {
 
   const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
   const redirectUri = `${baseUrl}/api/connections/link-x/callback`;
-  const scopes = ["tweet.read", "users.read", "offline.access"];
+  const scopes = ["tweet.read", "tweet.write", "media.write", "users.read", "offline.access"];
 
   const authUrl = new URL("https://x.com/i/oauth2/authorize");
   authUrl.searchParams.set("response_type", "code");

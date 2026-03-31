@@ -1,43 +1,82 @@
 import { pool } from "./db";
 import { sendEmail, milestoneEmail } from "./email";
+import { autoPostMilestone } from "./auto-post";
 
 /**
- * Milestone threshold strategy — repeating pattern per order of magnitude:
+ * Milestone threshold strategy — progressively wider gaps:
  *
- *   Within each decade (1×10^n to 10×10^n):
- *   - 1×, 1.5×, 2×, 2.5×, 3×, 4×, 5×, 6×, 7×, 7.5×, 9×
- *
- *   Concrete examples:
- *   10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 90,
- *   100, 150, 200, 250, 300, 400, 500, 600, 700, 750, 900,
- *   1K, 1.5K, 2K, 2.5K, 3K, 4K, 5K, 6K, 7K, 7.5K, 9K,
- *   10K, 15K, 20K, 25K, 30K, 40K, 50K, 60K, 70K, 75K, 90K, 100K, ...
- *
- *   This gives frequent celebrations at small numbers and
- *   progressively wider gaps at larger numbers.
+ *   10, 25, 50, then 100–1000 every 100,
+ *   1000–2000 every 100, 2000–5000 every 200,
+ *   5000–10000 every 500, 10000–20000 every 1000,
+ *   20000–50000 every 2000, 50000–100000 every 5000,
+ *   then continues doubling the step with each range doubling.
  */
 function generateThresholds(maxValue: number = 10_000_000): number[] {
-  const multipliers = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 7.5, 9];
-  const thresholds: number[] = [];
+  const thresholds: number[] = [10, 25, 50];
 
-  for (let power = 1; power <= Math.log10(maxValue); power++) {
-    const base = 10 ** power;
-    for (const m of multipliers) {
-      const value = Math.round(base * m);
-      if (value <= maxValue) thresholds.push(value);
+  // 100 to 1000, step 100
+  for (let v = 100; v <= 1000; v += 100) thresholds.push(v);
+
+  // Repeating pattern: range doubles, step doubles
+  // [from, to, step]
+  const ranges: [number, number, number][] = [
+    [1000, 2000, 100],
+    [2000, 5000, 200],
+    [5000, 10_000, 500],
+    [10_000, 20_000, 1000],
+    [20_000, 50_000, 2000],
+    [50_000, 100_000, 5000],
+    [100_000, 200_000, 10_000],
+    [200_000, 500_000, 20_000],
+    [500_000, 1_000_000, 50_000],
+    [1_000_000, 2_000_000, 100_000],
+    [2_000_000, 5_000_000, 200_000],
+    [5_000_000, 10_000_000, 500_000],
+  ];
+
+  for (const [from, to, step] of ranges) {
+    for (let v = from + step; v <= to && v <= maxValue; v += step) {
+      thresholds.push(v);
     }
   }
 
-  return [...new Set(thresholds)].sort((a, b) => a - b);
+  return thresholds;
 }
 
-const STAT_MILESTONES = generateThresholds();
+export const STAT_MILESTONES = generateThresholds();
 
 // Export count milestones (smaller scale, specific)
 const EXPORT_MILESTONES = [1, 10, 50, 100, 200, 500, 1_000];
 
 // Revenue milestones in dollars (same pattern)
-const REVENUE_MILESTONES = generateThresholds(10_000_000);
+export const REVENUE_MILESTONES = generateThresholds(10_000_000);
+
+/**
+ * Get the next milestone threshold above the given value for a metric.
+ */
+export function getNextMilestone(
+  metric: "followers" | "posts" | "mrr" | "revenue" | "customers",
+  currentMilestone: number
+): number | null {
+  const thresholds = metric === "mrr" || metric === "revenue" ? REVENUE_MILESTONES : STAT_MILESTONES;
+  const idx = thresholds.indexOf(currentMilestone);
+  if (idx === -1 || idx >= thresholds.length - 1) return null;
+  return thresholds[idx + 1];
+}
+
+/**
+ * Get the first milestone threshold strictly above the given value.
+ */
+export function getNextMilestoneAbove(
+  metric: "followers" | "posts" | "mrr" | "revenue" | "customers",
+  currentValue: number
+): number | null {
+  const thresholds = metric === "mrr" || metric === "revenue" ? REVENUE_MILESTONES : STAT_MILESTONES;
+  for (const t of thresholds) {
+    if (t > currentValue) return t;
+  }
+  return null;
+}
 
 type MilestoneHit = {
   metric: "followers" | "posts" | "exports" | "mrr" | "revenue" | "customers";
@@ -248,6 +287,18 @@ async function insertMilestoneNotifications(
         } catch (e) {
           console.error("Failed to send milestone email:", e);
         }
+      }
+    }
+  }
+
+  // Auto-post to X for Pro users (fire & forget, errors are logged in x_auto_post table)
+  if (isPro) {
+    const autoPostMetrics: MilestoneHit["metric"][] = ["followers", "mrr", "revenue"];
+    for (const hit of highestPerMetric.values()) {
+      if (autoPostMetrics.includes(hit.metric)) {
+        autoPostMilestone(userId, hit.metric, hit.milestone, hit.value).catch((e) => {
+          console.error("Auto-post error:", e);
+        });
       }
     }
   }

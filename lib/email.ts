@@ -156,6 +156,42 @@ export function milestoneEmail(name: string, milestone: string, metric: string, 
   };
 }
 
+export function automationPostedEmail(
+  name: string,
+  metric: string,
+  formattedValue: string,
+  tweetUrl: string,
+  trigger: "milestone" | "daily" | "weekly" = "milestone"
+) {
+  const firstName = name.split(" ")[0] || name;
+  const metricLabel =
+    metric === "followers" ? "followers"
+    : metric === "posts" ? "posts"
+    : metric === "mrr" ? "MRR"
+    : metric === "revenue" ? "in revenue"
+    : metric === "customers" ? "customers"
+    : metric;
+
+  const isMilestone = trigger === "milestone";
+  const subject = isMilestone
+    ? `Your ${formattedValue} ${metricLabel} milestone was posted to X`
+    : `Your ${metricLabel} update was posted to X`;
+  const description = isMilestone
+    ? `your <strong>${formattedValue} ${metricLabel}</strong> milestone`
+    : `your <strong>${metricLabel}</strong> progress update (${formattedValue})`;
+
+  return {
+    subject,
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:bold;margin:0 0 16px;">Posted to X!</h1>
+      <p>Hey ${firstName}, your automation just posted ${description} to X.</p>
+      ${cta("View post on X", tweetUrl)}
+      <p style="color:#6b7280;font-size:14px;">You can manage your automations from the <a href="${SITE_URL}/dashboard/automation" style="color:#f97316;">automation dashboard</a>.</p>
+      <p>— Yannick</p>
+    `),
+  };
+}
+
 export function subscriptionConfirmedEmail(name: string, billingPeriod: "monthly" | "lifetime") {
   const firstName = name.split(" ")[0] || name;
   const planDetail = billingPeriod === "lifetime"

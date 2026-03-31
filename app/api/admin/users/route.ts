@@ -31,6 +31,10 @@ export async function GET() {
       s."updatedAt" as "subscriptionUpdatedAt",
       COALESCE(us."exportsCount", (SELECT COUNT(*) FROM export WHERE "userId" = u.id)) as "exportCount",
       (SELECT string_agg(DISTINCT a2."providerId", ', ') FROM account a2 WHERE a2."userId" = u.id) as "providers",
+      -- Credits used this month
+      COALESCE((SELECT SUM(credits) FROM automation_credit ac
+        WHERE ac."userId" = u.id
+        AND ac."createdAt" >= date_trunc('month', CURRENT_DATE)), 0)::int as "creditsUsed",
       -- Latest analytics snapshot
       (SELECT json_build_object(
         'followersCount', xs."followersCount",

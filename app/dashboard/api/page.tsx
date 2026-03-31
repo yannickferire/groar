@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { METRIC_LABELS, type MetricType, type TemplateType } from "@/components/editor/types";
 import ApiTemplateModal from "@/components/ApiTemplateModal";
 import { API_TIERS, API_TIER_ORDER, type ApiTier } from "@/lib/plans";
+import ProGate from "@/components/dashboard/ProGate";
 
 type ApiKey = {
   id: string;
@@ -96,8 +97,6 @@ function minimalSettings(tplSettings: any): string {
 }
 
 function ApiContent() {
-  // Plan & loading
-  const [isPro, setIsPro] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // API Keys
@@ -147,32 +146,17 @@ function ApiContent() {
   const [modalSettings, setModalSettings] = useState<Parameters<typeof ApiTemplateModal>[0]["settings"]>(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Fetch plan + keys + templates
+  // Fetch keys + templates + usage
   useEffect(() => {
-    fetch("/api/user/plan")
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (data) {
-          const pro = data.plan === "pro" || data.plan === "friend";
-          setIsPro(pro);
-          if (pro) {
-            Promise.all([
-              fetch("/api/user/api-keys").then((r) => r.ok ? r.json() : null),
-              fetch("/api/user/card-templates").then((r) => r.ok ? r.json() : null),
-              fetch("/api/user/api-usage").then((r) => r.ok ? r.json() : null),
-            ]).then(([keysData, tplData, usageData]) => {
-              if (keysData?.keys) setApiKeys(keysData.keys);
-              if (tplData?.templates) setTemplates(tplData.templates);
-              if (usageData) setUsage(usageData);
-            }).finally(() => setLoading(false));
-          } else {
-            setLoading(false);
-          }
-        } else {
-          setLoading(false);
-        }
-      })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch("/api/user/api-keys").then((r) => r.ok ? r.json() : null),
+      fetch("/api/user/card-templates").then((r) => r.ok ? r.json() : null),
+      fetch("/api/user/api-usage").then((r) => r.ok ? r.json() : null),
+    ]).then(([keysData, tplData, usageData]) => {
+      if (keysData?.keys) setApiKeys(keysData.keys);
+      if (tplData?.templates) setTemplates(tplData.templates);
+      if (usageData) setUsage(usageData);
+    }).finally(() => setLoading(false));
   }, []);
 
   // --- API Key actions ---
@@ -457,26 +441,6 @@ function ApiContent() {
           <div className="flex justify-center">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isPro) {
-    return (
-      <div className="w-full max-w-3xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-heading font-bold">API</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Generate dynamic card images via API.
-          </p>
-        </div>
-        <div className="mt-10 text-center py-16 rounded-2xl border-fade">
-          <HugeiconsIcon icon={Key01Icon} size={32} strokeWidth={1.5} className="text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground mb-4">The API is available on Pro plans.</p>
-          <Button asChild variant="default">
-            <a href="/dashboard/plan#plans">Upgrade to Pro</a>
-          </Button>
         </div>
       </div>
     );
@@ -1120,8 +1084,10 @@ function ParamRow({ name, desc, required }: { name: string; desc: string; requir
 
 export default function ApiPage() {
   return (
-    <Suspense>
-      <ApiContent />
-    </Suspense>
+    <ProGate>
+      <Suspense>
+        <ApiContent />
+      </Suspense>
+    </ProGate>
   );
 }

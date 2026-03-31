@@ -18,11 +18,15 @@ type PreviewProps = {
   settings: EditorSettings;
   backgrounds: BackgroundPreset[];
   isPremium?: boolean;
+  /** Override the default rounded-3xl wrapper. Use "none" for thumbnails. */
+  rounded?: "none" | "lg" | "3xl";
 };
 
 const textShadow = "0 1px 2px rgba(0,0,0,0.15)";
 
-const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ settings, backgrounds, isPremium = false }, ref) {
+const ROUNDED_CLASSES = { none: "", lg: "rounded-lg", "3xl": "rounded-3xl" } as const;
+
+const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ settings, backgrounds, isPremium = false, rounded = "3xl" }, ref) {
   // Icon sizes as percentage of container width (based on 1200px reference)
   const iconSizes = {
     primaryWithPeriod: "4.5cqi",   // ~54px at 1200px
@@ -51,7 +55,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
   return (
     <div className="flex flex-col">
       {/* Wrapper with rounded corners for display only */}
-      <div className="rounded-3xl overflow-hidden">
+      <div className={`${ROUNDED_CLASSES[rounded]} overflow-hidden`}>
         {/* Export target - no rounded corners, uses container queries */}
         <div
           ref={ref}
@@ -394,7 +398,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
               height={settings.branding.logoSize ?? 30}
               className="object-contain"
               style={{
-                height: `${settings.branding.logoSize ?? 30}px`,
+                height: `${(settings.branding.logoSize ?? 30) / 6}cqi`,
                 objectPosition: settings.branding.position === "right" ? "right" : settings.branding.position === "left" ? "left" : "center",
               }}
             />

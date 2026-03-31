@@ -29,6 +29,16 @@ export async function GET(req: NextRequest) {
 
   const { codeVerifier, userId } = stateResult.rows[0];
 
+  // Parse returnTo from state payload
+  let returnTo: string | null = null;
+  try {
+    const statePayload = JSON.parse(Buffer.from(state, "base64url").toString());
+    if (typeof statePayload.returnTo === "string" && statePayload.returnTo.startsWith("/")) {
+      returnTo = statePayload.returnTo;
+    }
+  } catch { /* ignore */ }
+  const finalRedirect = returnTo ? `${baseUrl}${returnTo}` : connectionsUrl;
+
   // Exchange code for tokens
   const redirectUri = `${baseUrl}/api/connections/link-x/callback`;
   const clientId = process.env.TWITTER_CLIENT_ID!;
@@ -114,5 +124,5 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(connectionsUrl);
+  return NextResponse.redirect(finalRedirect);
 }

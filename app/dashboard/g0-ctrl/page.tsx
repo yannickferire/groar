@@ -43,6 +43,7 @@ type UserRow = {
   subscriptionCreatedAt: string | null;
   subscriptionUpdatedAt: string | null;
   exportCount: string;
+  creditsUsed: number;
   providers: string | null;
   xAnalytics: XAnalytics | null;
 };
@@ -235,7 +236,10 @@ export default function AdminPage() {
       ? Math.round((proTrialWithExport.reduce((sum, u) => sum + parseInt(u.exportCount), 0) / activeUsers) * 10) / 10
       : 0;
 
-    return { exportRate, proTrialWithExport: proTrialWithExport.length, proTrialTotal: proTrialUsers.length, trialConversion, convertedTrials: convertedTrials.length, totalTrials: expiredTrials.length + convertedTrials.length, totalExports, avgExports, activeUsers };
+    const totalCreditsUsed = users.reduce((sum, u) => sum + (u.creditsUsed || 0), 0);
+    const totalAutomationCost = (totalCreditsUsed / 1000).toFixed(2);
+
+    return { exportRate, proTrialWithExport: proTrialWithExport.length, proTrialTotal: proTrialUsers.length, trialConversion, convertedTrials: convertedTrials.length, totalTrials: expiredTrials.length + convertedTrials.length, totalExports, avgExports, activeUsers, totalCreditsUsed, totalAutomationCost };
   }, [users]);
 
   const filtered = useMemo(() => {
@@ -309,7 +313,7 @@ export default function AdminPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="rounded-xl border-fade p-4">
           <p className="text-xs text-muted-foreground">Export rate (pro/trial)</p>
           <p className="text-2xl font-heading font-bold mt-1">{stats.exportRate}%</p>
@@ -329,6 +333,11 @@ export default function AdminPage() {
           <p className="text-xs text-muted-foreground">Avg exports / active user</p>
           <p className="text-2xl font-heading font-bold mt-1">{stats.avgExports}</p>
           <p className="text-xs text-muted-foreground mt-0.5">{stats.activeUsers} active users</p>
+        </div>
+        <div className="rounded-xl border-fade p-4">
+          <p className="text-xs text-muted-foreground">Automation cost (this month)</p>
+          <p className="text-2xl font-heading font-bold mt-1">${stats.totalAutomationCost}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{numberFormatter.format(stats.totalCreditsUsed)} credits</p>
         </div>
       </div>
 
@@ -369,6 +378,7 @@ export default function AdminPage() {
               <th className="text-left font-medium px-4 py-3 hidden md:table-cell">X Handle</th>
               <th className="text-left font-medium px-4 py-3">Plan</th>
               <th className="text-right font-medium px-4 py-3 hidden sm:table-cell">Exports</th>
+              <th className="text-right font-medium px-4 py-3 hidden lg:table-cell">Cost</th>
               <th className="text-right font-medium px-4 py-3 hidden md:table-cell">Signed up</th>
               <th className="text-right font-medium px-4 py-3 w-10"></th>
             </tr>
@@ -401,6 +411,13 @@ export default function AdminPage() {
                 </td>
                 <td className="px-4 py-3 text-right hidden sm:table-cell">
                   <span className="text-xs text-muted-foreground">{user.exportCount}</span>
+                </td>
+                <td className="px-4 py-3 text-right hidden lg:table-cell">
+                  {user.creditsUsed > 0 ? (
+                    <span className="text-xs font-medium">${(user.creditsUsed / 1000).toFixed(3)}</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground/50">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-right hidden md:table-cell">
                   <span className="text-xs text-muted-foreground">{formatShortDate(user.userCreatedAt)}</span>
@@ -467,6 +484,14 @@ export default function AdminPage() {
                     <div>
                       <dt className="text-xs text-muted-foreground">Exports</dt>
                       <dd className="mt-0.5 text-xs font-medium">{selectedUser.exportCount}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Automation cost (this month)</dt>
+                      <dd className="mt-0.5 text-xs font-medium">
+                        {selectedUser.creditsUsed > 0
+                          ? `$${(selectedUser.creditsUsed / 1000).toFixed(3)} (${selectedUser.creditsUsed} credits)`
+                          : "—"}
+                      </dd>
                     </div>
                   </dl>
                 </section>

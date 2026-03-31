@@ -13,6 +13,7 @@ type EmailPreferences = {
   emailMilestones: boolean;
   emailTrialReminders: boolean;
   emailProductUpdates: boolean;
+  emailAutomation: boolean;
 };
 
 function SettingsContent() {
@@ -26,6 +27,7 @@ function SettingsContent() {
     emailMilestones: true,
     emailTrialReminders: true,
     emailProductUpdates: true,
+    emailAutomation: true,
   });
   const [loadingPrefs, setLoadingPrefs] = useState(true);
 
@@ -94,7 +96,7 @@ function SettingsContent() {
   // Get higher-res Twitter image (replace _normal with _bigger or _200x200)
   const avatarUrl = session?.user?.image?.replace(/_normal\./, "_200x200.") || session?.user?.image;
 
-  const allEmailsOn = prefs.emailMilestones || prefs.emailTrialReminders || prefs.emailProductUpdates;
+  const allEmailsOn = prefs.emailMilestones || prefs.emailTrialReminders || prefs.emailProductUpdates || prefs.emailAutomation;
 
   const togglePref = useCallback(async (key: keyof EmailPreferences, checked: boolean) => {
     setPrefs((prev) => ({ ...prev, [key]: checked }));
@@ -110,6 +112,7 @@ function SettingsContent() {
       emailMilestones: checked,
       emailTrialReminders: checked,
       emailProductUpdates: checked,
+      emailAutomation: checked,
     };
     setPrefs(newPrefs);
     await fetch("/api/user/preferences", {
@@ -252,6 +255,20 @@ function SettingsContent() {
             <Switch
               checked={prefs.emailMilestones}
               onCheckedChange={(checked) => togglePref("emailMilestones", checked)}
+              disabled={loadingPrefs || !allEmailsOn}
+            />
+          </div>
+
+          <div className={`flex items-center justify-between gap-4 ${!allEmailsOn ? "opacity-50" : ""}`}>
+            <div>
+              <p className="text-sm font-medium">Automation posts</p>
+              <p className="text-sm text-muted-foreground">
+                Get notified when an automation posts to X.
+              </p>
+            </div>
+            <Switch
+              checked={prefs.emailAutomation}
+              onCheckedChange={(checked) => togglePref("emailAutomation", checked)}
               disabled={loadingPrefs || !allEmailsOn}
             />
           </div>

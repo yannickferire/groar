@@ -28,16 +28,18 @@ type NavItem = {
   href: string;
   icon: IconSvgElement;
   premium?: boolean;
+  proOnly?: boolean;
   comingSoon?: boolean;
+  beta?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Analytics", href: "/dashboard/analytics", icon: Analytics01Icon, premium: true },
-  { label: "Connections", href: "/dashboard/connections", icon: Link01Icon, premium: true },
+  { label: "Connections", href: "/dashboard/connections", icon: Link01Icon },
   { label: "History", href: "/dashboard/history", icon: Clock01Icon, premium: true },
   { label: "Notifications", href: "/dashboard/notifications", icon: Notification03Icon },
-  { label: "Automation", href: "/dashboard/automation", icon: RoboticIcon, premium: true, comingSoon: true },
-  { label: "API", href: "/dashboard/api", icon: SourceCodeSquareIcon, premium: true },
+  { label: "Automation", href: "/dashboard/automation", icon: RoboticIcon, premium: true, proOnly: true, beta: true },
+  { label: "API", href: "/dashboard/api", icon: SourceCodeSquareIcon, premium: true, proOnly: true, beta: true },
   { label: "Leaderboard", href: "/dashboard/leaderboard", icon: RankingIcon },
 ];
 
@@ -203,7 +205,9 @@ export default function DashboardSidebar() {
                   );
                 }
 
-                const isLocked = item.premium && userPlan === "free";
+                const isLocked = item.proOnly
+                  ? userPlan === "free" || isTrialing
+                  : item.premium && userPlan === "free";
 
                 if (isLocked) {
                   return (
@@ -235,7 +239,6 @@ export default function DashboardSidebar() {
 
                 const isLeaderboard = item.href === "/dashboard/leaderboard";
                 const isNotifications = item.href === "/dashboard/notifications";
-                const isApi = item.href === "/dashboard/api";
 
                 return (
                   <SidebarMenuItem key={item.href}>
@@ -251,7 +254,7 @@ export default function DashboardSidebar() {
                           strokeWidth={2}
                         />
                         <span className="flex-1">{item.label}</span>
-                        {isApi && (
+                        {item.beta && (
                           <span className={`text-[10px] font-medium text-muted-foreground px-1.5 py-0.5 rounded-full ${isActive(item.href) ? "bg-muted" : "bg-sidebar-accent"}`}>Beta</span>
                         )}
                         {isNotifications && unreadNotifications > 0 && (

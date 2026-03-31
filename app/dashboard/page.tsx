@@ -13,7 +13,7 @@ import { PlanType, PLANS, ProTierInfo, LifetimeTierInfo, fetchProTierInfo, fetch
 import XLogo from "@/components/icons/XLogo";
 import GoogleLogo from "@/components/icons/GoogleLogo";
 import { authClient } from "@/lib/auth-client";
-import { getStartOfWeek } from "@/lib/week";
+
 
 type Export = {
   id: string;
@@ -52,6 +52,7 @@ function DashboardContent() {
   const [hasUsedTrial, setHasUsedTrial] = useState(true);
   const [proTierInfo, setProTierInfo] = useState<ProTierInfo | null>(null);
   const [lifetimeTierInfo, setLifetimeTierInfo] = useState<LifetimeTierInfo | null>(null);
+  const [serverExportsThisWeek, setServerExportsThisWeek] = useState(0);
 
   // Get first name from session
   const firstName = session?.user?.name?.split(" ")[0];
@@ -82,6 +83,7 @@ function DashboardContent() {
       setIsTrialing(!!planData.isTrialing);
       setTrialEnd(planData.trialEnd || null);
       setHasUsedTrial(!!planData.hasUsedTrial);
+      setServerExportsThisWeek(planData.exportsThisWeek ?? 0);
       setAnalyticsAccounts(analyticsData.accounts || []);
       return planData.plan || "free";
     } finally {
@@ -172,9 +174,7 @@ function DashboardContent() {
   const xConnectionCount = connectedAccounts.filter(a => a.providerId === "twitter").length;
   const isFree = plan === "free";
 
-  // This week's exports count (Monday-based, matches server)
-  const weekStart = getStartOfWeek();
-  const exportsThisWeek = exports.filter(e => new Date(e.createdAt) >= weekStart).length;
+  const exportsThisWeek = serverExportsThisWeek;
 
   // Streak: count consecutive days with at least 1 export (including today)
   const streak = (() => {

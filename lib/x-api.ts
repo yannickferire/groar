@@ -181,6 +181,86 @@ export function aggregateTweetMetrics(tweets: XTweet[]) {
   );
 }
 
+// ─── Posting / Media upload ─────────────────────────────────────────
+
+// Upload an image buffer to X via simple upload (single multipart request)
+// Supports OAuth 2.0 Bearer tokens
+export async function uploadMedia(
+  accessToken: string,
+  imageBuffer: Buffer,
+  mimeType: string = "image/png"
+): Promise<string | XApiError> {
+  try {
+    // Simple upload: single multipart POST with the file
+    const blob = new Blob([new Uint8Array(imageBuffer)], { type: mimeType });
+    const formData = new FormData();
+    formData.append("media", blob, `card.${mimeType === "image/png" ? "png" : "jpg"}`);
+    formData.append("media_category", "tweet_image");
+
+    const res = await fetch("https://api.x.com/2/media/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("X media upload failed:", res.status, errorText);
+      return { error: `Media upload failed: ${res.status} ${errorText}`, status: res.status };
+    }
+
+    const data = await res.json();
+    const mediaId = data.data?.id || data.id || data.media_id_string;
+
+    if (!mediaId) {
+      console.error("X media upload response:", JSON.stringify(data));
+      return { error: "No media_id returned from upload" };
+    }
+
+    return String(mediaId);
+  } catch (error) {
+    console.error("Failed to upload media to X:", error);
+    return { error: "Failed to upload media to X" };
+  }
+}
+
+// Post a tweet with optional media attachments
+export async function postTweet(
+  accessToken: string,
+  text: string,
+  mediaIds?: string[]
+): Promise<{ tweetId: string } | XApiError> {
+  try {
+    const body: Record<string, unknown> = { text };
+    if (mediaIds && mediaIds.length > 0) {
+      body.media = { media_ids: mediaIds };
+    }
+
+    const response = await fetch(`${X_API_BASE}/tweets`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("X post tweet failed:", errorText);
+      return { error: `Post tweet failed: ${response.status}`, status: response.status };
+    }
+
+    const data = await response.json();
+    return { tweetId: data.data?.id };
+  } catch (error) {
+    console.error("Failed to post tweet:", error);
+    return { error: "Failed to post tweet" };
+  }
+}
+
 // Check if an error response indicates token expiry
 export function isTokenExpired(error: XApiError): boolean {
   return error.status === 401;

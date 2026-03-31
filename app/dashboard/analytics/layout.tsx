@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PremiumGate from "@/components/dashboard/PremiumGate";
+import ProGate from "@/components/dashboard/ProGate";
 
 export const metadata: Metadata = {
   title: "Analytics — Track your growth",
@@ -10,5 +10,5 @@ export default function AnalyticsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <PremiumGate>{children}</PremiumGate>;
+  return <ProGate>{children}</ProGate>;
 }

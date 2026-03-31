@@ -49,11 +49,13 @@ export const auth = betterAuth({
     twitter: {
       clientId: process.env.TWITTER_CLIENT_ID as string,
       clientSecret: process.env.TWITTER_CLIENT_SECRET as string,
-      // Scopes needed for X API v2 analytics access
+      // Scopes needed for X API v2 analytics + auto-posting
       // tweet.read: Access tweets and metrics
+      // tweet.write: Post tweets on behalf of user
+      // media.write: Upload media (images) for tweets
       // users.read: Access user profile and public_metrics
       // offline.access: Get refresh token for background fetching
-      scope: ["tweet.read", "users.read", "offline.access"],
+      scope: ["tweet.read", "tweet.write", "media.write", "users.read", "offline.access"],
     },
   },
   databaseHooks: {

@@ -79,11 +79,6 @@ function ConnectionsContent() {
         fetch("/api/connections"),
         fetch("/api/user/plan"),
       ]);
-      if (connectionsRes.status === 403) {
-        setError("premium");
-        setLoading(false);
-        return;
-      }
       const connectionsData = await connectionsRes.json();
       const planData = await planRes.json();
       setAccounts(connectionsData.accounts || []);
@@ -160,23 +155,6 @@ function ConnectionsContent() {
   };
 
   const googleAccount = accounts.find((a) => a.providerId === "google");
-
-  if (error === "premium") {
-    return (
-      <div className="w-full max-w-5xl mx-auto flex items-center justify-center py-32">
-        <div className="space-y-6 max-w-md text-center">
-          <p className="text-8xl">🦁</p>
-          <h1 className="text-4xl font-bold font-heading">Pro feature</h1>
-          <p className="text-xl text-muted-foreground">
-            Only the king of the jungle can access this.
-          </p>
-          <Button asChild size="lg">
-            <Link href="/dashboard/plan#plans">Upgrade to Pro</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-10">

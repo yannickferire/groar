@@ -147,7 +147,7 @@ export default function RootLayout({
         <Analytics />
         <Script
           id="datafast-queue"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `window.datafast=window.datafast||function(){window.datafast.q=window.datafast.q||[];window.datafast.q.push(arguments)};`,
           }}

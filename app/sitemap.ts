@@ -4,7 +4,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
 
   // Update these dates when page content actually changes
-  const lastUpdated = "2026-03-17";
+  const lastUpdated = "2026-03-25";
 
   return [
     {

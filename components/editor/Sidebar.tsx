@@ -407,9 +407,9 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           // Auto-populate SaaS metrics if present in current settings
           const current = settingsRef.current;
           const saasMap: Partial<Record<string, number>> = {
-            mrr: latest.mrrCents / 100,
-            arr: Math.round(latest.mrrCents * 12) / 100,
-            revenue: latest.revenueTotalCents / 100,
+            mrr: Math.round(latest.mrrCents / 100),
+            arr: Math.round(latest.mrrCents * 12 / 100),
+            revenue: Math.round(latest.revenueTotalCents / 100),
           };
           const hasSaasMetric = current.metrics.some(m => m.type in saasMap);
           if (hasSaasMetric) {

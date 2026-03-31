@@ -355,6 +355,13 @@ function renderHeading(h: HeadingSettings, unit: number, isBanner: boolean, isSq
       </div>
     );
   }
+  if (h.type === "day" && h.day != null) {
+    return (
+      <div style={{ fontWeight: 700, fontSize: baseFontSize, letterSpacing: "-0.02em", display: "flex" }}>
+        Day {h.day}
+      </div>
+    );
+  }
   if (h.type === "custom" && h.text) {
     const size = isAnnouncement ? (isBanner ? unit * 5 : unit * 6.5) : (isBanner ? unit * 5 : unit * sq(6.5));
     return (
@@ -500,20 +507,26 @@ function parseMetrics(params: URLSearchParams): { type: string; value: number; p
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
 
-  // Auth — skip usage tracking for internal dashboard requests
+  // Auth — internal requests (dashboard, auto-post) bypass API key entirely
   const key = params.get("key");
   const referer = request.headers.get("referer") || "";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
   const isInternal = referer.startsWith(siteUrl) || referer.startsWith("http://localhost");
-  const authResult = await validateAndTrackKey(key, isInternal);
-  if (!authResult.valid) {
-    return new Response(JSON.stringify({ error: "Invalid API key" }), { status: 401, headers: { "Content-Type": "application/json" } });
-  }
-  // Monthly usage check (grace buffer = limit + 20%)
-  const usageCheck = await checkMonthlyUsage(authResult.userId!);
 
-  // Rate limit per minute (tier-dependent) — skip for internal requests
+  let authResult: { valid: boolean; userId: string | null };
+  if (isInternal) {
+    authResult = { valid: true, userId: null };
+  } else {
+    authResult = await validateAndTrackKey(key, false);
+    if (!authResult.valid) {
+      return new Response(JSON.stringify({ error: "Invalid API key" }), { status: 401, headers: { "Content-Type": "application/json" } });
+    }
+  }
+  // Monthly usage check & rate limiting — skip for internal requests
+  let externalTierWatermark = false;
   if (!isInternal) {
+    const usageCheck = await checkMonthlyUsage(authResult.userId!);
+    externalTierWatermark = API_TIERS[usageCheck.tier].watermark;
     const tierRateLimit = API_TIERS[usageCheck.tier].rateLimit;
     if (!checkRateLimit(key!, tierRateLimit)) {
       return new Response(JSON.stringify({ error: `Rate limit exceeded (${tierRateLimit} requests/minute)` }), { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "60" } });
@@ -529,28 +542,27 @@ export async function GET(request: NextRequest) {
         upgrade: "https://groar.app/dashboard/api",
       }), { status: 429, headers: { "Content-Type": "application/json" } });
     }
-  }
 
-  // ── Quota notifications (fire & forget) ────────────────────────────────────
-  if (!isInternal && usageCheck.limit > 0) {
-    checkAndUpdateQuotaThreshold(authResult.userId!, usageCheck.used, usageCheck.limit)
-      .then(async (threshold) => {
-        if (!threshold) return;
-        // Look up user email & name
-        const userRow = await pool.query(
-          `SELECT name, email FROM "user" WHERE id = $1`,
-          [authResult.userId]
-        );
-        const user = userRow.rows[0];
-        if (!user?.email) return;
-        const tierName = API_TIERS[usageCheck.tier].name;
-        const emailData =
-          threshold === 80 ? apiQuota80Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit)
-          : threshold === 100 ? apiQuota100Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit)
-          : apiQuota120Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit);
-        await sendEmail({ to: user.email, ...emailData });
-      })
-      .catch((err) => console.error("Quota notification error:", err));
+    // Quota notifications (fire & forget)
+    if (usageCheck.limit > 0) {
+      checkAndUpdateQuotaThreshold(authResult.userId!, usageCheck.used, usageCheck.limit)
+        .then(async (threshold) => {
+          if (!threshold) return;
+          const userRow = await pool.query(
+            `SELECT name, email FROM "user" WHERE id = $1`,
+            [authResult.userId]
+          );
+          const user = userRow.rows[0];
+          if (!user?.email) return;
+          const tierName = API_TIERS[usageCheck.tier].name;
+          const emailData =
+            threshold === 80 ? apiQuota80Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit)
+            : threshold === 100 ? apiQuota100Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit)
+            : apiQuota120Email(user.name || "there", tierName, usageCheck.used, usageCheck.limit);
+          await sendEmail({ to: user.email, ...emailData });
+        })
+        .catch((err) => console.error("Quota notification error:", err));
+    }
   }
 
   // ── Resolve settings ──────────────────────────────────────────────────────
@@ -595,10 +607,10 @@ export async function GET(request: NextRequest) {
   const showLogo = brandingParam !== "false" && brandingParam !== "0";
   const watermarkParam = params.get("watermark");
   // Free tier: watermark always on, paid tiers: watermark off by default (opt-in)
-  const forceWatermark = API_TIERS[usageCheck.tier].watermark;
-  const showWatermark = forceWatermark
-    ? true
-    : watermarkParam === "true" || watermarkParam === "1";
+  // Internal requests (dashboard/auto-post) never show watermark
+  const showWatermark = isInternal
+    ? false
+    : externalTierWatermark || watermarkParam === "true" || watermarkParam === "1";
 
   // Random support
   const imageBackgrounds = BACKGROUNDS.filter(b => b.image);
@@ -982,19 +994,23 @@ export async function GET(request: NextRequest) {
       {/* Main content */}
       {content}
 
-      {/* User logo (if right position, force to left to cohabit with groar branding) */}
+      {/* User logo */}
       {logoDataUrl && (
         <div style={{
           position: "absolute",
           bottom: "3%",
           display: "flex",
-          ...(logoPosition === "right" || logoPosition === "left" ? { left: "3%" } : { left: "50%", transform: "translateX(-50%)" }),
+          ...(logoPosition === "left"
+            ? { left: "3%" }
+            : logoPosition === "right"
+              ? { right: "3%" }
+              : { left: "50%", transform: "translateX(-50%)" }),
         }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoDataUrl}
             alt=""
-            style={{ height: unit * logoSize / 8, objectFit: "contain" }}
+            style={{ height: logoSize * unit / 6, objectFit: "contain" }}
           />
         </div>
       )}
