@@ -86,6 +86,41 @@ export async function fetchAccountAnalytics(
       [accountDbId]
     );
     if (recentAuto.rows.length > 0) {
+      // Even when skipping the fetch, still check scheduled auto-posts
+      // (they depend on the cron cycle, not on fresh data)
+      try {
+        const userRow = await pool.query(
+          `SELECT "userId" FROM account WHERE id = $1`, [accountDbId]
+        );
+        const uid = userRow.rows[0]?.userId;
+        if (uid) {
+          const lastSnapshot = await pool.query(
+            `SELECT "followersCount" FROM x_analytics_snapshot
+             WHERE "accountId" = $1 ORDER BY date DESC, "createdAt" DESC LIMIT 1`,
+            [accountDbId]
+          );
+          const followers = lastSnapshot.rows[0]?.followersCount;
+          if (followers != null) {
+            await processQueuedPosts(uid);
+            await checkScheduledAutoPost(uid, "followers", followers);
+          }
+          // Also check MRR/revenue auto-posts from latest TrustMRR data
+          const tmrr = await pool.query(
+            `SELECT "mrrCents", "revenueTotalCents" FROM trustmrr_snapshot
+             WHERE "userId" = $1 ORDER BY date DESC, "createdAt" DESC LIMIT 1`,
+            [uid]
+          );
+          if (tmrr.rows[0]) {
+            const mrr = Math.floor(tmrr.rows[0].mrrCents / 100);
+            const revenue = Math.floor(tmrr.rows[0].revenueTotalCents / 100);
+            if (mrr > 0) await checkScheduledAutoPost(uid, "mrr", mrr);
+            if (revenue > 0) await checkScheduledAutoPost(uid, "revenue", revenue);
+          }
+        }
+      } catch (e) {
+        console.error("Auto-post check on skipped fetch:", e);
+      }
+
       return {
         accountId: accountDbId,
         alreadyFetched: true,
@@ -223,11 +258,28 @@ export async function fetchAccountAnalytics(
         console.error("Queued auto-post error:", e);
       }
 
-      // Check scheduled auto-posts (daily/weekly/monthly) for X metrics
+      // Check scheduled auto-posts (daily/weekly) for X metrics
       try {
         await checkScheduledAutoPost(userId, "followers", userResult.public_metrics.followers_count);
       } catch (e) {
         console.error("Scheduled auto-post (followers) error:", e);
+      }
+
+      // Check scheduled auto-posts for MRR/revenue using latest TrustMRR data from DB
+      try {
+        const tmrr = await pool.query(
+          `SELECT "mrrCents", "revenueTotalCents" FROM trustmrr_snapshot
+           WHERE "userId" = $1 ORDER BY date DESC, "createdAt" DESC LIMIT 1`,
+          [userId]
+        );
+        if (tmrr.rows[0]) {
+          const mrr = Math.floor(tmrr.rows[0].mrrCents / 100);
+          const revenue = Math.floor(tmrr.rows[0].revenueTotalCents / 100);
+          if (mrr > 0) await checkScheduledAutoPost(userId, "mrr", mrr);
+          if (revenue > 0) await checkScheduledAutoPost(userId, "revenue", revenue);
+        }
+      } catch (e) {
+        console.error("Scheduled auto-post (mrr/revenue) error:", e);
       }
     }
   }

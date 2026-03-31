@@ -91,8 +91,8 @@ const ALL_TEMPLATE_VARIABLES = [
   { name: "{period}", desc: "Day or week counter number", templates: ["metrics"] as AutoPostCardTemplate[] },
 ];
 
-// Available schedule hours (UTC) — aligned with Inngest cron at 1,7,13,19 UTC
-const SCHEDULE_HOURS_UTC = [1, 7, 13, 19];
+// Available schedule hours (UTC) — aligned with Inngest cron
+const SCHEDULE_HOURS_UTC = [1, 7, 13, 14, 19];
 
 /** Convert UTC hour to local hour string (e.g. "9:00 AM") */
 function utcHourToLocal(utcHour: number): string {

@@ -2,7 +2,6 @@
 import { pool } from "@/lib/db";
 import { fetchStartupByXHandle } from "@/lib/trustmrr";
 import { checkRevenueMilestones } from "@/lib/milestones";
-import { checkScheduledAutoPost, processQueuedPosts } from "@/lib/auto-post";
 
 export type FetchType = "auto" | "manual";
 
@@ -152,25 +151,6 @@ export async function fetchTrustMRRForUser(
       );
     } catch (e) {
       console.error("Failed to check revenue milestones:", e);
-    }
-
-    // Process any queued milestone posts whose schedule hour matches
-    try {
-      await processQueuedPosts(userId);
-    } catch (e) {
-      console.error("Queued auto-post error:", e);
-    }
-
-    // Check scheduled auto-posts (daily/weekly/monthly) for revenue metrics
-    try {
-      await checkScheduledAutoPost(userId, "mrr", Math.floor(startup.revenue.mrrCents / 100));
-    } catch (e) {
-      console.error("Scheduled auto-post (mrr) error:", e);
-    }
-    try {
-      await checkScheduledAutoPost(userId, "revenue", Math.floor(startup.revenue.totalCents / 100));
-    } catch (e) {
-      console.error("Scheduled auto-post (revenue) error:", e);
     }
   }
 

@@ -6,16 +6,15 @@ import { sendEmail, trialEndingEmail, trialExpiredEmail, trialFollowUpEmail, sec
 import { getPricingTierInfo } from "@/lib/plans-server";
 import { TRIAL_DURATION_DAYS } from "@/lib/plans";
 
-// Daily analytics fetch - runs at 1am UTC for all accounts
+// X Analytics fetch + auto-post checks (uses latest TrustMRR data from DB)
 export const dailyAnalyticsFetch = inngest.createFunction(
   {
     id: "daily-analytics-fetch",
     name: "Daily X Analytics Fetch",
     retries: 3,
   },
-  { cron: "0 1,7,13,19 * * *" }, // Every 6 hours: 1am, 7am, 1pm, 7pm UTC
+  { cron: "0 1,7,13,14,19 * * *" }, // 1am, 7am, 1pm, 2pm, 7pm UTC
   async ({ step, logger }) => {
-    // Get all X accounts
     const accounts = await step.run("get-all-accounts", async () => {
       return await getAllXAccounts();
     });
@@ -31,7 +30,6 @@ export const dailyAnalyticsFetch = inngest.createFunction(
     let errorCount = 0;
     let skippedCount = 0;
 
-    // Process each account
     for (const account of accounts) {
       const result = await step.run(
         `fetch-account-${account.id}`,
@@ -102,6 +100,43 @@ export const dailyAnalyticsFetch = inngest.createFunction(
       },
       accounts: results,
     };
+  }
+);
+
+// TrustMRR fetch — runs 1h before each X analytics fetch to ensure fresh data
+export const dailyTrustMRRFetch = inngest.createFunction(
+  {
+    id: "daily-trustmrr-fetch",
+    name: "Daily TrustMRR Fetch",
+    retries: 2,
+  },
+  { cron: "0 0,6,12,13,18 * * *" }, // 1h before analytics cron (1,7,13,14,19 UTC)
+  async ({ step, logger }) => {
+    const tmrrSummary = await step.run("fetch-all-trustmrr", async () => {
+      const users = await getUsersForTrustMRR();
+      let success = 0, errors = 0, skipped = 0;
+
+      for (let i = 0; i < users.length; i++) {
+        // 4s between each request = max 15 req/min (TrustMRR limit: 20/min)
+        if (i > 0) {
+          await new Promise((r) => setTimeout(r, 4000));
+        }
+
+        try {
+          const result = await fetchTrustMRRForUser(users[i].userId, users[i].xUsername, "auto");
+          if ("success" in result && result.success) success++;
+          else skipped++;
+        } catch {
+          errors++;
+        }
+      }
+
+      return { total: users.length, success, errors, skipped };
+    });
+
+    logger.info(`TrustMRR: ${tmrrSummary.success} success, ${tmrrSummary.errors} errors, ${tmrrSummary.skipped} skipped`);
+
+    return { success: true, ...tmrrSummary };
   }
 );
 
@@ -294,85 +329,6 @@ export const trialEmailSequence = inngest.createFunction(
   }
 );
 
-// Daily TrustMRR fetch — runs once per day at 2am UTC
-export const dailyTrustMRRFetch = inngest.createFunction(
-  {
-    id: "daily-trustmrr-fetch",
-    name: "Daily TrustMRR Fetch",
-    retries: 2,
-  },
-  { cron: "0 2 * * *" },
-  async ({ step, logger }) => {
-    const users = await step.run("get-trustmrr-users", async () => {
-      return await getUsersForTrustMRR();
-    });
-
-    logger.info(`Found ${users.length} users with TrustMRR data`);
-
-    if (users.length === 0) {
-      return { message: "No users with TrustMRR data", users: [] };
-    }
-
-    let successCount = 0;
-    let errorCount = 0;
-    let skippedCount = 0;
-
-    for (let i = 0; i < users.length; i++) {
-      const user = users[i];
-
-      // Rate limit: TrustMRR allows 20 req/min, space out requests
-      if (i > 0) {
-        await step.sleep(`wait-${i}`, "4s");
-      }
-
-      const result = await step.run(
-        `fetch-trustmrr-${user.userId}`,
-        async () => {
-          try {
-            return await fetchTrustMRRForUser(
-              user.userId,
-              user.xUsername,
-              "auto"
-            );
-          } catch (error) {
-            return {
-              userId: user.userId,
-              error: error instanceof Error ? error.message : "Unknown error",
-            };
-          }
-        }
-      );
-
-      if ("success" in result && result.success) {
-        successCount++;
-      } else if ("alreadyFetched" in result && result.alreadyFetched) {
-        skippedCount++;
-      } else if ("notFound" in result && result.notFound) {
-        skippedCount++;
-      } else {
-        errorCount++;
-        if ("error" in result) {
-          logger.error(`TrustMRR error for ${user.userId}: ${result.error}`);
-        }
-      }
-    }
-
-    logger.info(
-      `TrustMRR: ${successCount} success, ${errorCount} errors, ${skippedCount} skipped`
-    );
-
-    return {
-      success: true,
-      summary: {
-        total: users.length,
-        success: successCount,
-        errors: errorCount,
-        skipped: skippedCount,
-      },
-    };
-  }
-);
-
 // Batch re-engage old leads — triggered manually from admin funnel page
 // Spaces out emails with 30s between each to avoid rate limits
 export const batchReengage = inngest.createFunction(
@@ -490,6 +446,5 @@ export const batchReengage = inngest.createFunction(
   }
 );
 
-// Export all functions for the serve handler
-// Export all functions for the serve handler (max 5 on free Inngest plan)
+// Export all functions for the serve handler (max 5 on free Inngest plan — currently 4/5)
 export const functions = [dailyAnalyticsFetch, dailyTrustMRRFetch, trialEmailSequence, batchReengage];

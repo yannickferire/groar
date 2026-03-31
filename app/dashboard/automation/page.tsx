@@ -98,7 +98,7 @@ type AutoPostStats = {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-const SCHEDULE_HOURS_UTC = [1, 7, 13, 19];
+const SCHEDULE_HOURS_UTC = [1, 7, 13, 14, 19];
 
 function closestScheduleHour(hour: number): number {
   return SCHEDULE_HOURS_UTC.reduce((prev, curr) =>
@@ -126,6 +126,17 @@ function getNextScheduledDate(trigger: "daily" | "weekly", scheduleHour: number,
 function formatNextDate(date: Date): string {
   return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
     + " " + date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+function formatTimeUntil(date: Date): string {
+  const diffMs = date.getTime() - Date.now();
+  if (diffMs <= 0) return "now";
+  const totalMin = Math.floor(diffMs / 60000);
+  const hours = Math.floor(totalMin / 60);
+  const minutes = totalMin % 60;
+  if (hours === 0) return `in ${minutes}m`;
+  if (minutes === 0) return `in ${hours}h`;
+  return `in ${hours}h ${minutes}m`;
 }
 
 /** Calculate current day/week number from start date for preview heading */
@@ -648,7 +659,7 @@ export default function AutomationPage() {
                         <p className="text-[11px] text-muted-foreground truncate capitalize">{auto.trigger}</p>
                       </div>
                       <span className="text-[11px] text-muted-foreground shrink-0">
-                        {formatNextDate(nextDate)}
+                        {formatTimeUntil(nextDate)}
                       </span>
                     </div>
                   );

@@ -387,12 +387,18 @@ async function executePost(
       });
     }
   } catch (err) {
+    const errorMsg = error || String(err);
     await pool.query(
       `INSERT INTO x_auto_post ("userId", "accountId", metric, milestone, "tweetText", status, error, "automationId")
        VALUES ($1, $2, $3, $4, $5, 'failed', $6, $7)`,
-      [userId, account.accountId, metric, value, tweetText, error || String(err), automationId]
+      [userId, account.accountId, metric, value, tweetText, errorMsg, automationId]
     );
     console.error(`Auto-post failed for user ${userId}, automation ${automationId}:`, err);
+
+    // Send failure email to admin (fire & forget)
+    sendAutoPostFailureAdminEmail(userId, automationId, metric, value, errorMsg, trigger, tweetText).catch((e) => {
+      console.error("Auto-post failure admin email failed:", e);
+    });
   }
 }
 
@@ -421,6 +427,48 @@ async function sendAutoPostEmail(
 
   const email = automationPostedEmail(user.name || "there", metric, formatted, tweetUrl, emailTrigger);
   await sendEmail({ to: user.email, ...email });
+}
+
+const ADMIN_EMAIL = "yannick.ferire@gmail.com";
+
+async function sendAutoPostFailureAdminEmail(
+  userId: string,
+  automationId: string | null,
+  metric: string,
+  value: number,
+  errorMessage: string,
+  trigger: AutoPostTrigger,
+  tweetText: string | null
+): Promise<void> {
+  const userResult = await pool.query(
+    `SELECT email, name, "xUsername" FROM "user" WHERE id = $1`,
+    [userId]
+  );
+  const user = userResult.rows[0];
+
+  const isRevenue = metric === "mrr" || metric === "revenue";
+  const formatted = isRevenue
+    ? `$${formatMilestoneNumber(value)}`
+    : formatMilestoneNumber(value);
+
+  const details = [
+    `<strong>User:</strong> ${user?.name || "?"} (${user?.email || "?"})`,
+    `<strong>User ID:</strong> ${userId}`,
+    `<strong>X handle:</strong> @${user?.xUsername || "?"}`,
+    `<strong>Automation ID:</strong> ${automationId || "N/A"}`,
+    `<strong>Trigger:</strong> ${trigger}`,
+    `<strong>Metric:</strong> ${metric}`,
+    `<strong>Value:</strong> ${formatted}`,
+    `<strong>Tweet text:</strong> <pre style="white-space:pre-wrap;font-size:12px;background:#1a1a1a;padding:8px;border-radius:4px;margin:4px 0;">${tweetText || "N/A"}</pre>`,
+    `<strong>Error:</strong> <pre style="white-space:pre-wrap;font-size:12px;background:#2d1111;color:#fca5a5;padding:8px;border-radius:4px;margin:4px 0;">${errorMessage}</pre>`,
+    `<strong>Time:</strong> ${new Date().toISOString()}`,
+  ].join("<br>");
+
+  await sendEmail({
+    to: ADMIN_EMAIL,
+    subject: `[Groar] Auto-post FAILED — ${user?.name || userId} — ${metric} ${formatted}`,
+    html: `<div style="font-family:monospace;font-size:13px;color:#e5e5e5;background:#111;padding:20px;border-radius:8px;">${details}</div>`,
+  });
 }
 
 // ─── Fresh metric fetch ─────────────────────────────────────────────
