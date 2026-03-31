@@ -358,7 +358,12 @@ export default function DashboardSidebar() {
             </div>
           </div>
         ) : null}
-        <SidebarSeparator />
+        {userPlan && ["pro", "friend"].includes(userPlan) && (
+          <a href="https://affiliates.creem.io/join/early-affiliate-program" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-2 py-1.5 w-full rounded-lg border border-sidebar-border hover:bg-sidebar-accent transition-colors text-left h-9">
+            <HugeiconsIcon icon={GiftIcon} size={20} strokeWidth={2} />
+            <span className="text-sm flex-1">Earn 30% commission</span>
+          </a>
+        )}
         <UserMenu isAdmin={isAdmin} />
       </SidebarFooter>
     </Sidebar>
