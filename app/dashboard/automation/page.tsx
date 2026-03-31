@@ -83,7 +83,7 @@ type AutoPostEntry = {
   milestone: number;
   tweetId: string | null;
   tweetText: string;
-  status: "posted" | "failed" | "skipped_limit" | "pending" | "queued";
+  status: "posted" | "failed" | "skipped_limit" | "pending" | "queued" | "publishing";
   error: string | null;
   postedAt: string | null;
   createdAt: string;
@@ -111,7 +111,7 @@ function getNextScheduledDate(trigger: "daily" | "weekly", scheduleHour: number,
   const now = new Date();
   const target = new Date(now);
   const hour = closestScheduleHour(scheduleHour);
-  target.setUTCHours(hour, 0, 0, 0);
+  target.setUTCHours(hour, hour === 14 ? 30 : 0, 0, 0);
   if (trigger === "weekly") {
     const currentDay = (now.getUTCDay() + 6) % 7; // Mon=0...Sun=6
     let daysUntil = scheduleDay - currentDay;
@@ -137,6 +137,15 @@ function formatTimeUntil(date: Date): string {
   if (hours === 0) return `in ${minutes}m`;
   if (minutes === 0) return `in ${hours}h`;
   return `in ${hours}h ${minutes}m`;
+}
+
+function CountdownText({ date }: { date: Date }) {
+  const [text, setText] = useState(() => formatTimeUntil(date));
+  useEffect(() => {
+    const id = setInterval(() => setText(formatTimeUntil(date)), 60_000);
+    return () => clearInterval(id);
+  }, [date]);
+  return <>{text}</>;
 }
 
 /** Calculate current day/week number from start date for preview heading */
@@ -615,11 +624,33 @@ export default function AutomationPage() {
           {/* Upcoming */}
           {(() => {
             const queuedEntries = history.filter((e) => e.status === "queued");
+            const publishingEntries = history.filter((e) => e.status === "publishing");
             const scheduledAutos = automations.filter((a) => a.enabled && a.trigger !== "milestone" && a.scheduleHour != null);
-            if (queuedEntries.length === 0 && scheduledAutos.length === 0) return null;
+            if (queuedEntries.length === 0 && publishingEntries.length === 0 && scheduledAutos.length === 0) return null;
             return (
               <div className="rounded-2xl border-fade p-5 space-y-3">
                 <h2 className="text-sm font-medium">Upcoming</h2>
+                {publishingEntries.map((entry) => {
+                  const automation = automations.find((a) => a.id === entry.automationId);
+                  return (
+                    <div key={entry.id} className="flex items-center gap-3 py-1.5">
+                      <HugeiconsIcon icon={Loading03Icon} size={14} strokeWidth={1.5} className="text-primary shrink-0 animate-spin" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate">
+                          <span className="font-medium">{METRIC_INFO[entry.metric as AutoPostMetric]?.label || entry.metric}</span>{" "}
+                          <span className="text-muted-foreground">
+                            {["mrr", "revenue"].includes(entry.metric) ? "$" : ""}
+                            {entry.milestone.toLocaleString()}
+                          </span>
+                        </p>
+                        {automation && (
+                          <p className="text-[11px] text-muted-foreground truncate">{automation.name}</p>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-primary font-medium shrink-0">Publishing...</span>
+                    </div>
+                  );
+                })}
                 {queuedEntries.map((entry) => {
                   const automation = automations.find((a) => a.id === entry.automationId);
                   return (
@@ -659,7 +690,7 @@ export default function AutomationPage() {
                         <p className="text-[11px] text-muted-foreground truncate capitalize">{auto.trigger}</p>
                       </div>
                       <span className="text-[11px] text-muted-foreground shrink-0">
-                        {formatTimeUntil(nextDate)}
+                        <CountdownText date={nextDate} />
                       </span>
                     </div>
                   );
@@ -672,7 +703,7 @@ export default function AutomationPage() {
           <div className="rounded-2xl border-fade p-5 space-y-3">
             <h2 className="text-sm font-medium">Recent posts</h2>
             {(() => {
-              const pastEntries = history.filter((e) => e.status !== "queued");
+              const pastEntries = history.filter((e) => e.status !== "queued" && e.status !== "publishing");
               if (pastEntries.length === 0) {
                 return <p className="text-sm text-muted-foreground">No posts yet.</p>;
               }

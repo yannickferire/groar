@@ -327,6 +327,14 @@ async function executePost(
   let tweetId: string | null = null;
   let error: string | null = null;
 
+  // Insert a "publishing" row so the UI shows progress
+  const publishingRow = await pool.query(
+    `INSERT INTO x_auto_post ("userId", "accountId", metric, milestone, "tweetText", status, "automationId")
+     VALUES ($1, $2, $3, $4, $5, 'publishing', $6) RETURNING id`,
+    [userId, account.accountId, metric, value, tweetText, automationId]
+  );
+  const publishingId = publishingRow.rows[0]?.id;
+
   try {
     let mediaIds: string[] | undefined;
     if (imageBuffer) {
@@ -365,9 +373,8 @@ async function executePost(
     }
 
     await pool.query(
-      `INSERT INTO x_auto_post ("userId", "accountId", metric, milestone, "tweetId", "tweetText", status, "postedAt", "automationId")
-       VALUES ($1, $2, $3, $4, $5, $6, 'posted', NOW(), $7)`,
-      [userId, account.accountId, metric, value, tweetId, tweetText, automationId]
+      `UPDATE x_auto_post SET status = 'posted', "tweetId" = $2, "postedAt" = NOW() WHERE id = $1`,
+      [publishingId, tweetId]
     );
 
     // Deduct credits
@@ -389,9 +396,8 @@ async function executePost(
   } catch (err) {
     const errorMsg = error || String(err);
     await pool.query(
-      `INSERT INTO x_auto_post ("userId", "accountId", metric, milestone, "tweetText", status, error, "automationId")
-       VALUES ($1, $2, $3, $4, $5, 'failed', $6, $7)`,
-      [userId, account.accountId, metric, value, tweetText, errorMsg, automationId]
+      `UPDATE x_auto_post SET status = 'failed', error = $2 WHERE id = $1`,
+      [publishingId, errorMsg]
     );
     console.error(`Auto-post failed for user ${userId}, automation ${automationId}:`, err);
 
@@ -711,18 +717,25 @@ export async function checkScheduledAutoPost(
   metric: AutoPostMetric,
   currentValue: number
 ): Promise<void> {
+  console.log(`[auto-post] checkScheduledAutoPost called: userId=${userId}, metric=${metric}, value=${currentValue}`);
+
   // Only Pro users can auto-post
-  if (!(await isProUser(userId))) return;
+  if (!(await isProUser(userId))) {
+    console.log(`[auto-post] Skipped: user ${userId} is not Pro`);
+    return;
+  }
 
   // Check credits
   if (!(await hasEnoughCredits(userId, CREDIT_COST_POST))) {
-    console.log(`No credits left for user ${userId}, skipping scheduled post`);
+    console.log(`[auto-post] Skipped: no credits left for user ${userId}`);
     return;
   }
 
   // Only run automations scheduled for the current UTC hour
   const currentUtcHour = new Date().getUTCHours();
   const currentUtcDay = (new Date().getUTCDay() + 6) % 7; // 0=Mon, 6=Sun (matching our scheduleDay)
+
+  console.log(`[auto-post] currentUtcHour=${currentUtcHour}, currentUtcDay=${currentUtcDay}`);
 
   const result = await pool.query(
     `SELECT id, metric, trigger, "cardTemplate", goal, "tweetTemplate", "visualSettings", "startDay", "startDate", "scheduleHour", "scheduleDay"
@@ -733,7 +746,17 @@ export async function checkScheduledAutoPost(
     [userId, metric, currentUtcHour]
   );
 
-  if (result.rows.length === 0) return;
+  console.log(`[auto-post] Found ${result.rows.length} matching automations for metric=${metric}, hour=${currentUtcHour}`);
+  if (result.rows.length === 0) {
+    // Debug: check what automations exist for this user
+    const allAutos = await pool.query(
+      `SELECT id, metric, trigger, enabled, "scheduleHour", "scheduleDay"
+       FROM automation WHERE "userId" = $1 AND trigger != 'milestone'`,
+      [userId]
+    );
+    console.log(`[auto-post] All non-milestone automations for user:`, JSON.stringify(allAutos.rows));
+    return;
+  }
 
   const account = await getXAccount(userId);
   if (!account || !hasWriteScope(account.scope)) return;
@@ -741,12 +764,20 @@ export async function checkScheduledAutoPost(
   for (const row of result.rows) {
     const auto: AutomationRow = row;
 
+    console.log(`[auto-post] Checking automation ${auto.id}: trigger=${auto.trigger}, scheduleHour=${auto.scheduleHour}, scheduleDay=${auto.scheduleDay}`);
+
     // For weekly automations, check if today is the scheduled day
-    if (auto.trigger === "weekly" && auto.scheduleDay != null && auto.scheduleDay !== currentUtcDay) continue;
+    if (auto.trigger === "weekly" && auto.scheduleDay != null && auto.scheduleDay !== currentUtcDay) {
+      console.log(`[auto-post] Skipped automation ${auto.id}: wrong day (scheduleDay=${auto.scheduleDay}, today=${currentUtcDay})`);
+      continue;
+    }
 
     // Check cooldown: ensure we haven't already posted for this automation in this time slot
     const requiredHours = FREQUENCY_HOURS[auto.trigger as Exclude<AutoPostTrigger, "milestone">];
-    if (!(await canScheduledPostNow(userId, auto.id, requiredHours))) continue;
+    if (!(await canScheduledPostNow(userId, auto.id, requiredHours))) {
+      console.log(`[auto-post] Skipped automation ${auto.id}: cooldown not elapsed (required ${requiredHours}h)`);
+      continue;
+    }
 
     const dayNumber = calculateDayNumber(auto.startDay, auto.startDate, auto.trigger);
     const allMetrics = parseMetrics(auto.metric);
@@ -770,8 +801,11 @@ export async function checkScheduledAutoPost(
        ORDER BY "postedAt" DESC LIMIT 1`,
       [auto.id]
     );
+    if (lastPost.rows.length > 0) {
+      console.log(`[auto-post] Last posted milestone=${lastPost.rows[0].milestone} (type=${typeof lastPost.rows[0].milestone}), current primaryValue=${primaryValue} (type=${typeof primaryValue})`);
+    }
     if (lastPost.rows.length > 0 && lastPost.rows[0].milestone === primaryValue) {
-      console.log(`Skipped scheduled post for user ${userId}: ${primaryMetric} value unchanged at ${primaryValue}`);
+      console.log(`[auto-post] Skipped automation ${auto.id}: value unchanged at ${primaryValue}`);
       continue;
     }
 
