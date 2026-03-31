@@ -136,7 +136,7 @@ export const dailyTrustMRRFetch = inngest.createFunction(
 
     logger.info(`TrustMRR: ${tmrrSummary.success} success, ${tmrrSummary.errors} errors, ${tmrrSummary.skipped} skipped`);
 
-    return { success: true, ...tmrrSummary };
+    return { ok: true, ...tmrrSummary };
   }
 );
 
