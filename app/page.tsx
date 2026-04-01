@@ -1,6 +1,17 @@
+import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
+
+export const metadata: Metadata = {
+  twitter: {
+    card: "summary_large_image",
+    title: "Groar — Turn your growth into visuals that Roaaar",
+    description: "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
+    images: ["https://groar.app/og-image.png"],
+    creator: "@yannick_ferire",
+  },
+};
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/Hero";
 
