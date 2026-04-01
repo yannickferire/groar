@@ -109,6 +109,10 @@ export default function ProofSection() {
           <Link href="/wall" className="inline-block mt-0.5 underline underline-offset-2 hover:text-foreground transition-colors">
             See what the community created
           </Link>
+          {" · "}
+          <Link href="/milestone" className="inline-block mt-0.5 underline underline-offset-2 hover:text-foreground transition-colors">
+            Browse milestone templates
+          </Link>
         </p>
       </FadeInView>
     </section>

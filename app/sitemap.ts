@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { MILESTONE_PAGES } from "@/lib/milestone-pages";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
@@ -97,5 +98,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    {
+      url: `${siteUrl}/milestone`,
+      lastModified: "2026-04-01",
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    ...MILESTONE_PAGES.map((m) => ({
+      url: `${siteUrl}/milestone/${m.slug}`,
+      lastModified: "2026-04-01",
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
   ];
 }

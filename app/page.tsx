@@ -146,6 +146,10 @@ export default async function Home() {
             <Link href="/vs" className="underline hover:text-foreground transition-colors">
               all comparisons
             </Link>.
+            {" "}Or browse our{" "}
+            <Link href="/milestone" className="underline hover:text-foreground transition-colors">
+              milestone post templates
+            </Link>.
           </p>
         </section>
         <Footer />

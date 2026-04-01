@@ -340,10 +340,56 @@ Groar offers a REST API to generate card images programmatically. Users design t
 
 ---
 
+## Milestone Templates
+
+Groar offers 180 programmatic SEO pages for milestone celebrations (30 base + 150 platform-specific). Each page targets a specific milestone value, category, and optionally a platform, and includes:
+
+- SEO-optimized title, description, and keywords
+- A card preview with a unique background
+- Tips for crafting the milestone post (platform-specific when applicable)
+- 3 ready-to-copy post ideas adapted to the platform's tone
+- FAQ section with structured data (JSON-LD FAQPage)
+- Article JSON-LD schema
+- Internal linking (prev/next, cross-category, cross-platform)
+
+### Categories & Values
+
+**Followers**: 100, 500, 1K, 2K, 5K, 10K, 25K, 50K, 100K
+- URLs: https://groar.app/milestone/100-followers through https://groar.app/milestone/100k-followers
+
+**MRR** (Monthly Recurring Revenue): $100, $500, $1K, $5K, $10K, $50K, $100K
+- URLs: https://groar.app/milestone/100-mrr through https://groar.app/milestone/100k-mrr
+
+**Revenue** (Total Revenue): $1K, $10K, $100K, $1M
+- URLs: https://groar.app/milestone/1k-revenue through https://groar.app/milestone/1m-revenue
+
+**GitHub Stars**: 100, 500, 1K, 5K, 10K
+- URLs: https://groar.app/milestone/100-github-stars through https://groar.app/milestone/10k-github-stars
+
+**Customers**: 10, 50, 100, 500, 1K
+- URLs: https://groar.app/milestone/10-customers through https://groar.app/milestone/1k-customers
+
+### Platform-Specific Pages
+
+Every milestone above is also available with platform-specific content for 5 platforms:
+- **X (Twitter)**: tips for X's algorithm, build-in-public style captions
+- **LinkedIn**: professional storytelling format, B2B tips
+- **Instagram**: carousel and Reel tips, visual-first captions
+- **TikTok**: authentic video content tips, casual tone captions
+- **Bluesky**: open web community tips, genuine conversation format
+
+URL pattern: https://groar.app/milestone/{milestone}-on-{platform}
+Examples: https://groar.app/milestone/1k-followers-on-linkedin, https://groar.app/milestone/10k-mrr-on-tiktok
+
+**Hub page**: https://groar.app/milestone — lists all milestones grouped by category and platform.
+
+---
+
 ## Links
 
 - Website: https://groar.app
 - API: https://groar.app/dashboard/api
+- Milestones: https://groar.app/milestone
 - Compare: https://groar.app/vs
 - Comparisons: https://groar.app/vs/screenshots, https://groar.app/vs/canva, https://groar.app/vs/piktochart, https://groar.app/vs/image-charts, https://groar.app/vs/spreadsheets, https://groar.app/vs/build-in-public
 - Leaderboard: https://groar.app/public

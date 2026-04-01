@@ -61,10 +61,29 @@ Generate card images programmatically. Design in the editor, save as API templat
 - Payments: Creem (primary), Polar (legacy)
 - Analytics: PostHog
 
+## Milestone Templates
+
+180 ready-made milestone post templates for social media. Each page includes post ideas, tips, and a card preview.
+
+### By Category
+- **Followers**: 100, 500, 1K, 2K, 5K, 10K, 25K, 50K, 100K
+- **MRR**: $100, $500, $1K, $5K, $10K, $50K, $100K
+- **Revenue**: $1K, $10K, $100K, $1M
+- **GitHub Stars**: 100, 500, 1K, 5K, 10K
+- **Customers**: 10, 50, 100, 500, 1K
+
+### By Platform
+Every milestone is also available with platform-specific tips, captions, and advice for: X (Twitter), LinkedIn, Instagram, TikTok, and Bluesky.
+
+Hub: https://groar.app/milestone
+Example: https://groar.app/milestone/1k-followers
+Platform example: https://groar.app/milestone/1k-followers-on-linkedin
+
 ## Links
 
 - Website: https://groar.app
 - API: https://groar.app/dashboard/api
+- Milestones: https://groar.app/milestone
 - Compare: https://groar.app/vs
 - Comparisons: https://groar.app/vs/screenshots, https://groar.app/vs/canva, https://groar.app/vs/piktochart, https://groar.app/vs/image-charts, https://groar.app/vs/spreadsheets, https://groar.app/vs/build-in-public
 - Leaderboard: https://groar.app/public

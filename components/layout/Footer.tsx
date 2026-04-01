@@ -9,12 +9,23 @@ export default function Footer() {
     <FadeInView direction="down" distance={24} amount={0.2}>
       <footer className="w-full max-w-6xl mx-auto border-t border-border mt-12 md:mt-24 px-4">
         <div className="py-8 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
-          <div className="flex flex-col items-center md:items-start gap-2 md:w-2/5 shrink-0">
+          <div className="flex flex-col items-center md:items-start gap-2 md:w-1/4 shrink-0">
             <Logo />
             <p className="text-sm text-muted-foreground">
               Turn your social media metrics
               <br />
               into shareable visuals
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-6">
+              Built by{" "}
+              <a
+                href="https://x.com/yannick_ferire"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-foreground transition-colors"
+              >
+                @yannick_ferire
+              </a>
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 items-start w-full">
@@ -42,6 +53,28 @@ export default function Footer() {
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
+              <h4 className="text-sm font-medium">Legal</h4>
+              <div className="flex flex-col gap-1 text-sm text-foreground/60">
+                <Link href="/privacy" className="hover:text-foreground transition-colors">
+                  Privacy
+                </Link>
+                <Link href="/terms" className="hover:text-foreground transition-colors">
+                  Terms
+                </Link>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <h4 className="text-sm font-medium">Resources</h4>
+              <div className="flex flex-col gap-1 text-sm text-foreground/60">
+                <Link href="/milestone" className="hover:text-foreground transition-colors">
+                  Milestone Templates
+                </Link>
+                <Link href="/vs/build-in-public" className="hover:text-foreground transition-colors">
+                  Build in Public
+                </Link>
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
               <h4 className="text-sm font-medium">Compare</h4>
               <div className="flex flex-col gap-1 text-sm text-foreground/60">
                 <Link href="/vs" className="hover:text-foreground transition-colors">
@@ -62,32 +95,7 @@ export default function Footer() {
                 <Link href="/vs/spreadsheets" className="hover:text-foreground transition-colors">
                   vs Spreadsheets
                 </Link>
-                <Link href="/vs/build-in-public" className="hover:text-foreground transition-colors">
-                  Build in Public
-                </Link>
               </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <h4 className="text-sm font-medium">Legal</h4>
-              <div className="flex flex-col gap-1 text-sm text-foreground/60">
-                <Link href="/privacy" className="hover:text-foreground transition-colors">
-                  Privacy
-                </Link>
-                <Link href="/terms" className="hover:text-foreground transition-colors">
-                  Terms
-                </Link>
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <h4 className="text-sm font-medium">Made by</h4>
-              <a
-                href="https://x.com/yannick_ferire"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-foreground/60 hover:text-foreground transition-colors"
-              >
-                @yannick_ferire
-              </a>
             </div>
           </div>
         </div>
