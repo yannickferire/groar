@@ -321,19 +321,23 @@ async function executePost(
   value: number,
   tweetText: string,
   imageBuffer: Buffer | null,
-  account: { id: string; accountId: string; accessToken: string; refreshToken: string }
+  account: { id: string; accountId: string; accessToken: string; refreshToken: string },
+  existingPublishingId?: string
 ): Promise<void> {
   let accessToken = account.accessToken;
   let tweetId: string | null = null;
   let error: string | null = null;
 
-  // Insert a "publishing" row so the UI shows progress
-  const publishingRow = await pool.query(
-    `INSERT INTO x_auto_post ("userId", "accountId", metric, milestone, "tweetText", status, "automationId")
-     VALUES ($1, $2, $3, $4, $5, 'publishing', $6) RETURNING id`,
-    [userId, account.accountId, metric, value, tweetText, automationId]
-  );
-  const publishingId = publishingRow.rows[0]?.id;
+  // Reuse existing publishing row or create one
+  let publishingId = existingPublishingId;
+  if (!publishingId) {
+    const publishingRow = await pool.query(
+      `INSERT INTO x_auto_post ("userId", "accountId", metric, milestone, "tweetText", status, "automationId")
+       VALUES ($1, $2, $3, $4, $5, 'publishing', $6) RETURNING id`,
+      [userId, account.accountId, metric, value, tweetText, automationId]
+    );
+    publishingId = publishingRow.rows[0]?.id;
+  }
 
   try {
     let mediaIds: string[] | undefined;
@@ -681,16 +685,20 @@ export async function processQueuedPosts(userId: string): Promise<void> {
   }
 
   const tweetText = buildTweetText(entry.metric, auto.trigger, auto.tweetTemplate, milestoneToPost, milestoneToPost, auto.goal || undefined);
-  const imageBuffer = await generateCardImage(entry.metric as MilestoneMetric, milestoneToPost, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined);
 
-  // Remove queued entry (executePost creates a new posted/failed entry)
-  await pool.query(`DELETE FROM x_auto_post WHERE id = $1`, [entry.id]);
+  // Switch queued → publishing so UI shows progress
+  await pool.query(
+    `UPDATE x_auto_post SET status = 'publishing', milestone = $2, "tweetText" = $3 WHERE id = $1`,
+    [entry.id, milestoneToPost, tweetText]
+  );
+
+  const imageBuffer = await generateCardImage(entry.metric as MilestoneMetric, milestoneToPost, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined);
 
   // Re-fetch account to get the latest token (ensureValidToken may have consumed the old refresh token)
   const freshAccount = await getXAccount(userId);
   if (!freshAccount || !hasWriteScope(freshAccount.scope)) return;
 
-  await executePost(userId, auto.id, entry.metric, auto.trigger, milestoneToPost, tweetText, imageBuffer, freshAccount);
+  await executePost(userId, auto.id, entry.metric, auto.trigger, milestoneToPost, tweetText, imageBuffer, freshAccount, entry.id);
   console.log(`Processed queued milestone for user ${userId}: ${entry.metric}=${milestoneToPost}`);
 }
 
@@ -792,13 +800,22 @@ export async function checkScheduledAutoPost(
     }
 
     const tweetText = buildTweetText(primaryMetric, auto.trigger, auto.tweetTemplate, primaryValue, primaryValue, auto.goal || undefined, dayNumber);
+
+    // Insert "publishing" row early so UI shows progress while image generates
+    const pubRow = await pool.query(
+      `INSERT INTO x_auto_post ("userId", "accountId", metric, milestone, "tweetText", status, "automationId")
+       VALUES ($1, $2, $3, $4, $5, 'publishing', $6) RETURNING id`,
+      [userId, account.accountId, primaryMetric, primaryValue, tweetText, auto.id]
+    );
+    const publishingId = pubRow.rows[0]?.id;
+
     const imageBuffer = await generateCardImage(primaryMetric as MilestoneMetric, primaryValue, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined, extraMetrics.length > 0 ? extraMetrics : undefined, dayNumber);
 
     // Re-fetch account to get the latest token (ensureValidToken may have consumed the old refresh token)
     const freshAccount = await getXAccount(userId);
     if (!freshAccount || !hasWriteScope(freshAccount.scope)) break;
 
-    await executePost(userId, auto.id, metric, auto.trigger, primaryValue, tweetText, imageBuffer, freshAccount);
+    await executePost(userId, auto.id, metric, auto.trigger, primaryValue, tweetText, imageBuffer, freshAccount, publishingId);
     return { posted: true };
   }
   return { skipped: "all_automations_filtered" };
