@@ -49,6 +49,7 @@ export async function PATCH(
     scheduleDay: '"scheduleDay"',
     startDay: '"startDay"',
     startDate: '"startDate"',
+    endDate: '"endDate"',
   };
 
   // When enabling a daily/weekly automation, auto-disable others of the same frequency

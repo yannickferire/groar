@@ -103,28 +103,28 @@ export const DEFAULT_TEMPLATES: Record<AutoPostTrigger, Record<AutoPostMetric, s
   },
 };
 
-/** Default tweet texts for Progress card template (no Day/Week heading in card) */
+/** Default tweet texts for Progress card template */
 export const PROGRESS_TEMPLATES: Record<Exclude<AutoPostTrigger, "milestone">, Record<AutoPostMetric, string[]>> = {
   daily: {
     followers: [
-      "{value}/{goal} {metric} 📈\n\nGrinding towards the goal, one day at a time. What's your current target? Let's keep each other accountable 👇\n\nMade with groar.app by @yannick_ferire",
+      "{value}/{goal} {metric} 📈\n\nGrinding towards the goal, one day at a time.\n\nWhat's your current target? Let's keep each other accountable 👇\n\nMade with groar.app",
     ],
     mrr: [
-      "${value}/${goal} {metric} 💪\n\nEvery dollar closer to the goal. What milestone are you chasing right now? Drop it below.\n\nMade with groar.app by @yannick_ferire",
+      "${value}/${goal} {metric} 💪\n\nEvery dollar closer to the goal.\n\nWhat milestone are you chasing right now? 👇\n\nMade with groar.app",
     ],
     revenue: [
-      "${value}/${goal} {metric} 🎯\n\nProgress update. What's the one thing that helped you most in growing revenue? Genuinely want to know.\n\nMade with groar.app by @yannick_ferire",
+      "${value}/${goal} {metric} 🎯\n\nProgress update.\n\nWhat's the one thing that helped you most in growing revenue? 👇\n\nMade with groar.app",
     ],
   },
   weekly: {
     followers: [
-      "{value}/{goal} {metric} 📊\n\nWeekly progress check. Getting closer. Who else is tracking their growth publicly? Love seeing the transparency.\n\nMade with groar.app by @yannick_ferire",
+      "{value}/{goal} {metric} 📊\n\nWeekly progress check. Getting closer.\n\nWho else is tracking their growth publicly? 👇\n\nMade with groar.app",
     ],
     mrr: [
-      "${value}/${goal} {metric} 🏗️\n\nBuilding in public, one week at a time. What was your best revenue week ever and what caused it?\n\nMade with groar.app by @yannick_ferire",
+      "${value}/${goal} {metric} 🏗️\n\nBuilding in public, one week at a time.\n\nWhat was your best revenue week ever? 👇\n\nMade with groar.app",
     ],
     revenue: [
-      "${value}/${goal} {metric} 📈\n\nAnother week closer to the goal. What's the one change that had the biggest impact on your revenue?\n\nMade with groar.app by @yannick_ferire",
+      "${value}/${goal} {metric} 📈\n\nAnother week closer to the goal.\n\nWhat had the biggest impact on your revenue? 👇\n\nMade with groar.app",
     ],
   },
 };
@@ -143,6 +143,9 @@ export type AutomationVisualSettings = {
   logoPosition?: "left" | "center" | "right";
   logoSize?: number; // px height, default 30
   metricsLayout?: "stack" | "grid"; // for metrics template with 2+ metrics
+  progressDisplay?: "bar" | "dots" | "square"; // for progress template
+  progressBarColor?: string; // custom bar color for progress template
+  progressBarAuto?: boolean; // true = auto red→green color
   // Legacy single-value fields (migrated to arrays above)
   background?: string;
   font?: string;

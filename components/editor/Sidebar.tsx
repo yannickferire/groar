@@ -1410,28 +1410,114 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
         </div>
       )}
 
-      {/* Goal - only for progress template */}
+      {/* Goal & Progress - only for progress template */}
       {(settings.template || "metrics") === "progress" && (
-        <div className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-            <HugeiconsIcon icon={Target01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
-            Goal
-          </h3>
-          <Input
-            type="text"
-            inputMode="text"
-            placeholder="10000"
-            value={settings.goal?.toString() || ""}
-            onChange={(e) => {
-              const parsed = parseMetricInput(e.target.value, settings.metrics[0]?.type || "followers");
-              if (parsed !== null) {
-                updateSetting("goal", parsed);
-              }
-            }}
-            className="bg-white dark:bg-background"
-            aria-label="Goal value"
-          />
-        </div>
+        <>
+          <div className="flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+              <HugeiconsIcon icon={Target01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
+              Goal
+            </h3>
+            <Input
+              type="text"
+              inputMode="text"
+              placeholder="10000"
+              value={settings.goal?.toString() || ""}
+              onChange={(e) => {
+                const parsed = parseMetricInput(e.target.value, settings.metrics[0]?.type || "followers");
+                if (parsed !== null) {
+                  updateSetting("goal", parsed);
+                }
+              }}
+              className="bg-white dark:bg-background"
+              aria-label="Goal value"
+            />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+              <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
+              Progress display
+            </h3>
+            <div className="flex gap-1 p-0.5 rounded-lg bg-muted/50">
+              {([
+                { value: "bar" as const, label: "Bar", icon: (
+                  <div className="flex flex-col items-center gap-0.5 w-4">
+                    <div className="w-full h-0.5 rounded-full bg-current" />
+                  </div>
+                )},
+                { value: "dots" as const, label: "Dots", icon: (
+                  <div className="grid grid-cols-3 gap-px w-3">
+                    {Array.from({ length: 9 }, (_, i) => (
+                      <div key={i} className="w-0.5 h-0.5 rounded-full bg-current" />
+                    ))}
+                  </div>
+                )},
+                { value: "square" as const, label: "Square", icon: (
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 3 }, (_, i) => (
+                      <div key={i} className="w-1.5 h-1.5 rounded-[2px] bg-current" />
+                    ))}
+                  </div>
+                )},
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => updateSetting("progressDisplay", opt.value)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    (settings.progressDisplay || "bar") === opt.value
+                      ? "bg-white dark:bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.icon}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Bar color - only for bar mode */}
+            {(settings.progressDisplay || "bar") === "bar" && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => updateSetting("progressBarAuto", true)}
+                  className={`h-8 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
+                    settings.progressBarAuto !== false
+                      ? "border-primary bg-background"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                >
+                  Auto
+                </button>
+                <label
+                  className={`h-8 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                    settings.progressBarAuto === false
+                      ? "border-primary bg-background"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                  onClick={() => {
+                    if (settings.progressBarAuto !== false) {
+                      const defaultColor = settings.background?.solidColor || "#22c55e";
+                      onSettingsChange({ ...settings, progressBarAuto: false, progressBarColor: settings.progressBarColor || defaultColor });
+                    }
+                  }}
+                >
+                  <span>Custom</span>
+                  <Input
+                    type="color"
+                    value={settings.progressBarColor || "#22c55e"}
+                    onChange={(e) => {
+                      onSettingsChange({ ...settings, progressBarColor: e.target.value, progressBarAuto: false });
+                    }}
+                    className="w-5 h-5 p-0 cursor-pointer border-0 rounded overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
+                    aria-label="Progress bar color"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Liste - only for announcement template */}

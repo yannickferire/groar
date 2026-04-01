@@ -119,6 +119,9 @@ export type EditorSettings = {
   metricsLayout?: MetricsLayout;
   branding?: BrandingSettings;
   goal?: number;
+  progressDisplay?: "bar" | "dots" | "square"; // progress visualization mode
+  progressBarColor?: string; // stored custom color for progress bar
+  progressBarAuto?: boolean; // true = use auto red→green color (default true)
   announcements?: { emoji?: string; emojiUnified?: string; emojiName?: string; text: string }[];
   abbreviateNumbers?: boolean;
   textAlign?: TextAlign;

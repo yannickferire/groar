@@ -666,6 +666,8 @@ export async function GET(request: NextRequest) {
   // For progress template
   const goalParam = params.get("goal");
   const goal = goalParam ? parseFloat(goalParam) : (settings.goal || 0);
+  const progressBarColorParam = params.get("progressBarColor") || settings.progressBarColor || null;
+  const progressDisplayParam = (params.get("progressDisplay") || settings.progressDisplay || "bar") as "bar" | "dots" | "square";
 
   // For milestone template
   const RANDOM_EMOJIS = Object.keys(EMOJI_IMAGES);
@@ -788,25 +790,70 @@ export async function GET(request: NextRequest) {
     const currentValue = primaryMetric.value;
     const resolvedGoal = goal > 0 ? goal : getNextGoal(currentValue);
     const progress = Math.min((currentValue / resolvedGoal) * 100, 100);
-    const progressColor = getProgressColor(progress);
+    const isAutoColor = settings.progressBarAuto !== false;
+    const autoColor = getProgressColor(progress);
+    const customColor = progressBarColorParam || autoColor;
+    const barColor = isAutoColor ? autoColor : customColor;
+    const barColorLight = isAutoColor
+      ? getProgressColor(Math.min(progress + 15, 100))
+      : `${customColor}cc`;
+    const haloColor = barColor;
     const metricLabel = primaryMetric.type === "custom" && primaryMetric.customLabel
       ? primaryMetric.customLabel
       : METRIC_LABELS[primaryMetric.type as MetricType] || primaryMetric.type;
-    const iconSize = isBanner ? unit * 7.5 : unit * 10;
 
     content = (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: textColor, textShadow, gap: isBanner ? unit * 1 : unit * 2, width: "70%", position: "relative", zIndex: 10 }}>
-        <div style={{ textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, fontSize: isBanner ? unit * 1.6 : unit * 2, display: "flex" }}>
-          Goal: {fmtMetric(primaryMetric.type, resolvedGoal, abbreviate)} {metricLabel}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: textColor, textShadow, gap: isBanner ? unit * 0.8 : unit * 1.2, width: "70%", position: "relative", zIndex: 10 }}>
+        {/* Metric label */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: isBanner ? unit * 0.5 : unit * 0.7, fontSize: isBanner ? unit * 2.5 : unit * 3, opacity: 0.6, fontWeight: 500, marginBottom: isBanner ? -unit * 0.4 : -unit * 0.6 }}>
+          {renderIcon(primaryMetric.type, isBanner ? unit * 2.5 : unit * 3, textColor)}
+          {metricLabel} Goal
         </div>
-        <div style={{ fontWeight: 700, fontSize: isBanner ? unit * 9 : unit * 12, display: "flex", alignItems: "center", gap: isBanner ? unit * 1.5 : unit * 2, letterSpacing: "-0.02em" }}>
-          {renderIcon(primaryMetric.type, iconSize, textColor)}
-          {fmtMetric(primaryMetric.type, currentValue, abbreviate)}
+        {/* Value: current / goal */}
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: isBanner ? unit * 0.5 : unit * 0.8 }}>
+          <span style={{ fontWeight: 700, fontSize: isBanner ? unit * 8 : unit * 10.5, letterSpacing: "-0.02em" }}>
+            {fmtMetric(primaryMetric.type, currentValue, abbreviate)}
+          </span>
+          <span style={{ fontWeight: 600, fontSize: isBanner ? unit * 3.5 : unit * 4.2, opacity: 0.5 }}>
+            / {fmtMetric(primaryMetric.type, resolvedGoal, abbreviate)}
+          </span>
         </div>
-        {/* Progress bar */}
-        <div style={{ display: "flex", width: "100%", height: isBanner ? unit * 2.8 : unit * 3.5, borderRadius: 9999, overflow: "hidden", background: "rgba(255,255,255,0.2)" }}>
-          <div style={{ width: `${progress}%`, height: "100%", borderRadius: 9999, background: progressColor, boxShadow: `0 2px 8px ${progressColor.replace("rgb", "rgba").replace(")", ", 0.5)")}` }} />
-        </div>
+        {/* Progress visualization */}
+        {progressDisplayParam === "bar" && (
+          <div style={{ display: "flex", width: "100%", height: isBanner ? unit * 2.8 : unit * 3.5, borderRadius: 9999, overflow: "hidden", background: "rgba(255,255,255,0.2)", position: "relative" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: `${progress}%`, borderRadius: 9999, background: haloColor, opacity: 0.5, filter: "blur(5px)" }} />
+            <div style={{ width: `${progress}%`, height: "100%", borderRadius: 9999, background: `linear-gradient(90deg, ${barColor}, ${barColorLight})`, boxShadow: `0 2px 12px ${barColor}80`, position: "relative" }} />
+          </div>
+        )}
+        {progressDisplayParam === "dots" && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", gap: isBanner ? unit * 0.5 : unit * 0.6 }}>
+            {[0, 25, 50, 75].map((rowStart) => (
+              <div key={rowStart} style={{ display: "flex", justifyContent: "center", gap: isBanner ? unit * 1 : unit * 1.3 }}>
+                {Array.from({ length: 25 }, (_, j) => {
+                  const idx = rowStart + j;
+                  return <div key={idx} style={{ width: isBanner ? unit * 0.9 : unit * 1.1, height: isBanner ? unit * 0.9 : unit * 1.1, borderRadius: 9999, backgroundColor: idx < Math.round(progress) ? textColor : `${textColor}30` }} />;
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+        {progressDisplayParam === "square" && (() => {
+          const blockProgress = progress / 10;
+          const getBlockColor = (i: number): string => {
+            const fill = blockProgress - i;
+            if (fill >= 1) return "#22c55e";
+            if (fill >= 0.5) return "#eab308";
+            if (fill > 0) return "#f97316";
+            return `${textColor}20`;
+          };
+          return (
+            <div style={{ display: "flex", justifyContent: "center", width: "100%", gap: isBanner ? unit * 0.8 : unit * 1.1 }}>
+              {Array.from({ length: 10 }, (_, i) => (
+                <div key={i} style={{ width: isBanner ? unit * 3.5 : unit * 4.5, height: isBanner ? unit * 3.5 : unit * 4.5, borderRadius: isBanner ? unit * 0.5 : unit * 0.6, backgroundColor: getBlockColor(i) }} />
+              ))}
+            </div>
+          );
+        })()}
         <div style={{ fontWeight: 600, fontSize: isBanner ? unit * 2.4 : unit * 3, display: "flex" }}>
           {Number.isInteger(progress) ? progress : progress.toFixed(2)}% complete
         </div>

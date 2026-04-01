@@ -49,14 +49,21 @@ export default function XPostPreview({
   const headingText = dayNumber != null && trigger && trigger !== "milestone"
     ? `${trigger === "weekly" ? "Week" : "Day"} ${dayNumber}`
     : undefined;
+  const formattedValue = value.toLocaleString();
+  const percent = goal && goal > 0 ? Math.round(Math.min((value / goal) * 100, 100)) : 0;
   const previewText = tweetText
-    .replace(/\{milestone\}/g, "1K")
-    .replace(/\{value\}/g, "1,000")
+    .replace(/\{milestone\}/g, formattedValue)
+    .replace(/\{value\}/g, formattedValue)
     .replace(/\{goal\}/g, goal ? goal.toLocaleString() : "10K")
     .replace(/\{metric\}/g, METRIC_DISPLAY_LABELS[metric as AutoPostMetric] || metric)
     .replace(/\{period\}/g, String(dayNumber ?? 42))
     .replace(/\{day\}/g, String(dayNumber ?? 42))
-    .replace(/\{week\}/g, String(dayNumber ?? 5));
+    .replace(/\{week\}/g, String(dayNumber ?? 5))
+    .replace(/\{currentDay\}/g, "1")
+    .replace(/\{totalDays\}/g, "30")
+    .replace(/\{daysLeft\}/g, "29")
+    .replace(/\{percent\}/g, String(percent))
+    .replace(/\{delta\}/g, "0");
 
   // Highlight @mentions, URLs, and #hashtags in blue (like X does)
   const renderTweetText = (text: string) => {

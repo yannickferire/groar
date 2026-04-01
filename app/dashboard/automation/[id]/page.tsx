@@ -16,6 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import Image from "next/image";
 import { toast } from "sonner";
 import XPostPreview from "@/components/XPostPreview";
@@ -53,6 +55,7 @@ type Automation = {
   scheduleDay: number;
   startDay: number;
   startDate: string;
+  endDate: string | null;
 };
 
 type XAccount = {
@@ -83,16 +86,24 @@ const PRESET_EMOJIS = [
   { emoji: "🎯", unified: "1f3af", name: "Bullseye" },
 ];
 
-const ALL_TEMPLATE_VARIABLES = [
+const BASE_TEMPLATE_VARIABLES = [
   { name: "{milestone}", desc: "Milestone value (e.g. 1K)", templates: ["milestone"] as AutoPostCardTemplate[] },
   { name: "{value}", desc: "Current value", templates: ["milestone", "metrics", "progress"] as AutoPostCardTemplate[] },
   { name: "{goal}", desc: "Goal target", templates: ["progress"] as AutoPostCardTemplate[] },
   { name: "{metric}", desc: "Metric name", templates: ["milestone", "metrics", "progress"] as AutoPostCardTemplate[] },
   { name: "{period}", desc: "Day or week counter number", templates: ["metrics"] as AutoPostCardTemplate[] },
+  { name: "{percent}", desc: "Progress percentage", templates: ["progress"] as AutoPostCardTemplate[] },
+  { name: "{delta}", desc: "Change since last post", templates: ["progress"] as AutoPostCardTemplate[] },
+];
+
+const PERIOD_TEMPLATE_VARIABLES = [
+  { name: "{currentDay}", desc: "Current day of goal (e.g. 5)", templates: ["progress"] as AutoPostCardTemplate[] },
+  { name: "{totalDays}", desc: "Total days in goal period (e.g. 30)", templates: ["progress"] as AutoPostCardTemplate[] },
+  { name: "{daysLeft}", desc: "Days remaining", templates: ["progress"] as AutoPostCardTemplate[] },
 ];
 
 // Available schedule hours (UTC) — aligned with Inngest cron
-const SCHEDULE_HOURS_UTC = [1, 7, 13, 19];
+const SCHEDULE_HOURS_UTC = [0, 6, 12, 18];
 
 /** Convert UTC hour to local hour string (e.g. "9:00 AM") */
 function utcHourToLocal(utcHour: number): string {
@@ -623,18 +634,102 @@ export default function AutomationEditPage() {
               </div>
             </div>
 
-            {/* Goal (progress template only) */}
+            {/* Goal & Period (progress template only) */}
             {showGoal && (
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Goal</label>
-                <input
-                  type="number"
-                  value={automation.goal ?? ""}
-                  onChange={(e) => update({ goal: parseInt(e.target.value) || null })}
-                  placeholder={primaryMetric === "mrr" || primaryMetric === "revenue" ? "e.g. 1000" : "e.g. 10000"}
-                  className="w-full px-3 py-1.5 rounded-lg border border-muted bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Goal</label>
+                  <input
+                    type="number"
+                    value={automation.goal ?? ""}
+                    onChange={(e) => update({ goal: parseInt(e.target.value) || null })}
+                    placeholder={primaryMetric === "mrr" || primaryMetric === "revenue" ? "e.g. 1000" : "e.g. 10000"}
+                    className="w-full px-3 py-1.5 rounded-lg border border-muted bg-transparent text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Period (optional)</label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <label className="text-[10px] text-muted-foreground">Start</label>
+                      <Popover>
+                        {(() => {
+                          const parsed = automation.startDate ? new Date(String(automation.startDate).slice(0, 10) + "T00:00:00") : null;
+                          const isValid = parsed && !isNaN(parsed.getTime());
+                          return (
+                            <>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start text-sm font-normal h-9">
+                                  {isValid
+                                    ? parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                                    : "Pick a date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={isValid ? parsed : undefined}
+                                  onSelect={(date) => {
+                                    if (!date) return;
+                                    const y = date.getFullYear();
+                                    const m = String(date.getMonth() + 1).padStart(2, "0");
+                                    const d = String(date.getDate()).padStart(2, "0");
+                                    update({ startDate: `${y}-${m}-${d}` });
+                                  }}
+                                />
+                              </PopoverContent>
+                            </>
+                          );
+                        })()}
+                      </Popover>
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] text-muted-foreground">End</label>
+                      <Popover>
+                        {(() => {
+                          const parsed = automation.endDate ? new Date(String(automation.endDate).slice(0, 10) + "T00:00:00") : null;
+                          const isValid = parsed && !isNaN(parsed.getTime());
+                          return (
+                            <>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start text-sm font-normal h-9">
+                                  {isValid
+                                    ? parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                                    : "Pick a date"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={isValid ? parsed : undefined}
+                                  onSelect={(date) => {
+                                    if (!date) { update({ endDate: null }); return; }
+                                    const y = date.getFullYear();
+                                    const m = String(date.getMonth() + 1).padStart(2, "0");
+                                    const d = String(date.getDate()).padStart(2, "0");
+                                    update({ endDate: `${y}-${m}-${d}` });
+                                  }}
+                                />
+                              </PopoverContent>
+                            </>
+                          );
+                        })()}
+                      </Popover>
+                    </div>
+                  </div>
+                  {automation.startDate && automation.endDate && (() => {
+                    const startStr = String(automation.startDate).slice(0, 10);
+                    const endStr = String(automation.endDate).slice(0, 10);
+                    const totalDays = Math.ceil((new Date(endStr + "T00:00:00").getTime() - new Date(startStr + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                    const daysLeft = Math.max(0, Math.ceil((new Date(endStr + "T00:00:00").getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) + 1);
+                    return (
+                      <p className="text-[10px] text-muted-foreground">
+                        {daysLeft} days left of {totalDays} total
+                      </p>
+                    );
+                  })()}
+                </div>
+              </>
             )}
 
             {/* Day/week counter (for {period} variable in metrics template) */}
@@ -780,7 +875,7 @@ export default function AutomationEditPage() {
               </div>
             ))}
             <div className="flex flex-wrap gap-1.5">
-              {ALL_TEMPLATE_VARIABLES
+              {[...BASE_TEMPLATE_VARIABLES, ...(automation.startDate && automation.endDate ? PERIOD_TEMPLATE_VARIABLES : [])]
                 .filter((v) => v.templates.includes(automation.cardTemplate))
                 .map((v) => (
                 <button
@@ -876,6 +971,86 @@ export default function AutomationEditPage() {
                     Columns
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Progress display (progress template only) */}
+            {showGoal && (
+              <div className="space-y-2">
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Progress display</label>
+                <div className="flex gap-1 p-0.5 rounded-lg bg-muted/50">
+                  {([
+                    { value: "bar" as const, label: "Bar", icon: (
+                      <div className="flex flex-col items-center gap-0.5 w-4">
+                        <div className="w-full h-0.5 rounded-full bg-current" />
+                      </div>
+                    )},
+                    { value: "dots" as const, label: "Dots", icon: (
+                      <div className="grid grid-cols-3 gap-px w-3">
+                        {Array.from({ length: 9 }, (_, i) => (
+                          <div key={i} className="w-0.5 h-0.5 rounded-full bg-current" />
+                        ))}
+                      </div>
+                    )},
+                    { value: "square" as const, label: "Square", icon: (
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 3 }, (_, i) => (
+                          <div key={i} className="w-1.5 h-1.5 rounded-[2px] bg-current" />
+                        ))}
+                      </div>
+                    )},
+                  ]).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => updateVisual({ progressDisplay: opt.value })}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        (vs.progressDisplay || "bar") === opt.value
+                          ? "bg-white dark:bg-background shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {opt.icon}
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Bar color - only for bar mode */}
+                {(vs.progressDisplay || "bar") === "bar" && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateVisual({ progressBarAuto: true })}
+                      className={`h-8 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
+                        vs.progressBarAuto !== false
+                          ? "border-primary bg-background"
+                          : "border-border hover:bg-muted/50"
+                      }`}
+                    >
+                      Auto
+                    </button>
+                    <label
+                      className={`h-8 flex items-center gap-1.5 px-3 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                        vs.progressBarAuto === false
+                          ? "border-primary bg-background"
+                          : "border-border hover:bg-muted/50"
+                      }`}
+                      onClick={() => {
+                        if (vs.progressBarAuto !== false) {
+                          updateVisual({ progressBarAuto: false, progressBarColor: vs.progressBarColor || "#22c55e" });
+                        }
+                      }}
+                    >
+                      <span>Custom</span>
+                      <input
+                        type="color"
+                        value={vs.progressBarColor || "#22c55e"}
+                        onChange={(e) => updateVisual({ progressBarColor: e.target.value, progressBarAuto: false })}
+                        className="w-5 h-5 p-0 cursor-pointer border-0 rounded overflow-hidden [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none"
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             )}
 

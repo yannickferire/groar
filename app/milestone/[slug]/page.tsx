@@ -22,10 +22,13 @@ import type { MilestonePageData } from "@/lib/milestone-pages";
 import { PLATFORMS, PLATFORM_INFO } from "@/lib/milestone-platform-content";
 
 // ─── Static params ──────────────────────────────────────────────────
-
+// Only pre-render base pages at build time; platform variants are generated on-demand and cached via ISR
 export function generateStaticParams() {
-  return MILESTONE_PAGES.map((m) => ({ slug: m.slug }));
+  return MILESTONE_PAGES.filter((m) => !m.slug.includes("-on-")).map((m) => ({ slug: m.slug }));
 }
+
+export const dynamicParams = true;
+export const revalidate = 86400; // re-check once per day
 
 // ─── Metadata ───────────────────────────────────────────────────────
 

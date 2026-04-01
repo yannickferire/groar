@@ -37,6 +37,7 @@ type AutomationRow = {
   enabled: boolean;
   startDay: number | null;
   startDate: string | null;
+  endDate: string | null;
   scheduleHour: number | null;
   scheduleDay: number | null;
 };
@@ -53,6 +54,102 @@ function calculateDayNumber(startDay: number | null, startDate: string | null, t
   return base + diffDays;
 }
 
+/** Compute progress variables from start/end dates and current value */
+function computeProgressVars(
+  startDate: string | null,
+  endDate: string | null,
+  value: number,
+  goal: number | null,
+  delta: number | null
+): ProgressVars {
+  const now = new Date();
+  let currentDay: number | undefined;
+  let totalDays: number | undefined;
+  let daysLeft: number | undefined;
+
+  if (startDate) {
+    const start = new Date(startDate);
+    currentDay = Math.max(1, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    if (endDate) {
+      const end = new Date(endDate);
+      totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1; // inclusive
+      daysLeft = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) + 1); // inclusive
+    }
+  }
+
+  const percent = goal && goal > 0 ? Math.min((value / goal) * 100, 100) : undefined;
+
+  return { currentDay, totalDays, daysLeft, percent, delta: delta ?? undefined };
+}
+
+/** Get the delta (change since yesterday) from analytics snapshots, with fallback to last posted value */
+async function getDelta(
+  metric: string,
+  currentValue: number,
+  userId: string,
+  accountId: string | null,
+  automationId: string
+): Promise<number | null> {
+  // Map metric to the right snapshot source
+  const xMetricColumns: Record<string, string> = {
+    followers: '"followersCount"',
+  };
+  const trustmrrMetricColumns: Record<string, string> = {
+    mrr: '"mrrCents"',
+    revenue: '"revenueTotalCents"',
+  };
+
+  // Try analytics snapshots first (yesterday's value)
+  if (accountId && xMetricColumns[metric]) {
+    const col = xMetricColumns[metric];
+    const result = await pool.query(
+      `SELECT ${col} as value FROM x_analytics_snapshot
+       WHERE "accountId" = $1 AND date = CURRENT_DATE - INTERVAL '1 day'
+       ORDER BY "createdAt" DESC LIMIT 1`,
+      [accountId]
+    );
+    if (result.rows.length > 0 && result.rows[0].value != null) {
+      return currentValue - Number(result.rows[0].value);
+    }
+  }
+
+  if (trustmrrMetricColumns[metric]) {
+    const col = trustmrrMetricColumns[metric];
+    const isCents = col.includes("Cents");
+    const result = await pool.query(
+      `SELECT ${col} as value FROM trustmrr_snapshot
+       WHERE "userId" = $1 AND date = CURRENT_DATE - INTERVAL '1 day'
+       ORDER BY "createdAt" DESC LIMIT 1`,
+      [userId]
+    );
+    if (result.rows.length > 0 && result.rows[0].value != null) {
+      const prevValue = isCents ? Number(result.rows[0].value) / 100 : Number(result.rows[0].value);
+      return currentValue - prevValue;
+    }
+  }
+
+  // Fallback: delta from last posted value
+  const lastPost = await pool.query(
+    `SELECT milestone FROM x_auto_post
+     WHERE "automationId" = $1 AND status = 'posted'
+     ORDER BY "postedAt" DESC LIMIT 1`,
+    [automationId]
+  );
+  if (lastPost.rows.length > 0) {
+    return currentValue - Number(lastPost.rows[0].milestone);
+  }
+
+  return null;
+}
+
+type ProgressVars = {
+  currentDay?: number;
+  totalDays?: number;
+  daysLeft?: number;
+  percent?: number;
+  delta?: number;
+};
+
 function buildTweetText(
   metric: AutoPostMetric,
   trigger: AutoPostTrigger,
@@ -60,7 +157,8 @@ function buildTweetText(
   milestone: number,
   value: number,
   goal?: number,
-  dayNumber?: number
+  dayNumber?: number,
+  progressVars?: ProgressVars
 ): string {
   // Parse variants from stored JSON array (or legacy plain string)
   const variants = parseTweetVariants(tweetTemplate);
@@ -73,6 +171,7 @@ function buildTweetText(
   const formattedMilestone = formatMilestoneNumber(milestone);
   const formattedValue = formatMilestoneNumber(value);
   const formattedGoal = goal ? formatMilestoneNumber(goal) : "";
+  const pv = progressVars || {};
 
   return template
     .replace(/\{milestone\}/g, formattedMilestone)
@@ -81,7 +180,12 @@ function buildTweetText(
     .replace(/\{goal\}/g, formattedGoal)
     .replace(/\{period\}/g, dayNumber != null ? String(dayNumber) : "")
     .replace(/\{day\}/g, dayNumber != null ? String(dayNumber) : "")
-    .replace(/\{week\}/g, dayNumber != null ? String(dayNumber) : "");
+    .replace(/\{week\}/g, dayNumber != null ? String(dayNumber) : "")
+    .replace(/\{currentDay\}/g, pv.currentDay != null ? String(pv.currentDay) : "")
+    .replace(/\{totalDays\}/g, pv.totalDays != null ? String(pv.totalDays) : "")
+    .replace(/\{daysLeft\}/g, pv.daysLeft != null ? String(pv.daysLeft) : "")
+    .replace(/\{percent\}/g, pv.percent != null ? String(Math.round(pv.percent)) : "")
+    .replace(/\{delta\}/g, pv.delta != null ? formatMilestoneNumber(Math.abs(pv.delta)) : "");
 }
 
 // ─── Card image generation ──────────────────────────────────────────
@@ -138,6 +242,9 @@ async function generateCardImage(
       template: "progress",
       metrics: metricsArr,
       goal: goal || value * 2,
+      progressDisplay: vs.progressDisplay || "bar",
+      progressBarColor: vs.progressBarColor,
+      progressBarAuto: vs.progressBarAuto,
     };
   } else if (cardTemplate === "metrics") {
     settings = {
@@ -740,7 +847,7 @@ export async function checkScheduledAutoPost(
   const currentUtcDay = (new Date().getUTCDay() + 6) % 7; // 0=Mon, 6=Sun (matching our scheduleDay)
 
   const result = await pool.query(
-    `SELECT id, metric, trigger, "cardTemplate", goal, "tweetTemplate", "visualSettings", "startDay", "startDate", "scheduleHour", "scheduleDay"
+    `SELECT *
      FROM automation
      WHERE "userId" = $1 AND trigger != 'milestone' AND enabled = true
        AND "scheduleHour" = $3
@@ -771,6 +878,22 @@ export async function checkScheduledAutoPost(
       continue;
     }
 
+    // Auto-disable progress automations that have passed their end date
+    if (auto.endDate) {
+      const end = new Date(auto.endDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      if (today > end) {
+        await pool.query(
+          `UPDATE automation SET enabled = false, "updatedAt" = NOW() WHERE id = $1`,
+          [auto.id]
+        );
+        console.log(`Auto-disabled automation ${auto.id}: endDate ${auto.endDate} has passed`);
+        continue;
+      }
+    }
+
     // No cooldown — credits already limit posting frequency
 
     const dayNumber = calculateDayNumber(auto.startDay, auto.startDate, auto.trigger);
@@ -799,7 +922,14 @@ export async function checkScheduledAutoPost(
       return { skipped: `value_unchanged (automation=${auto.id}, value=${primaryValue}, lastPosted=${lastPost.rows[0].milestone}, types=${typeof primaryValue}/${typeof lastPost.rows[0].milestone})` };
     }
 
-    const tweetText = buildTweetText(primaryMetric, auto.trigger, auto.tweetTemplate, primaryValue, primaryValue, auto.goal || undefined, dayNumber);
+    // Compute progress variables for progress template
+    let progressVars: ProgressVars | undefined;
+    if (auto.cardTemplate === "progress") {
+      const delta = await getDelta(primaryMetric, primaryValue, userId, account.accountId, auto.id);
+      progressVars = computeProgressVars(auto.startDate, auto.endDate, primaryValue, auto.goal, delta);
+    }
+
+    const tweetText = buildTweetText(primaryMetric, auto.trigger, auto.tweetTemplate, primaryValue, primaryValue, auto.goal || undefined, dayNumber, progressVars);
 
     // Insert "publishing" row early so UI shows progress while image generates
     const pubRow = await pool.query(
@@ -825,8 +955,7 @@ export async function checkScheduledAutoPost(
 
 export async function testAutoPost(userId: string, automationId: string): Promise<{ success: boolean; error?: string; tweetId?: string }> {
   const autoResult = await pool.query(
-    `SELECT id, metric, trigger, "cardTemplate", goal, "tweetTemplate", "visualSettings", "startDay", "startDate", "scheduleHour", "scheduleDay"
-     FROM automation WHERE id = $1 AND "userId" = $2`,
+    `SELECT * FROM automation WHERE id = $1 AND "userId" = $2`,
     [automationId, userId]
   );
 
@@ -856,7 +985,14 @@ export async function testAutoPost(userId: string, automationId: string): Promis
   }
 
   const dayNumber = auto.trigger !== "milestone" ? calculateDayNumber(auto.startDay, auto.startDate, auto.trigger) : undefined;
-  const tweetText = buildTweetText(primaryMetric, auto.trigger, auto.tweetTemplate, value, currentValue, auto.goal || undefined, dayNumber);
+
+  let testProgressVars: ProgressVars | undefined;
+  if (auto.cardTemplate === "progress") {
+    const delta = await getDelta(primaryMetric, currentValue, userId, account.accountId, auto.id);
+    testProgressVars = computeProgressVars(auto.startDate, auto.endDate, currentValue, auto.goal, delta);
+  }
+
+  const tweetText = buildTweetText(primaryMetric, auto.trigger, auto.tweetTemplate, value, currentValue, auto.goal || undefined, dayNumber, testProgressVars);
   const imageBuffer = await generateCardImage(
     primaryMetric as MilestoneMetric, value, account.username || "", auto.visualSettings, auto.cardTemplate,
     auto.goal || undefined, extraMetrics.length > 0 ? extraMetrics : undefined, dayNumber

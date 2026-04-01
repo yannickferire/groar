@@ -98,7 +98,7 @@ type AutoPostStats = {
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
-const SCHEDULE_HOURS_UTC = [1, 7, 13, 19];
+const SCHEDULE_HOURS_UTC = [0, 6, 12, 18];
 
 function closestScheduleHour(hour: number): number {
   return SCHEDULE_HOURS_UTC.reduce((prev, curr) =>

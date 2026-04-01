@@ -13,7 +13,7 @@ export const dailyAnalyticsFetch = inngest.createFunction(
     name: "Daily X Analytics Fetch",
     retries: 3,
   },
-  { cron: "0 1,7,13,19 * * *" }, // 1am, 7am, 1pm, 7pm UTC
+  { cron: "0 0,6,12,18 * * *" }, // 0am, 6am, 12pm, 6pm UTC (2h, 8h, 14h, 20h CET)
   async ({ step, logger }) => {
     const accounts = await step.run("get-all-accounts", async () => {
       return await getAllXAccounts();
@@ -110,7 +110,7 @@ export const dailyTrustMRRFetch = inngest.createFunction(
     name: "Daily TrustMRR Fetch",
     retries: 2,
   },
-  { cron: "0 0,6,12,18 * * *" }, // 1h before analytics cron (1,7,13,19 UTC)
+  { cron: "0 23,5,11,17 * * *" }, // 1h before analytics cron (0,6,12,18 UTC)
   async ({ step, logger }) => {
     const tmrrSummary = await step.run("fetch-all-trustmrr", async () => {
       const users = await getUsersForTrustMRR();
