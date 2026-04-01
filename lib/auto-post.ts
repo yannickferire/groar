@@ -123,7 +123,7 @@ async function getDelta(
       [userId]
     );
     if (result.rows.length > 0 && result.rows[0].value != null) {
-      const prevValue = isCents ? Number(result.rows[0].value) / 100 : Number(result.rows[0].value);
+      const prevValue = isCents ? Math.floor(Number(result.rows[0].value) / 100) : Number(result.rows[0].value);
       return currentValue - prevValue;
     }
   }

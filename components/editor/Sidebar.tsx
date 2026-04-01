@@ -494,9 +494,9 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
       map.posts = account.latest.tweetCount;
     }
     if (trustmrrLatest) {
-      map.mrr = trustmrrLatest.mrrCents / 100;
-      map.arr = Math.round(trustmrrLatest.mrrCents * 12) / 100;
-      map.revenue = trustmrrLatest.revenueTotalCents / 100;
+      map.mrr = Math.floor(trustmrrLatest.mrrCents / 100);
+      map.arr = Math.floor(trustmrrLatest.mrrCents * 12 / 100);
+      map.revenue = Math.floor(trustmrrLatest.revenueTotalCents / 100);
     }
     return map;
   }, [trustmrrLatest]);

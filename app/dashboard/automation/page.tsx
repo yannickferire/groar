@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProGate from "@/components/dashboard/ProGate";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -131,20 +131,37 @@ function formatNextDate(date: Date): string {
 function formatTimeUntil(date: Date): string {
   const diffMs = date.getTime() - Date.now();
   if (diffMs <= 0) return "now";
-  const totalMin = Math.floor(diffMs / 60000);
-  const hours = Math.floor(totalMin / 60);
-  const minutes = totalMin % 60;
-  if (hours === 0) return `in ${minutes}m`;
+  const totalSec = Math.floor(diffMs / 1000);
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  if (hours === 0 && minutes === 0) return `in ${seconds}s`;
+  if (hours === 0) return `in ${minutes}m ${seconds}s`;
   if (minutes === 0) return `in ${hours}h`;
   return `in ${hours}h ${minutes}m`;
 }
 
-function CountdownText({ date }: { date: Date }) {
+function CountdownText({ date, onReached }: { date: Date; onReached?: () => void }) {
   const [text, setText] = useState(() => formatTimeUntil(date));
+  const reached = useRef(false);
   useEffect(() => {
-    const id = setInterval(() => setText(formatTimeUntil(date)), 60_000);
+    const update = () => {
+      const t = formatTimeUntil(date);
+      setText(t);
+      if (t === "now" && !reached.current) {
+        reached.current = true;
+        onReached?.();
+      }
+    };
+    const diffMs = date.getTime() - Date.now();
+    const interval = diffMs < 60_000 ? 1_000 : 60_000;
+    const id = setInterval(update, interval);
     return () => clearInterval(id);
-  }, [date]);
+  }, [date, onReached]);
+
+  if (text === "now") {
+    return <HugeiconsIcon icon={Loading03Icon} size={12} strokeWidth={2} className="animate-spin text-primary" />;
+  }
   return <>{text}</>;
 }
 
@@ -206,6 +223,19 @@ export default function AutomationPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Poll every 5s when there are publishing entries or a scheduled post is due
+  useEffect(() => {
+    const hasPublishing = history.some((e) => e.status === "publishing");
+    const hasDueSoon = automations.some((a) => {
+      if (!a.enabled || a.trigger === "milestone" || a.scheduleHour == null) return false;
+      const next = getNextScheduledDate(a.trigger as "daily" | "weekly", a.scheduleHour, a.scheduleDay);
+      return next.getTime() - Date.now() < 0;
+    });
+    if (!hasPublishing && !hasDueSoon) return;
+    const id = setInterval(fetchData, 5_000);
+    return () => clearInterval(id);
+  }, [history, automations, fetchData]);
 
   const connectX = useCallback(async () => {
     setConnecting(true);
@@ -690,7 +720,7 @@ export default function AutomationPage() {
                         <p className="text-[11px] text-muted-foreground truncate capitalize">{auto.trigger}</p>
                       </div>
                       <span className="text-[11px] text-muted-foreground shrink-0">
-                        <CountdownText date={nextDate} />
+                        <CountdownText date={nextDate} onReached={fetchData} />
                       </span>
                     </div>
                   );
