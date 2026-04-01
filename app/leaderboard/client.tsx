@@ -92,7 +92,7 @@ export default function PublicLeaderboardClient({
                           key={url}
                           href={url}
                           target="_blank"
-                          rel="noopener noreferrer"
+                          rel="noopener"
                           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                         >
                           <Image
