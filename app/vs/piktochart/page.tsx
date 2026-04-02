@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: "GROAR vs Piktochart — Best Tool for Sharing Your Metrics",
     description:
       "Compare GROAR and Piktochart for creating metrics visuals. Piktochart is great for infographics, but GROAR is purpose-built for sharing growth metrics on social media.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

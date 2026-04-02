@@ -911,15 +911,17 @@ export async function checkScheduledAutoPost(
       extraMetrics.push({ metric: m, value: val ?? 0 });
     }
 
-    // Skip if all metric values are unchanged from the last successful post
-    const lastPost = await pool.query(
-      `SELECT milestone FROM x_auto_post
-       WHERE "automationId" = $1 AND status = 'posted'
-       ORDER BY "postedAt" DESC LIMIT 1`,
-      [auto.id]
-    );
-    if (lastPost.rows.length > 0 && lastPost.rows[0].milestone === primaryValue) {
-      return { skipped: `value_unchanged (automation=${auto.id}, value=${primaryValue}, lastPosted=${lastPost.rows[0].milestone}, types=${typeof primaryValue}/${typeof lastPost.rows[0].milestone})` };
+    // Skip if all metric values are unchanged from the last successful post (except progress template — always post daily updates)
+    if (auto.cardTemplate !== "progress") {
+      const lastPost = await pool.query(
+        `SELECT milestone FROM x_auto_post
+         WHERE "automationId" = $1 AND status = 'posted'
+         ORDER BY "postedAt" DESC LIMIT 1`,
+        [auto.id]
+      );
+      if (lastPost.rows.length > 0 && lastPost.rows[0].milestone === primaryValue) {
+        return { skipped: `value_unchanged (automation=${auto.id}, value=${primaryValue}, lastPosted=${lastPost.rows[0].milestone}, types=${typeof primaryValue}/${typeof lastPost.rows[0].milestone})` };
+      }
     }
 
     // Compute progress variables for progress template

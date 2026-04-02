@@ -27,14 +27,14 @@ export const metadata: Metadata = {
     title: "Milestone Post Templates — Celebrate Your Growth with GROAR",
     description:
       "Browse milestone templates for followers, MRR, revenue, GitHub stars, and customers. Create professional milestone visuals in seconds.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar Milestones" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar Milestones" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Milestone Post Templates — Celebrate Your Growth with GROAR",
     description:
       "Browse milestone templates for followers, MRR, revenue, GitHub stars, and customers. Create professional milestone visuals in seconds.",
-    images: ["/og-image.png"],
+    images: ["/og.png"],
   },
 };
 

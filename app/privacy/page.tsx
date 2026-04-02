@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Privacy Policy for Groar - Learn how we handle your data.",
   alternates: { canonical: "/privacy" },
   openGraph: {
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar — Privacy Policy" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar — Privacy Policy" }],
   },
 };
 

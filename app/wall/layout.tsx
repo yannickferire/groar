@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     description:
       "Browse visuals created by the GROAR community. See how creators share their growth metrics and milestones.",
     url: `${siteUrl}/wall`,
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

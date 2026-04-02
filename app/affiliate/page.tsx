@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     title: "GROAR Affiliate Program — Earn 40% Commission",
     description:
       "Join the GROAR affiliate program and earn 40% commission on every sale you refer — monthly and lifetime plans included.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

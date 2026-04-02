@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     title: "Leaderboard — GROAR",
     description: "See who's leading the GROAR community leaderboard. Export visuals, log in daily, and climb the ranks.",
     url: `${siteUrl}/leaderboard`,
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

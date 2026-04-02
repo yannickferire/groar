@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Groar — Turn your growth into visuals that Roaaar",
     description: "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
-    images: ["https://groar.app/og-image.png"],
+    images: ["https://groar.app/og.png"],
     creator: "@yannick_ferire",
   },
 };
@@ -100,7 +100,7 @@ const jsonLd = {
     "Brand presets per client",
     "API for programmatic card generation",
   ],
-  screenshot: "https://groar.app/og-image.png",
+  screenshot: "https://groar.app/og.png",
   author: {
     "@type": "Person",
     name: "Yannick Ferire",

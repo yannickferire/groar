@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     description:
       "Groar builds in public. See live revenue, user count, MRR, growth metrics and the full tech stack — updated daily.",
     url: `${siteUrl}/open`,
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

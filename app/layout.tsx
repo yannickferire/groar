@@ -94,7 +94,7 @@ export const metadata: Metadata = {
       "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og.png",
         width: 1200,
         height: 630,
         alt: "Groar — Share your growth with stunning visuals",
@@ -106,7 +106,7 @@ export const metadata: Metadata = {
     title: "Groar — Turn your growth into visuals that Roaaar",
     description:
       "Your analytics deserve better than a screenshot. Get eye-catching visuals in 10 seconds. Built for builders, founders and indie hackers.",
-    images: ["/og-image.png"],
+    images: ["/og.png"],
     creator: "@yannick_ferire",
   },
   robots: {

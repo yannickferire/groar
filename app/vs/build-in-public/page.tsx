@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     title: "Best Build in Public Tools for Sharing Growth Metrics",
     description:
       "Build in public? GROAR turns your growth metrics into eye-catching visuals for X and social media. Share milestones, MRR, followers, and more in 10 seconds.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

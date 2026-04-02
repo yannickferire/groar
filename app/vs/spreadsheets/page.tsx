@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: "GROAR vs Spreadsheet Charts — Share Metrics Without Ugly Excel Exports",
     description:
       "Stop exporting ugly charts from Google Sheets or Excel. GROAR turns your metrics into clean, branded visuals designed for social media — in 10 seconds.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 

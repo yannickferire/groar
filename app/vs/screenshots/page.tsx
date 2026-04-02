@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: "GROAR vs Screenshots — Stop Screenshotting Your Analytics",
     description:
       "Screenshots of your analytics look messy and get ignored. GROAR turns your metrics into clean, branded visuals that actually get engagement — in 10 seconds.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Groar" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Groar" }],
   },
 };
 
