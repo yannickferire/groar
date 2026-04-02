@@ -400,7 +400,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
     const handle = settings.handle.replace("@", "").toLowerCase();
     const matchedAccount = connectedAccounts.find(a => a.username?.toLowerCase() === handle);
     if (matchedAccount) {
-      setHandleMode(matchedAccount.username);
+      setHandleMode(matchedAccount.username || "custom");
     } else if (settings.handle && settings.handle !== "" && settings.handle !== "@") {
       setHandleMode("custom");
     }
