@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     `INSERT INTO user_presets ("userId", name, settings)
      VALUES ($1, $2, $3)
      RETURNING id, name, settings, "createdAt", "updatedAt"`,
-    [session.user.id, name.trim(), settings]
+    [session.user.id, name.trim(), JSON.stringify(settings)]
   );
 
   return NextResponse.json({ preset: result.rows[0] });
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest) {
   }
   if (settings && typeof settings === "object") {
     updates.push(`settings = $${paramIndex++}`);
-    values.push(settings);
+    values.push(JSON.stringify(settings));
   }
 
   if (updates.length === 0) {

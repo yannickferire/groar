@@ -357,12 +357,14 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           setConnectedAccounts(accounts);
 
           // Auto-select connected account: match current handle, or default to first account
+          // Don't override a non-empty handle (may come from a preset)
           const current = settingsRef.current;
           const currentHandle = current.handle.replace("@", "").toLowerCase();
+          const hasCustomHandle = current.handle && current.handle !== "" && current.handle !== "@";
           const match = accounts.find((a: ConnectedAccount) => a.username?.toLowerCase() === currentHandle);
           const selected = match || accounts[0];
           if (selected?.username) {
-            setHandleMode(selected.username);
+            setHandleMode(match ? selected.username : (hasCustomHandle ? "custom" : selected.username));
             if (selected.latest) {
               const metricMap: Partial<Record<string, number>> = {
                 followers: selected.latest.followersCount,
@@ -373,9 +375,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                 const autoValue = metricMap[m.type];
                 return autoValue !== undefined ? { ...m, value: autoValue } : m;
               });
-              const newHandle = match ? current.handle : `@${selected.username}`;
-              onSettingsChange({ ...current, handle: newHandle, metrics: updatedMetrics });
-            } else if (!match) {
+              if (!hasCustomHandle && !match) {
+                onSettingsChange({ ...current, handle: `@${selected.username}`, metrics: updatedMetrics });
+              } else {
+                onSettingsChange({ ...current, metrics: updatedMetrics });
+              }
+            } else if (!match && !hasCustomHandle) {
               onSettingsChange({ ...current, handle: `@${selected.username}` });
             }
           }
@@ -389,6 +394,17 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
     fetchXAnalytics();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
+
+  // Sync handleMode when settings.handle changes externally (e.g. preset load)
+  useEffect(() => {
+    const handle = settings.handle.replace("@", "").toLowerCase();
+    const matchedAccount = connectedAccounts.find(a => a.username?.toLowerCase() === handle);
+    if (matchedAccount) {
+      setHandleMode(matchedAccount.username);
+    } else if (settings.handle && settings.handle !== "" && settings.handle !== "@") {
+      setHandleMode("custom");
+    }
+  }, [settings.handle, connectedAccounts]);
 
   // Fetch TrustMRR data for SaaS metric auto-fill (server auto-fetches if stale)
   const fetchTrustMRR = useCallback(() => {

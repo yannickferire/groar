@@ -9,7 +9,7 @@ import { isValidHexColor } from "@/lib/validation";
 import { FONT_LIST } from "@/lib/fonts";
 import { ASPECT_RATIO_LIST } from "@/lib/aspect-ratios";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CrownIcon, Cancel01Icon, FloppyDiskIcon, Loading03Icon, ShuffleSquareIcon, Delete02Icon, PencilEdit02Icon, SourceCodeSquareIcon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { CrownIcon, Cancel01Icon, FloppyDiskIcon, Loading03Icon, ShuffleSquareIcon, Delete02Icon, PencilEdit02Icon, SourceCodeSquareIcon, ArrowRight01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 import {
   Select,
   SelectContent,
@@ -21,6 +21,7 @@ import {
 // --- Preset types & helpers ---
 
 type PresetSettings = {
+  handle?: string;
   template?: TemplateType;
   background: BackgroundSettings;
   textColor: string;
@@ -28,6 +29,10 @@ type PresetSettings = {
   font?: FontFamily;
   branding?: BrandingSettings;
   abbreviateNumbers?: boolean;
+  milestoneEmoji?: string;
+  milestoneEmojiUnified?: string;
+  milestoneEmojiName?: string;
+  milestoneEmojiCount?: number;
 };
 
 type Preset = {
@@ -38,11 +43,13 @@ type Preset = {
 };
 
 const PRESET_STYLE_KEYS: (keyof PresetSettings)[] = [
-  "template", "background", "textColor", "aspectRatio", "font", "branding", "abbreviateNumbers",
+  "handle", "template", "background", "textColor", "aspectRatio", "font", "branding", "abbreviateNumbers",
+  "milestoneEmoji", "milestoneEmojiUnified", "milestoneEmojiName", "milestoneEmojiCount",
 ];
 
 function extractPresetSettings(settings: EditorSettings): PresetSettings {
   return {
+    handle: settings.handle,
     template: settings.template,
     background: settings.background,
     textColor: settings.textColor,
@@ -50,13 +57,23 @@ function extractPresetSettings(settings: EditorSettings): PresetSettings {
     font: settings.font,
     branding: settings.branding,
     abbreviateNumbers: settings.abbreviateNumbers,
+    milestoneEmoji: settings.milestoneEmoji,
+    milestoneEmojiUnified: settings.milestoneEmojiUnified,
+    milestoneEmojiName: settings.milestoneEmojiName,
+    milestoneEmojiCount: settings.milestoneEmojiCount,
   };
 }
 
 function presetMatchesSettings(preset: PresetSettings, settings: EditorSettings): boolean {
+  // Compare all preset keys; keys missing from older presets are treated as matching
+  // unless the current setting has a meaningful value
+  // Keys that didn't exist in older presets — skip comparison if absent from preset
+  const OPTIONAL_KEYS = new Set(["handle", "milestoneEmoji", "milestoneEmojiUnified", "milestoneEmojiName", "milestoneEmojiCount"]);
   for (const key of PRESET_STYLE_KEYS) {
     const a = preset[key];
     const b = settings[key as keyof EditorSettings];
+    // For optional keys not stored in older presets, skip if preset doesn't have it
+    if (a === undefined && OPTIONAL_KEYS.has(key)) continue;
     if (JSON.stringify(a) !== JSON.stringify(b)) return false;
   }
   return true;
@@ -134,14 +151,12 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
       .catch(() => {});
   }, [isPremium]);
 
-  // Auto-deselect preset when style changes
-  useEffect(() => {
-    if (!activePresetId) return;
+  // Track whether active preset has unsaved changes
+  const activePresetDirty = (() => {
+    if (!activePresetId) return false;
     const active = presets.find(p => p.id === activePresetId);
-    if (active && !presetMatchesSettings(active.settings, settings)) {
-      setActivePresetId(null);
-    }
-  }, [settings, activePresetId, presets]);
+    return active ? !presetMatchesSettings(active.settings, settings) : false;
+  })();
 
   const savePreset = useCallback(async (name: string) => {
     setIsSavingPreset(true);
@@ -155,6 +170,23 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
         const data = await res.json();
         setPresets(prev => [...prev, data.preset]);
         setActivePresetId(data.preset.id);
+      }
+    } catch {} finally {
+      setIsSavingPreset(false);
+    }
+  }, []);
+
+  const updatePreset = useCallback(async (id: string) => {
+    setIsSavingPreset(true);
+    try {
+      const res = await fetch("/api/user/presets", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, settings: extractPresetSettings(settingsRef.current) }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPresets(prev => prev.map(p => p.id === id ? { ...p, settings: data.preset.settings ?? extractPresetSettings(settingsRef.current) } : p));
       }
     } catch {} finally {
       setIsSavingPreset(false);
@@ -669,22 +701,57 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
                     )}
                   </SelectContent>
                 </Select>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={!!activePresetId}
-                  onClick={() => {
-                    setPresetName(`Preset ${nextPresetNumber}`);
-                    setShowPresetInput(true);
-                    setTimeout(() => presetInputRef.current?.select(), 50);
-                  }}
-                  className="h-9 px-3 text-xs shrink-0"
-                  title={activePresetId ? "Preset already saved" : "Save current style as preset"}
-                >
-                  <HugeiconsIcon icon={FloppyDiskIcon} size={14} strokeWidth={1.5} />
-                  Save
-                </Button>
+                {activePresetId && activePresetDirty ? (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="default"
+                      disabled={isSavingPreset}
+                      onClick={() => updatePreset(activePresetId)}
+                      className="h-9 px-3 text-xs shrink-0"
+                      title="Update current preset with new settings"
+                    >
+                      {isSavingPreset ? <HugeiconsIcon icon={Loading03Icon} size={14} className="animate-spin" /> : <>
+                        <HugeiconsIcon icon={FloppyDiskIcon} size={14} strokeWidth={1.5} />
+                        Update
+                      </>}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={isSavingPreset}
+                      onClick={() => {
+                        setActivePresetId(null);
+                        setPresetName(`Preset ${nextPresetNumber}`);
+                        setShowPresetInput(true);
+                        setTimeout(() => presetInputRef.current?.select(), 50);
+                      }}
+                      className="h-9 px-2 text-xs shrink-0"
+                      title="Save as new preset"
+                    >
+                      <HugeiconsIcon icon={PlusSignIcon} size={14} strokeWidth={1.5} />
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!!activePresetId}
+                    onClick={() => {
+                      setPresetName(`Preset ${nextPresetNumber}`);
+                      setShowPresetInput(true);
+                      setTimeout(() => presetInputRef.current?.select(), 50);
+                    }}
+                    className="h-9 px-3 text-xs shrink-0"
+                    title="Save current style as new preset"
+                  >
+                    <HugeiconsIcon icon={FloppyDiskIcon} size={14} strokeWidth={1.5} />
+                    Save
+                  </Button>
+                )}
               </>
             )}
           </div>
