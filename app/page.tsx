@@ -5,18 +5,18 @@ import Footer from "@/components/layout/Footer";
 import Hero from "@/components/Hero";
 
 import EditorShowcase from "@/components/EditorShowcase";
-import MetricsUniverse from "@/components/MetricsUniverse";
-import WhoItsFor from "@/components/WhoItsFor";
-import HowItWorks from "@/components/HowItWorks";
-import ProofSection from "@/components/ProofSection";
-import MadeBy from "@/components/MadeBy";
 import DataFastFunnel from "@/components/DataFastFunnel";
-import CommunityHighlights from "@/components/CommunityHighlights";
 import { Suspense } from "react";
 import { faqs } from "@/lib/faqs";
 
+const MetricsUniverse = dynamic(() => import("@/components/MetricsUniverse"));
+const ProofSection = dynamic(() => import("@/components/ProofSection"));
+const HowItWorks = dynamic(() => import("@/components/HowItWorks"));
+const WhoItsFor = dynamic(() => import("@/components/WhoItsFor"));
+const MadeBy = dynamic(() => import("@/components/MadeBy"));
 const Testimonials = dynamic(() => import("@/components/Testimonials"));
 const Pricing = dynamic(() => import("@/components/Pricing"));
+const CommunityHighlights = dynamic(() => import("@/components/CommunityHighlights"));
 const VsFaq = dynamic(() => import("@/components/VsFaq"));
 
 const faqJsonLd = {

@@ -188,7 +188,7 @@ export default function EditorShowcase() {
       {/* Preload template images */}
       <div className="hidden">
         {templates.slice(1).map((t) => (
-          <Image key={t.name} src={t.image} alt="" width={1016} height={605} priority />
+          <Image key={t.name} src={t.image} alt="" width={1016} height={605} loading="eager" />
         ))}
       </div>
 
@@ -221,7 +221,6 @@ export default function EditorShowcase() {
                 height={1080}
                 sizes="960px"
                 className="w-full h-auto rounded-xl"
-                priority
               />
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent pointer-events-none" />
             </div>
@@ -238,7 +237,6 @@ export default function EditorShowcase() {
                 width={1016}
                 height={605}
                 sizes="500px"
-                priority
                 className="w-full h-auto rounded-lg shadow-lg"
               />
             </div>

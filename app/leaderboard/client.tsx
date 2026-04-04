@@ -11,9 +11,12 @@ type FastestBuyer = {
   startupWebsite: string | null;
 };
 
-function getHiResAvatar(url: string): string {
-  if (url.includes("googleusercontent.com")) return url.replace(/=s\d+-c/, "=s256-c");
-  if (url.includes("pbs.twimg.com")) return url.replace("_normal", "_200x200");
+function getSmallAvatar(url: string): string {
+  if (url.includes("googleusercontent.com")) {
+    if (/=s\d+/.test(url)) return url.replace(/=s\d+(-c)?/, "=s96-c");
+    return url + "=s96-c";
+  }
+  if (url.includes("pbs.twimg.com")) return url.replace("_normal", "_x96");
   return url;
 }
 
@@ -21,7 +24,7 @@ function BuyerAvatar({ image, name }: { image: string | null; name: string | nul
   if (image) {
     return (
       <Image
-        src={getHiResAvatar(image)}
+        src={getSmallAvatar(image)}
         alt={name || "User"}
         width={80}
         height={80}

@@ -11,13 +11,12 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import XIcon from "@/components/icons/XIcon";
 import LeaderboardTable from "@/components/dashboard/LeaderboardTable";
 
-function getHiResAvatar(url: string): string {
+function getSmallAvatar(url: string): string {
   if (url.includes("googleusercontent.com")) {
-    return url.replace(/=s\d+-c/, "=s256-c");
+    if (/=s\d+/.test(url)) return url.replace(/=s\d+(-c)?/, "=s96-c");
+    return url + "=s96-c";
   }
-  if (url.includes("pbs.twimg.com")) {
-    return url.replace("_normal", "_200x200");
-  }
+  if (url.includes("pbs.twimg.com")) return url.replace("_normal", "_x96");
   return url;
 }
 
@@ -25,7 +24,7 @@ function Avatar({ image, name, size = 40 }: { image: string | null; name: string
   if (image) {
     return (
       <Image
-        src={getHiResAvatar(image)}
+        src={getSmallAvatar(image)}
         alt={name || "User avatar"}
         width={size * 2}
         height={size * 2}
