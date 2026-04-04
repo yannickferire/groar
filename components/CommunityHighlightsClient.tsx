@@ -30,10 +30,12 @@ function getSmallAvatar(url: string): string {
 }
 
 function Avatar({ image, name }: { image: string | null; name: string | null }) {
-  if (image) {
+  // Skip data: URLs (base64 images stored in DB can be several MB)
+  const src = image && !image.startsWith("data:") ? getSmallAvatar(image) : null;
+  if (src) {
     return (
       <img
-        src={getSmallAvatar(image)}
+        src={src}
         alt={name || "User"}
         width={36}
         height={36}

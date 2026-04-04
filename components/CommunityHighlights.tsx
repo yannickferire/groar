@@ -82,10 +82,15 @@ export default async function CommunityHighlights() {
     getFastestBuyers(),
   ]);
 
+  // Strip data: URLs from images to avoid serializing MB of base64 in RSC payload
+  const cleanImage = (img: string | null) => img && !img.startsWith("data:") ? img : null;
+  const cleanLeaderboard = leaderboard.map((u) => ({ ...u, image: cleanImage(u.image) }));
+  const cleanBuyers = fastestBuyers.map((b) => ({ ...b, image: cleanImage(b.image) }));
+
   return (
     <CommunityHighlightsClient
-      leaderboard={leaderboard}
-      fastestBuyers={fastestBuyers}
+      leaderboard={cleanLeaderboard}
+      fastestBuyers={cleanBuyers}
     />
   );
 }
