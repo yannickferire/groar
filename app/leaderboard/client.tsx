@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+
 import LeaderboardTable, { type LeaderboardEntry } from "@/components/dashboard/LeaderboardTable";
 
 type FastestBuyer = {
@@ -21,13 +21,15 @@ function getSmallAvatar(url: string): string {
 }
 
 function BuyerAvatar({ image, name }: { image: string | null; name: string | null }) {
-  if (image) {
+  const src = image && !image.startsWith("data:") ? getSmallAvatar(image) : null;
+  if (src) {
     return (
-      <Image
-        src={getSmallAvatar(image)}
+      <img
+        src={src}
         alt={name || "User"}
-        width={80}
-        height={80}
+        width={40}
+        height={40}
+        loading="lazy"
         className="w-10 h-10 rounded-full object-cover"
       />
     );
@@ -98,11 +100,12 @@ export default function PublicLeaderboardClient({
                           rel="noopener"
                           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                         >
-                          <Image
+                          <img
                             src={`https://www.google.com/s2/favicons?domain=${url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")}&sz=32`}
                             alt=""
                             width={14}
                             height={14}
+                            loading="lazy"
                             className="rounded-sm shrink-0"
                           />
                           <span className="truncate">{url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>

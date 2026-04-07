@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
+
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RankingIcon, Fire02Icon, Download04Icon } from "@hugeicons/core-free-icons";
 import XIcon from "@/components/icons/XIcon";
@@ -26,24 +26,25 @@ function RankBadge({ rank }: { rank: number }) {
   return <span className="text-sm font-mono font-bold text-muted-foreground">{rank}</span>;
 }
 
-function getHiResAvatar(url: string): string {
+function getSmallAvatar(url: string): string {
   if (url.includes("googleusercontent.com")) {
-    return url.replace(/=s\d+-c/, "=s256-c");
+    if (/=s\d+/.test(url)) return url.replace(/=s\d+(-c)?/, "=s96-c");
+    return url + "=s96-c";
   }
-  if (url.includes("pbs.twimg.com")) {
-    return url.replace("_normal", "_200x200");
-  }
+  if (url.includes("pbs.twimg.com")) return url.replace("_normal", "_x96");
   return url;
 }
 
 function Avatar({ image, name, size = 40 }: { image: string | null; name: string | null; size?: number }) {
-  if (image) {
+  const src = image && !image.startsWith("data:") ? getSmallAvatar(image) : null;
+  if (src) {
     return (
-      <Image
-        src={getHiResAvatar(image)}
+      <img
+        src={src}
         alt={name || "User avatar"}
-        width={size * 2}
-        height={size * 2}
+        width={size}
+        height={size}
+        loading="lazy"
         className="rounded-full object-cover"
         style={{ width: size, height: size }}
       />
@@ -194,11 +195,12 @@ export default function LeaderboardTable({ apiUrl = "/api/leaderboard", currentU
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            <Image
+                            <img
                               src={`https://www.google.com/s2/favicons?domain=${url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")}&sz=32`}
                               alt=""
                               width={14}
                               height={14}
+                              loading="lazy"
                               className="rounded-sm shrink-0"
                             />
                             <span>{url.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span>

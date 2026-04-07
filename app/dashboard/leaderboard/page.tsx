@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
+
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Fire02Icon, Download04Icon, CalendarCheckIn01Icon, Layout01Icon, PaintBoardIcon } from "@hugeicons/core-free-icons";
 import { IconSvgElement } from "@hugeicons/react";
@@ -21,13 +21,15 @@ function getSmallAvatar(url: string): string {
 }
 
 function Avatar({ image, name, size = 40 }: { image: string | null; name: string | null; size?: number }) {
-  if (image) {
+  const src = image && !image.startsWith("data:") ? getSmallAvatar(image) : null;
+  if (src) {
     return (
-      <Image
-        src={getSmallAvatar(image)}
+      <img
+        src={src}
         alt={name || "User avatar"}
-        width={size * 2}
-        height={size * 2}
+        width={size}
+        height={size}
+        loading="lazy"
         className="rounded-full object-cover"
         style={{ width: size, height: size }}
       />

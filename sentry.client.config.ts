@@ -13,4 +13,9 @@ Sentry.init({
   // Define how likely Replay events are sampled.
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 1.0,
+
+  // Ignore known harmless errors
+  ignoreErrors: [
+    "Cannot read properties of undefined (reading 'removeListener')", // Next.js prefetch cleanup race condition
+  ],
 });
