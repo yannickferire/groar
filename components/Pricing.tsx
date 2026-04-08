@@ -58,6 +58,9 @@ export default function Pricing() {
     // Trial flow for Pro (only for free/non-logged-in users)
     if (canTrial && planKey === "pro" && (!userPlan || userPlan === "free")) {
       if (!session) {
+        import("posthog-js").then(({ default: posthog }) => {
+          posthog.capture("cta_clicked", { source: "pricing" });
+        }).catch(() => {});
         window.location.href = `/login?callbackUrl=${encodeURIComponent("/dashboard?trial=start")}`;
       } else {
         fetch("/api/user/trial", { method: "POST" })

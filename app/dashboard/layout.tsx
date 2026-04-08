@@ -55,6 +55,9 @@ export default function DashboardLayout({
         name: session.user.name,
       });
 
+      // Track login completed (funnel step 4)
+      posthog.capture("login_completed");
+
       // Track daily login for leaderboard
       fetch("/api/user/stats", {
         method: "POST",

@@ -6,6 +6,7 @@ import Hero from "@/components/Hero";
 
 import EditorShowcase from "@/components/EditorShowcase";
 import DataFastFunnel from "@/components/DataFastFunnel";
+import SectionTracker from "@/components/SectionTracker";
 import { Suspense } from "react";
 import { faqs } from "@/lib/faqs";
 
@@ -116,13 +117,13 @@ export default async function Home() {
         <div className="relative z-50 flex flex-col">
         <div className="hidden [@media(min-width:1024px)_and_(min-height:600px)]:block h-72 bg-gradient-to-b from-transparent via-background/50 to-background [mask-image:radial-gradient(ellipse_90%_100%_at_50%_100%,black_50%,transparent_100%)]" />
         <div className="bg-background flex flex-col gap-10 md:gap-24 pt-8 md:pt-20">
-        <MetricsUniverse />
-        <ProofSection />
-        <HowItWorks />
-        <WhoItsFor />
-        <MadeBy />
-        <Testimonials />
-        <Pricing />
+        <SectionTracker name="metrics_universe"><MetricsUniverse /></SectionTracker>
+        <SectionTracker name="proof_section"><ProofSection /></SectionTracker>
+        <SectionTracker name="how_it_works"><HowItWorks /></SectionTracker>
+        <SectionTracker name="who_its_for"><WhoItsFor /></SectionTracker>
+        <SectionTracker name="made_by"><MadeBy /></SectionTracker>
+        <SectionTracker name="testimonials"><Testimonials /></SectionTracker>
+        <SectionTracker name="pricing"><Pricing /></SectionTracker>
         <Suspense>
           <CommunityHighlights />
         </Suspense>

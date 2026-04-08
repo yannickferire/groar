@@ -29,6 +29,13 @@ function LoginFormInner() {
     }
   }, [session, router]);
 
+  // Track login page view for non-logged-in users (funnel step 3)
+  useEffect(() => {
+    if (!session) {
+      posthog.capture("login_page_viewed");
+    }
+  }, [session]);
+
   // Detect failed OAuth: user returns to login page after sign-in attempt
   useEffect(() => {
     if (errorParam) {

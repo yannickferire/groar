@@ -26,6 +26,15 @@ export default function Hero() {
     setMounted(true);
   }, []);
 
+  // Track landing page view for non-logged-in users (funnel step 1)
+  useEffect(() => {
+    if (mounted && !session) {
+      import("posthog-js").then(({ default: posthog }) => {
+        posthog.capture("landing_viewed");
+      }).catch(() => {});
+    }
+  }, [mounted, session]);
+
   return (
     <section className="max-w-3xl text-balance text-center flex flex-col gap-4 md:gap-6 mx-auto px-4">
       <FadeIn delay={0.2} duration={0.6}>
@@ -79,7 +88,7 @@ export default function Hero() {
               data-fast-goal="hero_cta_clicked"
               onClick={() => {
                 import("posthog-js").then(({ default: posthog }) => {
-                  posthog.capture("hero_cta_clicked");
+                  posthog.capture("cta_clicked", { source: "hero" });
                 }).catch(() => {});
                 localStorage.setItem("groar-trial-intent", "true");
                 router.push("/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart");

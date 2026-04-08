@@ -81,6 +81,9 @@ export default function Header() {
                 </Button>
               ) : (
                 <Button variant="default" size="default" onClick={() => {
+                  import("posthog-js").then(({ default: posthog }) => {
+                    posthog.capture("cta_clicked", { source: "header" });
+                  }).catch(() => {});
                   localStorage.setItem("groar-trial-intent", "true");
                   router.push("/login?callbackUrl=%2Fdashboard%3Ftrial%3Dstart");
                 }}>
