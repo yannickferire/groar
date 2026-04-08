@@ -599,7 +599,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <p className="hidden md:block text-xs text-muted-foreground -mt-1">Share your results with GROAR? Tag <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a> and get a repost!</p>
+            <p className="hidden md:block text-xs text-muted-foreground -mt-1">If you tag <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a> on your post with 🐯 GROAR visual, I&apos;ll repost you!</p>
             <button
               onClick={() => shareToXRef.current?.(dataUrl, id)}
               className="w-full flex items-center justify-center gap-2 bg-foreground text-background rounded-xl px-4 py-2 md:py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -871,9 +871,9 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
           <>
             {isPremium ? (
               <div className="text-center text-sm text-muted-foreground mb-4">
-                Share your results with GROAR? Tag{" "}
+                If you tag{" "}
                 <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a>
-                {" "}and get a repost!
+                {" "}on your post with 🐯 GROAR visual, I&apos;ll repost you!
               </div>
             ) : (
               <div className="text-center text-sm text-muted-foreground mb-4">
