@@ -74,6 +74,22 @@ const TWEETS: Tweet[] = [
     url: "https://x.com/ardent__dev/status/2031345006703947937",
     avatar: "/testimonials/ardent__dev.jpg",
   },
+  {
+    author: "Ramit Koul",
+    handle: "ramitkoul",
+    verified: true,
+    text: "this is a **must have tool**. everyone building in public should try this out.",
+    url: "https://x.com/ramitkoul",
+    avatar: "/testimonials/ramitkoul.jpg",
+  },
+  {
+    author: "R.",
+    handle: "RichDoesTech",
+    verified: true,
+    text: "I was gonna use for free but it was so good **I ended up purchasing before even exporting** 😅",
+    url: "https://x.com/RichDoesTech",
+    avatar: "/testimonials/RichDoesTech.jpg",
+  },
 ];
 
 
@@ -136,8 +152,16 @@ function TweetCard({ tweet }: { tweet: Tweet }) {
 export default function Testimonials() {
   const [paused, setPaused] = useState(false);
 
-  // Duplicate tweets for seamless loop
-  const allTweets = [...TWEETS, ...TWEETS];
+  // Split tweets into two rows
+  const mid = Math.ceil(TWEETS.length / 2);
+  const topRow = TWEETS.slice(0, mid);
+  const bottomRow = TWEETS.slice(mid);
+
+  // Duplicate for seamless loop
+  const topAll = [...topRow, ...topRow];
+  const bottomAll = [...bottomRow, ...bottomRow];
+
+  const duration = TWEETS.length * 6;
 
   return (
     <section className="w-full">
@@ -146,26 +170,47 @@ export default function Testimonials() {
         <p className="text-muted-foreground mt-2">Don&apos;t take our word for it</p>
       </FadeInView>
       <div
-        className="overflow-hidden mask-l-from-80% mask-r-from-80%"
+        className="flex flex-col gap-4"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        <div
-          className="flex gap-4 w-max"
-          style={{
-            animation: `scroll ${TWEETS.length * 8}s linear infinite`,
-            animationPlayState: paused ? "paused" : "running",
-          }}
-        >
-          {allTweets.map((tweet, i) => (
-            <TweetCard key={`${tweet.handle}-${i}`} tweet={tweet} />
-          ))}
+        {/* Top row — scrolls left, wider visible area */}
+        <div className="overflow-hidden mask-l-from-75% mask-r-from-75%">
+          <div
+            className="flex gap-4 w-max"
+            style={{
+              animation: `scroll-left ${duration}s linear infinite`,
+              animationPlayState: paused ? "paused" : "running",
+            }}
+          >
+            {topAll.map((tweet, i) => (
+              <TweetCard key={`top-${tweet.handle}-${i}`} tweet={tweet} />
+            ))}
+          </div>
+        </div>
+        {/* Bottom row — scrolls right, narrower visible area */}
+        <div className="overflow-hidden mask-l-from-60% mask-r-from-60%">
+          <div
+            className="flex gap-4 w-max"
+            style={{
+              animation: `scroll-right ${duration}s linear infinite`,
+              animationPlayState: paused ? "paused" : "running",
+            }}
+          >
+            {bottomAll.map((tweet, i) => (
+              <TweetCard key={`bottom-${tweet.handle}-${i}`} tweet={tweet} />
+            ))}
+          </div>
         </div>
       </div>
       <style jsx>{`
-        @keyframes scroll {
+        @keyframes scroll-left {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
+        }
+        @keyframes scroll-right {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
         }
       `}</style>
     </section>
