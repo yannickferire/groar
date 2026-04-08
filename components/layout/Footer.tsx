@@ -72,6 +72,9 @@ export default function Footer() {
                 <Link href="/vs/build-in-public" className="hover:text-foreground transition-colors">
                   Build in Public
                 </Link>
+                <Link href="/rewards" className="hover:text-foreground transition-colors">
+                  Rewards
+                </Link>
               </div>
             </div>
             <div className="flex flex-col gap-1.5">

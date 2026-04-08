@@ -385,11 +385,38 @@ Examples: https://groar.app/milestone/1k-followers-on-linkedin, https://groar.ap
 
 ---
 
+## Rewards Program
+
+Groar offers a rewards program for users who share and promote the tool on X (Twitter).
+
+### 1. Affiliate Program
+- 30% commission on every sale (monthly and lifetime plans)
+- Apply by emailing yannick@groar.app
+
+### 2. Repost Reward
+- Create a visual with a Pro account or free trial
+- Post it on X and tag @yannick_ferire
+- Guaranteed repost, no conditions, no minimum followers
+
+### 3. Dedicated Post Rewards
+Write a post on X about your experience with GROAR and how it helps boost engagement. Tag @yannick_ferire. Rewards scale with reach:
+
+- **Any dedicated post**: repost to @yannick_ferire's audience
+- **5,000+ impressions**: full refund (lifetime users) or 1 month free (monthly users)
+- **50,000+ impressions**: $50 cash reward on top
+
+**How to claim**: DM @yannick_ferire with a screenshot once you hit the impressions threshold. Verified and paid within 48h.
+
+Page: https://groar.app/rewards
+
+---
+
 ## Links
 
 - Website: https://groar.app
 - API: https://groar.app/dashboard/api
 - Milestones: https://groar.app/milestone
+- Rewards: https://groar.app/rewards
 - Compare: https://groar.app/vs
 - Comparisons: https://groar.app/vs/screenshots, https://groar.app/vs/canva, https://groar.app/vs/piktochart, https://groar.app/vs/image-charts, https://groar.app/vs/spreadsheets, https://groar.app/vs/build-in-public
 - Leaderboard: https://groar.app/public

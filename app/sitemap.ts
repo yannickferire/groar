@@ -99,6 +99,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     },
     {
+      url: `${siteUrl}/rewards`,
+      lastModified: "2026-04-08",
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
       url: `${siteUrl}/milestone`,
       lastModified: "2026-04-01",
       changeFrequency: "monthly",

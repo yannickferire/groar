@@ -17,5 +17,6 @@ Sentry.init({
   // Ignore known harmless errors
   ignoreErrors: [
     "Cannot read properties of undefined (reading 'removeListener')", // Next.js prefetch cleanup race condition
+    "Object captured as promise rejection with keys: code, message", // Network errors / ad blockers causing unhandled fetch rejections
   ],
 });
