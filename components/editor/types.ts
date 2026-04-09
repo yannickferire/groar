@@ -70,7 +70,7 @@ export type PeriodSettings = {
   number: number;
 } | null;
 
-export type HeadingType = "period" | "last" | "date-range" | "today" | "yesterday" | "quote" | "custom";
+export type HeadingType = "period" | "last" | "date-range" | "today" | "yesterday" | "quote" | "custom" | "logo";
 
 export type HeadingSettings = {
   type: HeadingType;

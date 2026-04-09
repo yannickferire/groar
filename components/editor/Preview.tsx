@@ -268,6 +268,23 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                   </p>
                 );
               }
+              if (h.type === "logo" && settings.branding?.logoUrl && settings.branding?.enabled !== false) {
+                return (
+                  <div style={{ marginBottom: isBanner ? "1cqi" : "1.5cqi" }}>
+                    <Image
+                      src={settings.branding.logoUrl}
+                      alt="Logo"
+                      width={300}
+                      height={settings.branding.logoSize ?? 30}
+                      className="object-contain w-auto"
+                      style={{
+                        height: `${((settings.branding.logoSize ?? 30) / 6) * 1.8}cqi`,
+                        maxHeight: isBanner ? "8cqi" : "12cqi",
+                      }}
+                    />
+                  </div>
+                );
+              }
               return null;
             })()}
             {settings.metricsLayout === "grid" && settings.metrics.length >= 2 ? (
@@ -418,7 +435,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         )}
 
         {/* Branding Logo */}
-        {isPremium && settings.branding?.logoUrl && settings.branding?.enabled !== false && (
+        {isPremium && settings.branding?.logoUrl && settings.branding?.enabled !== false && settings.heading?.type !== "logo" && (
           <div
             className="absolute z-10"
             style={{

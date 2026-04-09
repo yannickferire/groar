@@ -299,7 +299,7 @@ function getDateLabel(periodType: string): string {
   return `${monthName} ${year}`;
 }
 
-function renderHeading(h: HeadingSettings, unit: number, isBanner: boolean, isSquare: boolean, isAnnouncement: boolean): React.ReactNode {
+function renderHeading(h: HeadingSettings, unit: number, isBanner: boolean, isSquare: boolean, isAnnouncement: boolean, logoDataUrl?: string | null, logoSize?: number): React.ReactNode {
   if (!h) return null;
   const sq = (base: number) => isSquare ? base * 1.15 : base;
   const baseFontSize = isAnnouncement
@@ -379,6 +379,15 @@ function renderHeading(h: HeadingSettings, unit: number, isBanner: boolean, isSq
     return (
       <div style={{ fontWeight: 700, fontSize: size, letterSpacing: "-0.02em", textAlign: "center", lineHeight: 1.1, padding: "0 2%", display: "flex" }}>
         {h.text}
+      </div>
+    );
+  }
+  if (h.type === "logo" && logoDataUrl) {
+    const height = ((logoSize ?? 30) / 6) * 1.8 * unit;
+    const maxHeight = isBanner ? unit * 8 : unit * 12;
+    return (
+      <div style={{ display: "flex", marginBottom: isBanner ? unit * 1 : unit * 1.5 }}>
+        <img src={logoDataUrl} alt="" style={{ height: Math.min(height, maxHeight), objectFit: "contain" }} />
       </div>
     );
   }
@@ -875,7 +884,7 @@ export async function GET(request: NextRequest) {
     // ── Announcement template ───────────────────────────────────────────────
     content = (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", color: textColor, textShadow, gap: isBanner ? unit * 1.5 : unit * 2.5, padding: "0 4%", position: "relative", zIndex: 10 }}>
-        {renderHeading(heading, unit, isBanner, isSquare, true)}
+        {renderHeading(heading, unit, isBanner, isSquare, true, logoDataUrl, logoSize)}
         <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: isBanner ? unit * 0.8 : unit * 1.2, padding: isBanner ? "0 8%" : "0 6%" }}>
           {announcements.map((a, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", overflow: "hidden", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: isBanner ? unit * 1.2 : unit * 1.8, padding: isBanner ? `${unit * 1.2}px ${unit * 2}px` : `${unit * 1.6}px ${unit * 2.5}px`, gap: isBanner ? unit * 1.2 : unit * 1.8 }}>
@@ -1012,7 +1021,7 @@ export async function GET(request: NextRequest) {
         width: "100%",
         zIndex: 10,
       }}>
-        {renderHeading(heading, unit, isBanner, isSquare, false)}
+        {renderHeading(heading, unit, isBanner, isSquare, false, logoDataUrl, logoSize)}
         {metricsContent}
       </div>
     );
@@ -1080,7 +1089,7 @@ export async function GET(request: NextRequest) {
       {content}
 
       {/* User logo */}
-      {logoDataUrl && (
+      {logoDataUrl && heading?.type !== "logo" && (
         <div style={{
           position: "absolute",
           bottom: "3%",

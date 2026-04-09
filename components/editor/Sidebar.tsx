@@ -801,6 +801,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       "yesterday": { type: "yesterday" },
                       "quote": { type: "quote", text: userText || "Your quote" },
                       "custom": { type: "custom", text: userText || "Your text" },
+                      "logo": { type: "logo" },
                     };
                     updateHeading(defaults[newType]);
                   }}
@@ -816,6 +817,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                     <SelectItem value="yesterday">Yesterday</SelectItem>
                     <SelectItem value="quote">Quote</SelectItem>
                     <SelectItem value="custom">Custom</SelectItem>
+                    <SelectItem value="logo">Logo</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
@@ -1682,7 +1684,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <HugeiconsIcon icon={ImageAdd01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
             Branding
-            {settings.branding?.logoUrl && (
+            {settings.branding?.logoUrl && settings.heading?.type !== "logo" && (
               <button
                 type="button"
                 role="switch"
@@ -1793,7 +1795,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                 </Popover>
 
                 {/* Position & size controls */}
-                {settings.branding?.logoUrl && (
+                {settings.branding?.logoUrl && settings.heading?.type !== "logo" && (
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
                       {([
