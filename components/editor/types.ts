@@ -9,6 +9,7 @@ export type Metric = {
   value: number;
   prefix?: string;
   customLabel?: string;
+  previousValue?: number; // for trending: value from previous period
 };
 
 export const METRIC_LABELS: Record<MetricType, string> = {
@@ -124,6 +125,7 @@ export type EditorSettings = {
   progressBarAuto?: boolean; // true = use auto red→green color (default true)
   announcements?: { emoji?: string; emojiUnified?: string; emojiName?: string; text: string }[];
   abbreviateNumbers?: boolean;
+  showTrending?: boolean; // show delta percentage on metrics template
   textAlign?: TextAlign;
   milestoneEmoji?: string;
   milestoneEmojiUnified?: string; // unified code for Apple emoji CDN (e.g. "1f389")

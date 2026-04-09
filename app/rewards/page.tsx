@@ -58,7 +58,7 @@ export default function RewardsPage() {
                 Share your unique referral link and earn <span className="text-foreground font-semibold">30% commission</span> on every 🐯 GROAR sale. Monthly and lifetime plans included.
               </p>
               <Button asChild variant="default" size="lg">
-                <a href="mailto:yannick@groar.app?subject=I want to join the GROAR affiliate program">
+                <a href="https://affiliates.creem.io/join/early-affiliate-program" target="_blank" rel="noopener noreferrer">
                   Get your affiliate link
                 </a>
               </Button>

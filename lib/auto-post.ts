@@ -203,7 +203,9 @@ async function generateCardImage(
   cardTemplate: AutoPostCardTemplate,
   goal?: number,
   extraMetrics?: { metric: string; value: number }[],
-  dayNumber?: number
+  dayNumber?: number,
+  userId?: string,
+  accountId?: string | null,
 ): Promise<Buffer | null> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
   const metricType = mapMetricType(metric);
@@ -247,10 +249,20 @@ async function generateCardImage(
       progressBarAuto: vs.progressBarAuto,
     };
   } else if (cardTemplate === "metrics") {
+    // Inject previousValue for trending when enabled
+    if (vs.showTrending && userId) {
+      for (const m of metricsArr) {
+        const delta = await getDelta(m.type, m.value, userId, accountId || null, "");
+        if (delta !== null) {
+          (m as Record<string, unknown>).previousValue = m.value - delta;
+        }
+      }
+    }
     settings = {
       ...baseSettings,
       template: "metrics",
       metrics: metricsArr,
+      showTrending: vs.showTrending,
     };
   } else {
     // Milestone template
@@ -694,7 +706,7 @@ export async function autoPostMilestone(
   if (!account || !hasWriteScope(account.scope)) return;
 
   const tweetText = buildTweetText(metric as AutoPostMetric, auto.trigger, auto.tweetTemplate, milestone, value, auto.goal || undefined);
-  const imageBuffer = await generateCardImage(metric, milestone, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined);
+  const imageBuffer = await generateCardImage(metric, milestone, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined, undefined, undefined, userId, account.accountId);
 
   await executePost(userId, auto.id, metric, auto.trigger, milestone, tweetText, imageBuffer, account);
 }
@@ -799,7 +811,7 @@ export async function processQueuedPosts(userId: string): Promise<void> {
     [entry.id, milestoneToPost, tweetText]
   );
 
-  const imageBuffer = await generateCardImage(entry.metric as MilestoneMetric, milestoneToPost, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined);
+  const imageBuffer = await generateCardImage(entry.metric as MilestoneMetric, milestoneToPost, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined, undefined, undefined, userId, account.accountId);
 
   // Re-fetch account to get the latest token (ensureValidToken may have consumed the old refresh token)
   const freshAccount = await getXAccount(userId);
@@ -941,7 +953,7 @@ export async function checkScheduledAutoPost(
     );
     const publishingId = pubRow.rows[0]?.id;
 
-    const imageBuffer = await generateCardImage(primaryMetric as MilestoneMetric, primaryValue, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined, extraMetrics.length > 0 ? extraMetrics : undefined, dayNumber);
+    const imageBuffer = await generateCardImage(primaryMetric as MilestoneMetric, primaryValue, account.username || "", auto.visualSettings, auto.cardTemplate, auto.goal || undefined, extraMetrics.length > 0 ? extraMetrics : undefined, dayNumber, userId, account.accountId);
 
     // Re-fetch account to get the latest token (ensureValidToken may have consumed the old refresh token)
     const freshAccount = await getXAccount(userId);
@@ -997,7 +1009,7 @@ export async function testAutoPost(userId: string, automationId: string): Promis
   const tweetText = buildTweetText(primaryMetric, auto.trigger, auto.tweetTemplate, value, currentValue, auto.goal || undefined, dayNumber, testProgressVars);
   const imageBuffer = await generateCardImage(
     primaryMetric as MilestoneMetric, value, account.username || "", auto.visualSettings, auto.cardTemplate,
-    auto.goal || undefined, extraMetrics.length > 0 ? extraMetrics : undefined, dayNumber
+    auto.goal || undefined, extraMetrics.length > 0 ? extraMetrics : undefined, dayNumber, userId, account.accountId
   );
 
   // Re-fetch account to get the latest refresh token (ensureValidToken may have consumed the old one)

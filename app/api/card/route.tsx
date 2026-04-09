@@ -230,6 +230,18 @@ async function checkMonthlyUsage(userId: string): Promise<{ allowed: boolean; us
 // ─── Icon rendering (Hugeicons → inline SVG for Satori) ─────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderTrendArrow(size: number, isUp: boolean, color: string): any {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+      {isUp ? (
+        <path d="M17 7L6 18M17 7H8M17 7V16" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <path d="M7 17L18 6M7 17H16M7 17V8" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+      )}
+    </svg>
+  );
+}
+
 function renderIcon(metricType: string, size: number, color: string): any {
   const iconData = METRIC_ICONS[metricType as MetricType];
   if (!iconData || metricType === "custom") return null;
@@ -482,8 +494,8 @@ function getEmojiPositions(emoji: string, isBanner: boolean, count: number): Emo
 
 // ─── Parse legacy metrics from URL (m1=followers:12500) ─────────────────────
 
-function parseMetrics(params: URLSearchParams): { type: string; value: number; prefix?: string; customLabel?: string }[] {
-  const metrics: { type: string; value: number; prefix?: string; customLabel?: string }[] = [];
+function parseMetrics(params: URLSearchParams): { type: string; value: number; prefix?: string; customLabel?: string; previousValue?: number }[] {
+  const metrics: { type: string; value: number; prefix?: string; customLabel?: string; previousValue?: number }[] = [];
   for (let i = 1; i <= 5; i++) {
     const raw = params.get(`m${i}`);
     if (!raw) continue;
@@ -640,7 +652,7 @@ export async function GET(request: NextRequest) {
       const value = valueStr ? parseFloat(valueStr.replace(/^\+/, "")) : (slot.value ?? 0);
       if (isNaN(value)) continue;
       const prefix = valueStr?.startsWith("+") ? "+" : (slot.prefix || undefined);
-      metrics.push({ type: slot.type, value, prefix, customLabel: slot.customLabel });
+      metrics.push({ type: slot.type, value, prefix, customLabel: slot.customLabel, previousValue: slot.previousValue });
     }
   }
 
@@ -921,6 +933,19 @@ export async function GET(request: NextRequest) {
                     {renderIcon(metric.type, iconSize, textColor)}
                     {label}
                   </div>
+                  {metric.previousValue !== undefined && metric.value > metric.previousValue && (() => {
+                    const trendSize = isMain
+                      ? (isBanner ? unit * 2.3 : unit * sq(2.9))
+                      : (isBanner ? unit * 1.8 : unit * sq(2.3));
+                    const pct = metric.previousValue > 0 ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100) : null;
+                    if (pct === 0) return null;
+                    return (
+                      <span style={{ fontSize: trendSize, fontWeight: 600, marginTop: unit * 0.15, color: "#34d399", display: "flex", alignItems: "center", gap: unit * 0.1 }}>
+                        {renderTrendArrow(trendSize, true, "#34d399")}
+                        {pct !== null && `+${pct}%`}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -953,6 +978,19 @@ export async function GET(request: NextRequest) {
               }}>
                 {renderIcon(metric.type, iconSize, textColor)}
                 {fmtMetric(metric.type, metric.value, abbreviate, metric.prefix)} {label}
+                {metric.previousValue !== undefined && metric.value > metric.previousValue && (() => {
+                  const trendSize = isPrimary
+                    ? (isBanner ? unit * 2.6 : unit * sq(3.25))
+                    : (isBanner ? unit * 1.8 : unit * sq(2.3));
+                  const pct = metric.previousValue > 0 ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100) : null;
+                  if (pct === 0) return null;
+                  return (
+                    <span style={{ fontSize: trendSize, fontWeight: 600, marginLeft: unit * 0.4, color: "#34d399", display: "flex", alignItems: "center", gap: unit * 0.15 }}>
+                      {renderTrendArrow(trendSize, true, "#34d399")}
+                      {pct !== null && `+${pct}%`}
+                    </span>
+                  );
+                })()}
               </div>
             );
           })}

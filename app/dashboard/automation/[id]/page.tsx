@@ -931,6 +931,26 @@ export default function AutomationEditPage() {
                   />
                 </button>
               </label>
+              {isMetricsTemplate && (
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <span className="text-[11px] text-muted-foreground">Trends</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={!!vs.showTrending}
+                    onClick={() => updateVisual({ showTrending: !vs.showTrending })}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                      vs.showTrending ? "bg-primary" : "bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                        vs.showTrending ? "translate-x-4.5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </label>
+              )}
             </div>
 
             {/* Layout (metrics template with 2+ metrics) */}

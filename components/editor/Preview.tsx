@@ -6,6 +6,7 @@ import { EditorSettings, MetricType, METRIC_LABELS, BackgroundPreset } from "../
 import { formatMetricValue } from "@/lib/metrics";
 import { getDateLabel } from "@/lib/date";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { TradeUpIcon, TradeDownIcon } from "@hugeicons/core-free-icons";
 import { METRIC_ICONS } from "@/lib/metric-icons";
 import BackgroundCanvas from "./BackgroundCanvas";
 import { FONTS } from "@/lib/fonts";
@@ -326,6 +327,24 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                               )}
                               {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
                             </p>
+                            {metric.previousValue !== undefined && metric.value > metric.previousValue && (() => {
+                              const trendSize = isMain
+                                ? (isBanner ? "2.3cqi" : `${sq(2.9)}cqi`)
+                                : (isBanner ? "1.8cqi" : `${sq(2.3)}cqi`);
+                              const pct = metric.previousValue > 0 ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100) : null;
+                              if (pct === 0) return null;
+                              return (
+                                <span style={{ fontSize: trendSize, marginTop: "0.15cqi" }} className="flex items-center gap-[0.1cqi] text-emerald-400 font-semibold">
+                                  <HugeiconsIcon
+                                    icon={TradeUpIcon}
+                                    style={{ width: trendSize, height: trendSize }}
+                                    strokeWidth={2.5}
+                                    color="currentColor"
+                                  />
+                                  {pct !== null && `+${pct}%`}
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
                       );
@@ -372,6 +391,24 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                         />
                       )}
                       {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
+                      {metric.previousValue !== undefined && metric.value > metric.previousValue && (() => {
+                        const trendSize = index === 0
+                          ? (isBanner ? "2.6cqi" : `${sq(3.25)}cqi`)
+                          : (isBanner ? "1.8cqi" : `${sq(2.3)}cqi`);
+                        const pct = metric.previousValue > 0 ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100) : null;
+                        if (pct === 0) return null;
+                        return (
+                          <span style={{ fontSize: trendSize, marginLeft: "0.4cqi" }} className="flex items-center gap-[0.15cqi] text-emerald-400 font-semibold">
+                            <HugeiconsIcon
+                              icon={TradeUpIcon}
+                              style={{ width: trendSize, height: trendSize }}
+                              strokeWidth={2.5}
+                              color="currentColor"
+                            />
+                            {pct !== null && `+${pct}%`}
+                          </span>
+                        );
+                      })()}
                     </p>
                   );
                 })}

@@ -143,6 +143,7 @@ export type AutomationVisualSettings = {
   logoPosition?: "left" | "center" | "right";
   logoSize?: number; // px height, default 30
   metricsLayout?: "stack" | "grid"; // for metrics template with 2+ metrics
+  showTrending?: boolean; // show trending percentage on metrics template
   progressDisplay?: "bar" | "dots" | "square"; // for progress template
   progressBarColor?: string; // custom bar color for progress template
   progressBarAuto?: boolean; // true = auto red→green color

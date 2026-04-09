@@ -87,6 +87,7 @@ const AUTO_FILL_SAAS: MetricType[] = ["mrr", "arr", "revenue"];
 type SortableMetricItemProps = {
   metric: Metric;
   onValueChange: (id: string, value: number, prefix?: string) => void;
+  onPreviousValueChange: (id: string, previousValue: number | undefined) => void;
   onRemove: (id: string) => void;
   onCustomLabelChange?: (label: string) => void;
   canRemove: boolean;
@@ -94,6 +95,7 @@ type SortableMetricItemProps = {
   autoFillValue?: number; // undefined = no auto-fill available
   autoFillLoading?: boolean;
   disabled?: boolean;
+  showTrending?: boolean;
 };
 
 function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
@@ -152,7 +154,7 @@ function PeriodNumberInput({ value, onChange, onBlurEmpty, autoFocus }: {
   );
 }
 
-const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onRemove, onCustomLabelChange, canRemove, canDrag, autoFillValue, autoFillLoading, disabled }: SortableMetricItemProps) {
+const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueChange, onPreviousValueChange, onRemove, onCustomLabelChange, canRemove, canDrag, autoFillValue, autoFillLoading, disabled, showTrending }: SortableMetricItemProps) {
   const [inputValue, setInputValue] = useState(metric.prefix ? `${metric.prefix}${metric.value}` : metric.value.toString());
 
   // Sync local state when metric value changes (e.g., from localStorage)
@@ -276,6 +278,27 @@ const SortableMetricItem = memo(function SortableMetricItem({ metric, onValueCha
       >
         <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
       </Button>
+      {showTrending && (
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-muted-foreground/60 shrink-0 mr-1">prev</span>
+          <Input
+            type="text"
+            inputMode="text"
+            placeholder=""
+            value={metric.previousValue !== undefined ? metric.previousValue.toString() : ""}
+            onChange={(e) => {
+              if (e.target.value === "") {
+                onPreviousValueChange(metric.id, undefined);
+                return;
+              }
+              const parsed = parseMetricInput(e.target.value, metric.type);
+              if (parsed !== null) onPreviousValueChange(metric.id, parsed);
+            }}
+            className="w-16 text-center text-xs bg-white dark:bg-background"
+            aria-label="Previous value for trending"
+          />
+        </div>
+      )}
     </div>
   );
 });
@@ -572,6 +595,12 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
   const updateMetricValue = useCallback((id: string, value: number, prefix?: string) => {
     updateSetting("metrics", settings.metrics.map(m =>
       m.id === id ? { ...m, value, prefix } : m
+    ));
+  }, [updateSetting, settings.metrics]);
+
+  const updateMetricPreviousValue = useCallback((id: string, previousValue: number | undefined) => {
+    updateSetting("metrics", settings.metrics.map(m =>
+      m.id === id ? { ...m, previousValue } : m
     ));
   }, [updateSetting, settings.metrics]);
 
@@ -963,19 +992,21 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           <div className="flex items-center gap-1.5">
             {(() => {
               const forceAbbreviate = settings.metrics.some(m => m.value > 999_999_999);
+              const hasLargeNumbers = settings.metrics.some(m => m.value >= 1000);
+              const isDisabled = forceAbbreviate || !hasLargeNumbers;
               const isAbbreviated = forceAbbreviate || settings.abbreviateNumbers !== false;
               return (
-                <label className={`flex items-center gap-1.5 ${forceAbbreviate ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
+                <label className={`flex items-center gap-1.5 ${isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
                   <span className="text-xs text-muted-foreground">
-                    Abbreviate numbers
+                    Abbrev. numbers
                   </span>
                   <button
                     type="button"
                     role="switch"
                     aria-checked={isAbbreviated}
                     aria-label="Abbreviate numbers"
-                    disabled={forceAbbreviate}
-                    onClick={() => !forceAbbreviate && updateSetting("abbreviateNumbers", settings.abbreviateNumbers === false)}
+                    disabled={isDisabled}
+                    onClick={() => !isDisabled && updateSetting("abbreviateNumbers", settings.abbreviateNumbers === false)}
                     className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
                       isAbbreviated ? "bg-primary" : "bg-muted"
                     }`}
@@ -990,6 +1021,31 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
               );
             })()}
           </div>
+          {(settings.template || "metrics") === "metrics" && (
+            <div className="flex items-center gap-1.5">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <span className="text-xs text-muted-foreground">
+                  Trends
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={!!settings.showTrending}
+                  aria-label="Show trending"
+                  onClick={() => updateSetting("showTrending", !settings.showTrending)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                    settings.showTrending ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                      settings.showTrending ? "translate-x-4.5" : "translate-x-0.75"
+                    }`}
+                  />
+                </button>
+              </label>
+            </div>
+          )}
         </div>
 
         {/* Layout toggle for metrics template */}
@@ -1053,7 +1109,9 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                       <SortableMetricItem
                         metric={metric}
                         onValueChange={updateMetricValue}
+                        onPreviousValueChange={updateMetricPreviousValue}
                         onRemove={removeMetric}
+                        showTrending={!!settings.showTrending}
                         onCustomLabelChange={metric.type === "custom" ? (label) => {
                           updateSetting("metrics", settings.metrics.map(m =>
                             m.id === metric.id ? { ...m, customLabel: label } : m

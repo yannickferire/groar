@@ -82,6 +82,7 @@ export default function CardPreview({
       milestoneEmojiName: emoji.name,
       milestoneEmojiCount: template === "milestone" ? (vs?.milestoneEmojiCount ?? 3) : 0,
       abbreviateNumbers: vs?.abbreviateNumbers !== false,
+      showTrending: template === "metrics" ? vs?.showTrending : undefined,
       ...(vs?.logoUrl ? { branding: { logoUrl: vs.logoUrl, position: vs.logoPosition || "center", logoSize: vs.logoSize ?? 30, enabled: true } } : {}),
     };
   }, [metric, extraMetrics, value, goal, cardTemplate, visualSettings, handle, headingText]);
