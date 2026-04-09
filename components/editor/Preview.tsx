@@ -123,8 +123,8 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 const from = h.periodFrom ?? 1;
                 const to = h.periodTo;
                 return (
-                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>
-                    <span className="capitalize">{h.periodType}</span>{" "}{to !== undefined ? `${from} - ${to}` : from}
+                  <p className="font-bold tracking-tight whitespace-nowrap" style={{ fontSize: baseFontSize }}>
+                    <span className="capitalize">{h.periodType}</span>{"\u00A0"}{to !== undefined ? `${from}\u00A0-\u00A0${to}` : from}
                   </p>
                 );
               }
@@ -132,8 +132,8 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 const count = h.lastCount ?? 1;
                 const unit = h.lastUnit;
                 return (
-                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>
-                    Last {count > 1 ? `${count} ` : ""}{unit}{count !== 1 ? "s" : ""}
+                  <p className="font-bold tracking-tight whitespace-nowrap" style={{ fontSize: baseFontSize }}>
+                    Last{"\u00A0"}{count > 1 ? `${count}\u00A0` : ""}{unit}{count !== 1 ? "s" : ""}
                   </p>
                 );
               }
@@ -207,8 +207,8 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 const from = h.periodFrom ?? 1;
                 const to = h.periodTo;
                 return (
-                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>
-                    <span className="capitalize">{h.periodType}</span>{" "}{to !== undefined ? `${from} - ${to}` : from}
+                  <p className="font-bold tracking-tight whitespace-nowrap" style={{ fontSize: baseFontSize }}>
+                    <span className="capitalize">{h.periodType}</span>{"\u00A0"}{to !== undefined ? `${from}\u00A0-\u00A0${to}` : from}
                   </p>
                 );
               }
@@ -216,8 +216,8 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                 const count = h.lastCount ?? 1;
                 const unit = h.lastUnit;
                 return (
-                  <p className="font-bold tracking-tight" style={{ fontSize: baseFontSize }}>
-                    Last {count > 1 ? `${count} ` : ""}{unit}{count !== 1 ? "s" : ""}
+                  <p className="font-bold tracking-tight whitespace-nowrap" style={{ fontSize: baseFontSize }}>
+                    Last{"\u00A0"}{count > 1 ? `${count}\u00A0` : ""}{unit}{count !== 1 ? "s" : ""}
                   </p>
                 );
               }

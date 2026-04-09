@@ -80,7 +80,7 @@ export default function LovedBy() {
         <div className="ml-3 h-6 w-36 rounded-full bg-sidebar animate-pulse" />
       ) : lovedBy.totalUsers > lovedBy.avatars.length ? (
         <span className="ml-3 px-2.5 py-1 rounded-full border border-border text-xs font-medium text-muted-foreground">
-          {Math.floor(lovedBy.totalUsers / 10) * 10}+ creators, join them!
+          {Math.floor(lovedBy.totalUsers / 10) * 10}+ creators<span className="hidden md:inline">, join them!</span>
         </span>
       ) : null}
     </div>

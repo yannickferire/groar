@@ -1878,7 +1878,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
             <HugeiconsIcon icon={Download04Icon} size={22} strokeWidth={2} className="transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-0 group-hover:scale-75" />
             <span className="absolute inset-0 flex items-center justify-center text-xl opacity-0 scale-75 transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-100 group-hover:scale-125 group-hover:rotate-[-8deg]">🐯</span>
           </span>
-          {isExporting ? "Loading..." : cooldown > 0 ? `Wait ${cooldown}s` : "Download image"}
+          {isExporting ? "Loading..." : cooldown > 0 ? `Wait ${cooldown}s` : <><span className="hidden md:inline">Download image</span><span className="md:hidden">Download</span></>}
         </Button>
         <Button
           onClick={onCopy}
