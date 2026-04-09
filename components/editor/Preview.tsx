@@ -452,7 +452,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
         )}
 
         {/* Branding Logo */}
-        {isPremium && settings.branding?.logoUrl && settings.branding?.enabled !== false && settings.heading?.type !== "logo" && (
+        {isPremium && settings.branding?.logoUrl && settings.branding?.enabled !== false && !(settings.heading?.type === "logo" && (settings.template === "metrics" || settings.template === "announcement" || !settings.template)) && (
           <div
             className="absolute z-10"
             style={{
@@ -476,8 +476,8 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
           </div>
         )}
 
-        {!isPremium && (
-          <footer className="absolute z-10 groar-watermark bottom-[3%] right-[3%]">
+        {(!isPremium || settings.showWatermark) && (
+          <footer className={`absolute z-10 groar-watermark bottom-[3%] ${settings.branding?.position === "right" && settings.branding?.enabled !== false && settings.branding?.logoUrl ? "left-[3%]" : "right-[3%]"}`}>
             <p
               className="whitespace-nowrap flex items-center"
               style={{ textShadow, fontSize: isBanner ? "2.3cqi" : "2.7cqi", gap: "0.3cqi" }}

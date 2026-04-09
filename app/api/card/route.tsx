@@ -630,7 +630,7 @@ export async function GET(request: NextRequest) {
   // Free tier: watermark always on, paid tiers: watermark off by default (opt-in)
   // Internal requests (dashboard/auto-post) never show watermark
   const showWatermark = isInternal
-    ? false
+    ? !!settings.showWatermark
     : externalTierWatermark || watermarkParam === "true" || watermarkParam === "1";
 
   // Random support
@@ -1089,7 +1089,7 @@ export async function GET(request: NextRequest) {
       {content}
 
       {/* User logo */}
-      {logoDataUrl && heading?.type !== "logo" && (
+      {logoDataUrl && !(heading?.type === "logo" && (templateType === "metrics" || templateType === "announcement")) && (
         <div style={{
           position: "absolute",
           bottom: "3%",
@@ -1111,7 +1111,7 @@ export async function GET(request: NextRequest) {
 
       {/* Powered by GROAR (bottom-right) */}
       {showWatermark && (
-        <div style={{ position: "absolute", bottom: "3%", right: "3%", display: "flex", alignItems: "center", color: textColor, opacity: 0.5, fontSize: isBanner ? unit * 2.3 : unit * 2.7, textShadow }}>
+        <div style={{ position: "absolute", bottom: "3%", [logoPosition === "right" && logoDataUrl ? "left" : "right"]: "3%", display: "flex", alignItems: "center", color: textColor, opacity: 0.5, fontSize: isBanner ? unit * 2.3 : unit * 2.7, textShadow }}>
           groar.app
         </div>
       )}

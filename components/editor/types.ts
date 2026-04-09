@@ -126,6 +126,7 @@ export type EditorSettings = {
   announcements?: { emoji?: string; emojiUnified?: string; emojiName?: string; text: string }[];
   abbreviateNumbers?: boolean;
   showTrending?: boolean; // show delta percentage on metrics template
+  showWatermark?: boolean; // pro users can opt-in to show groar.app watermark
   textAlign?: TextAlign;
   milestoneEmoji?: string;
   milestoneEmojiUnified?: string; // unified code for Apple emoji CDN (e.g. "1f389")

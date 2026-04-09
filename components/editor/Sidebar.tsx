@@ -1684,7 +1684,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
             <HugeiconsIcon icon={ImageAdd01Icon} size={18} strokeWidth={1.5} aria-hidden="true" />
             Branding
-            {settings.branding?.logoUrl && settings.heading?.type !== "logo" && (
+            {settings.branding?.logoUrl && !(settings.heading?.type === "logo" && (settings.template === "metrics" || settings.template === "announcement" || !settings.template)) && (
               <button
                 type="button"
                 role="switch"
@@ -1795,7 +1795,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
                 </Popover>
 
                 {/* Position & size controls */}
-                {settings.branding?.logoUrl && settings.heading?.type !== "logo" && (
+                {settings.branding?.logoUrl && !(settings.heading?.type === "logo" && (settings.template === "metrics" || settings.template === "announcement" || !settings.template)) && (
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
                       {([
@@ -1865,6 +1865,29 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
             )}
           </div>
         </div>
+      )}
+
+      {/* Watermark toggle (Pro only) */}
+      {isPremium && (
+        <label className="flex items-center justify-between cursor-pointer">
+          <span className="text-xs text-muted-foreground">Show groar.app watermark</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!!settings.showWatermark}
+            aria-label="Show groar.app watermark"
+            onClick={() => updateSetting("showWatermark", !settings.showWatermark)}
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+              settings.showWatermark ? "bg-primary" : "bg-muted"
+            }`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                settings.showWatermark ? "translate-x-4.5" : "translate-x-0.75"
+              }`}
+            />
+          </button>
+        </label>
       )}
 
       {/* Export */}
