@@ -104,6 +104,9 @@ export default function Footer() {
         </div>
         <div className="pb-8 pt-4 flex flex-col gap-3">
           <div className="flex items-center justify-start gap-4">
+            <a href="https://tinylaunch.com" target="_blank" rel="noopener">
+              <img loading="lazy" src="https://tinylaunch.com/tinylaunch_badge_1.svg" alt="TinyLaunch Badge" className="w-auto" style={{ maxHeight: 50 }} />
+            </a>
             <a href="https://peerpush.net/p/groar" target="_blank" rel="noopener">
               <img loading="lazy" src="https://peerpush.net/p/groar/badge.png" alt="🐯 GROAR badge" className="h-12 w-auto" />
             </a>
