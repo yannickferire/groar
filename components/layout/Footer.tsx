@@ -103,7 +103,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="pb-8 pt-4 flex flex-col gap-3">
-          <div className="flex items-center justify-start gap-4">
+          <div className="flex items-center justify-center gap-4">
             <a href="https://tinylaunch.com" target="_blank" rel="noopener">
               <img loading="lazy" src="https://tinylaunch.com/tinylaunch_badge_1.svg" alt="TinyLaunch Badge" className="w-auto" style={{ maxHeight: 50 }} />
             </a>
@@ -120,28 +120,43 @@ export default function Footer() {
               <img loading="lazy" src="https://launch.cab/api/badges/img/218fb417-54b1-4dab-a291-fa86e793bb74.svg?t=218fb417-54b1-4dab-a291-fa86e793bb74.1772116152241.d4789835032b82a6.96cc9b948c18afbe&tagline=TOP+%23%7Brank%7D&logoPosition=left" alt="Featured on launch.cab" />
             </a>
           </div>
-          <div className="flex items-center justify-start gap-4">
-            <a href="https://findly.tools/groar?utm_source=groar" target="_blank" rel="noopener noreferrer">
-              <img loading="lazy" src="https://findly.tools/badges/findly-tools-badge-light.svg" alt="Featured on Findly.tools" className="h-12 w-auto" />
-            </a>
-            <a href="https://twelve.tools" target="_blank" rel="noopener noreferrer">
-              <img loading="lazy" src="https://twelve.tools/badge0-white.svg" alt="Featured on Twelve Tools" className="h-12" />
-            </a>
-            <a href="https://wired.business" target="_blank" rel="noopener noreferrer">
-              <img loading="lazy" src="https://wired.business/badge0-white.svg" alt="Featured on Wired Business" className="max-h-12" />
-            </a>
-            <a href="https://www.stackco.st/tool/groar" target="_blank" rel="noopener noreferrer">
-              <img loading="lazy" src="https://www.stackco.st/api/badge/tool/groar" alt="Featured on stackco.st — Groar" height="54" className="h-[44px] w-auto border border-border rounded-md" />
-            </a>
-            <a href="https://neeed.directory/products/groar?utm_source=groar" target="_blank" rel="noopener">
-              <img loading="lazy" src="https://neeed.directory/badges/neeed-badge-light.svg" alt="Featured on neeed.directory" width="139" className="h-12" />
-            </a>
-            <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer" className="-ml-3 -mr-3">
-              <img loading="lazy" src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" className="h-14 -my-1" />
-            </a>
-            <a href="https://ufind.best/products/groar?utm_source=ufind.best" target="_blank" rel="noopener">
-              <img loading="lazy" src="https://ufind.best/badges/ufind-best-badge-light.svg" alt="Featured on ufind.best" width="150" className="h-12" />
-            </a>
+          <div className="overflow-hidden mask-l-from-80% mask-r-from-80%">
+            <div className="flex items-center gap-4 w-max" style={{ animation: "badge-scroll 40s linear infinite" }}>
+              {[...Array(2)].map((_, dup) => (
+                <div key={dup} className="flex items-center gap-4 shrink-0">
+                  <a href="https://launchpanda.dev/launches" target="_blank" rel="dofollow">
+                    <img loading="lazy" src="https://launchpanda.dev/images/badges/launchpanda-badge.svg" alt="Launched on LaunchPanda" className="h-12 w-auto" />
+                  </a>
+                  <a href="https://findly.tools/groar?utm_source=groar" target="_blank" rel="noopener noreferrer">
+                    <img loading="lazy" src="https://findly.tools/badges/findly-tools-badge-light.svg" alt="Featured on Findly.tools" className="h-12 w-auto" />
+                  </a>
+                  <a href="https://twelve.tools" target="_blank" rel="noopener noreferrer">
+                    <img loading="lazy" src="https://twelve.tools/badge0-white.svg" alt="Featured on Twelve Tools" className="h-12" />
+                  </a>
+                  <a href="https://wired.business" target="_blank" rel="noopener noreferrer">
+                    <img loading="lazy" src="https://wired.business/badge0-white.svg" alt="Featured on Wired Business" className="max-h-12" />
+                  </a>
+                  <a href="https://www.stackco.st/tool/groar" target="_blank" rel="noopener noreferrer">
+                    <img loading="lazy" src="https://www.stackco.st/api/badge/tool/groar" alt="Featured on stackco.st — Groar" height="54" className="h-[44px] w-auto border border-border rounded-md" />
+                  </a>
+                  <a href="https://neeed.directory/products/groar?utm_source=groar" target="_blank" rel="noopener">
+                    <img loading="lazy" src="https://neeed.directory/badges/neeed-badge-light.svg" alt="Featured on neeed.directory" width="139" className="h-12" />
+                  </a>
+                  <a href="https://www.foundrlist.com/product/groar" target="_blank" rel="noopener noreferrer">
+                    <img loading="lazy" src="https://www.foundrlist.com/api/badge/groar" alt="Live on FoundrList" width="140" height="56" className="h-12 w-auto" />
+                  </a>
+                  <a href="https://ufind.best/products/groar?utm_source=ufind.best" target="_blank" rel="noopener">
+                    <img loading="lazy" src="https://ufind.best/badges/ufind-best-badge-light.svg" alt="Featured on ufind.best" width="150" className="h-12" />
+                  </a>
+                </div>
+              ))}
+            </div>
+            <style>{`
+              @keyframes badge-scroll {
+                0% { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+              }
+            `}</style>
           </div>
         </div>
       </footer>
