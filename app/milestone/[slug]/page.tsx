@@ -39,10 +39,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const ogImage = `/api/card?template=milestone&m1=${page.metricType}:${page.value}&bg=${page.cardParams.bg}&color=${encodeURIComponent(page.cardParams.color)}&font=${page.cardParams.font}&emoji=${encodeURIComponent(page.cardParams.emoji)}&emojiCount=${page.cardParams.emojiCount}&handle=${encodeURIComponent("@yannick_ferire")}`;
 
+  const isPlatformVariant = page.slug.includes("-on-");
+
   return {
     title: page.title,
     description: page.description,
     keywords: page.keywords,
+    ...(isPlatformVariant ? { robots: { index: false, follow: true } } : {}),
     alternates: { canonical: `/milestone/${page.slug}` },
     openGraph: {
       title: page.title,
@@ -103,6 +106,10 @@ export default async function MilestonePage({ params }: { params: Promise<{ slug
     datePublished: "2026-04-01",
     dateModified: "2026-04-01",
     mainEntityOfPage: { "@type": "WebPage", "@id": `https://groar.app/milestone/${page.slug}` },
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["article h1", "article h2", "article p"],
+    },
   };
 
   return (

@@ -6,9 +6,23 @@ import VsFaq from "@/components/VsFaq";
 import { faqs } from "@/lib/faqs";
 import PricingClient from "./client";
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: { "@type": "Answer", text: faq.answer },
+  })),
+};
+
 export default function PricingPage() {
   return (
     <div className="flex flex-col min-h-screen px-4">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       <Header />
       <main className="flex-1 flex flex-col items-center justify-center py-8 md:py-16 mt-4 gap-24">
         <PricingClient>

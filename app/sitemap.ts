@@ -110,7 +110,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.7,
     },
-    ...MILESTONE_PAGES.map((m) => ({
+    ...MILESTONE_PAGES.filter((m) => !m.slug.includes("-on-")).map((m) => ({
       url: `${siteUrl}/milestone/${m.slug}`,
       lastModified: "2026-04-01",
       changeFrequency: "monthly" as const,

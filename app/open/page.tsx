@@ -305,6 +305,9 @@ export default function OpenPage() {
               <br />
               Live metrics, revenue, growth and stack.
             </p>
+            <p className="text-xs text-muted-foreground/50">
+              Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </p>
           </div>
         </FadeInView>
 

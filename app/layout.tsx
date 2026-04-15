@@ -131,6 +131,40 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Groar",
+  url: "https://groar.app",
+  logo: "https://groar.app/groar-logo.png",
+  description: "Turn your social media metrics into shareable visuals in 10 seconds.",
+  founder: {
+    "@type": "Person",
+    name: "Yannick Ferire",
+    url: "https://x.com/yannick_ferire",
+    sameAs: [
+      "https://x.com/yannick_ferire",
+    ],
+  },
+  sameAs: [
+    "https://x.com/yannick_ferire",
+    "https://groar.app",
+  ],
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "Groar",
+  url: "https://groar.app",
+  description: "Turn your social media metrics into shareable visuals in 10 seconds.",
+  publisher: {
+    "@type": "Organization",
+    name: "Groar",
+    url: "https://groar.app",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -141,6 +175,14 @@ export default function RootLayout({
       <body
         className={`${bricolage.variable} ${dmMono.variable} ${inter.variable} ${playfair.variable} ${spaceGrotesk.variable} ${averiaSerifLibre.variable} ${dmSerifDisplay.variable} antialiased max-w-[100vw] overflow-x-hidden`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <ThemeProvider>
         {children}
         <Toaster />
