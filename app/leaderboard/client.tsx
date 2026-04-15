@@ -1,6 +1,6 @@
 "use client";
 
-
+import { useState } from "react";
 import LeaderboardTable, { type LeaderboardEntry } from "@/components/dashboard/LeaderboardTable";
 
 type FastestBuyer = {
@@ -20,24 +20,30 @@ function getSmallAvatar(url: string): string {
   return url;
 }
 
-function BuyerAvatar({ image, name }: { image: string | null; name: string | null }) {
-  const src = image && !image.startsWith("data:") ? getSmallAvatar(image) : null;
-  if (src) {
+function BuyerAvatar({ image, name, xUsername }: { image: string | null; name: string | null; xUsername: string | null }) {
+  const dbSrc = image && !image.startsWith("data:") ? getSmallAvatar(image) : null;
+  const [stage, setStage] = useState<0 | 1 | 2>(dbSrc ? 0 : xUsername ? 1 : 2);
+
+  if (stage === 2) {
     return (
-      <img
-        src={src}
-        alt={name || "User"}
-        width={40}
-        height={40}
-        loading="lazy"
-        className="w-10 h-10 rounded-full object-cover"
-      />
+      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+        {name?.charAt(0)?.toUpperCase() || "?"}
+      </div>
     );
   }
+
+  const src = stage === 0 ? dbSrc! : `https://unavatar.io/x/${xUsername}?fallback=false`;
+
   return (
-    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-      {name?.charAt(0)?.toUpperCase() || "?"}
-    </div>
+    <img
+      src={src}
+      alt={name || "User"}
+      width={40}
+      height={40}
+      loading="lazy"
+      onError={() => setStage(stage === 0 && xUsername ? 1 : 2)}
+      className="w-10 h-10 rounded-full object-cover"
+    />
   );
 }
 
@@ -82,7 +88,7 @@ export default function PublicLeaderboardClient({
                 <span className="text-lg w-7 text-center shrink-0">
                   {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
                 </span>
-                <BuyerAvatar image={buyer.image} name={buyer.name} />
+                <BuyerAvatar image={buyer.image} name={buyer.name} xUsername={buyer.xUsername} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">
                     {buyer.name || (buyer.xUsername ? `@${buyer.xUsername}` : "Anonymous")}

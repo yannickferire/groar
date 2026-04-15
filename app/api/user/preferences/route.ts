@@ -2,7 +2,7 @@ import { requireAuth } from "@/lib/api-auth";
 import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-const PREFERENCE_FIELDS = ["emailMilestones", "emailTrialReminders", "emailProductUpdates", "emailAutomation"] as const;
+const PREFERENCE_FIELDS = ["emailMilestones", "emailTrialReminders", "emailProductUpdates", "emailAutomation", "botMilestones"] as const;
 
 // GET: Fetch user preferences
 export async function GET() {
@@ -11,7 +11,7 @@ export async function GET() {
 
   try {
     const result = await pool.query(
-      `SELECT "emailMilestones", "emailTrialReminders", "emailProductUpdates", "emailAutomation" FROM "user" WHERE id = $1`,
+      `SELECT "emailMilestones", "emailTrialReminders", "emailProductUpdates", "emailAutomation", "botMilestones" FROM "user" WHERE id = $1`,
       [session.user.id]
     );
 
@@ -21,6 +21,7 @@ export async function GET() {
       emailTrialReminders: row?.emailTrialReminders ?? true,
       emailProductUpdates: row?.emailProductUpdates ?? true,
       emailAutomation: row?.emailAutomation ?? true,
+      botMilestones: row?.botMilestones ?? true,
     });
   } catch (error) {
     console.error("Preferences fetch error:", error);

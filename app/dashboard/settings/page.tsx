@@ -30,12 +30,17 @@ function SettingsContent() {
     emailAutomation: true,
   });
   const [loadingPrefs, setLoadingPrefs] = useState(true);
+  const [botMilestones, setBotMilestones] = useState(false);
+  const [savingBot, setSavingBot] = useState(false);
 
   useEffect(() => {
     fetch("/api/user/preferences")
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
-        if (data) setPrefs(data);
+        if (data) {
+          setPrefs(data);
+          if (data.botMilestones !== undefined) setBotMilestones(data.botMilestones);
+        }
       })
       .catch(() => {})
       .finally(() => setLoadingPrefs(false));
@@ -300,6 +305,39 @@ function SettingsContent() {
               disabled={loadingPrefs || !allEmailsOn}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Bot milestones */}
+      <div className="rounded-2xl border-fade p-6 space-y-6">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🐯</span>
+          <h2 className="text-lg font-heading font-semibold">GROAR Bot</h2>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Celebrate my milestones</p>
+            <p className="text-sm text-muted-foreground">
+              When you hit a milestone, @GROAR_app will post a celebration on X and tag you.
+            </p>
+          </div>
+          <Switch
+            checked={botMilestones}
+            onCheckedChange={async (checked) => {
+              setSavingBot(true);
+              setBotMilestones(checked);
+              try {
+                await fetch("/api/user/preferences", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ botMilestones: checked }),
+                });
+              } catch {} finally {
+                setSavingBot(false);
+              }
+            }}
+            disabled={savingBot}
+          />
         </div>
       </div>
     </div>

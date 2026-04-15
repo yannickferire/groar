@@ -182,7 +182,7 @@ async function insertMilestoneNotifications(
   hits: MilestoneHit[]
 ): Promise<void> {
   const userResult = await pool.query(
-    `SELECT u.email, u.name, u."emailMilestones", s.plan, s.status, s."externalCustomerId"
+    `SELECT u.email, u.name, u."emailMilestones", u."xUsername", u."botMilestones", s.plan, s.status, s."externalCustomerId"
      FROM "user" u
      LEFT JOIN subscription s ON s."userId" = u.id
      WHERE u.id = $1`,
@@ -298,6 +298,21 @@ async function insertMilestoneNotifications(
       if (autoPostMetrics.includes(hit.metric)) {
         autoPostMilestone(userId, hit.metric, hit.milestone, hit.value).catch((e) => {
           console.error("Auto-post error:", e);
+        });
+      }
+    }
+  }
+
+  // Bot milestone post for opted-in Pro users
+  // Default opt-in: only false explicitly disables it
+  const BOT_METRICS: MilestoneHit["metric"][] = ["followers", "mrr"];
+  if (isPro && user.botMilestones !== false && user.xUsername) {
+    for (const hit of highestPerMetric.values()) {
+      if (BOT_METRICS.includes(hit.metric)) {
+        import("./groar-bot").then(({ postMilestoneAsBot }) => {
+          postMilestoneAsBot(userId, user.xUsername, hit.metric, hit.milestone).catch((e) => {
+            console.error("[groar-bot] Error:", e);
+          });
         });
       }
     }

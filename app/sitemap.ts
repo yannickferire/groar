@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { MILESTONE_PAGES } from "@/lib/milestone-pages";
+import { pool } from "@/lib/db";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
 
   // Update these dates when page content actually changes
@@ -116,5 +117,37 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.6,
     })),
+    ...(await getMilestonePosts(siteUrl)),
   ];
+}
+
+async function getMilestonePosts(siteUrl: string): Promise<MetadataRoute.Sitemap> {
+  try {
+    const [handles, posts] = await Promise.all([
+      pool.query(
+        `SELECT handle, MAX("postedAt") as last_posted FROM milestone_post GROUP BY handle`
+      ),
+      pool.query(
+        `SELECT handle, slug, "postedAt" FROM milestone_post ORDER BY "postedAt" DESC`
+      ),
+    ]);
+
+    const handlePages: MetadataRoute.Sitemap = handles.rows.map((row) => ({
+      url: `${siteUrl}/m/${row.handle}`,
+      lastModified: row.last_posted,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+
+    const postPages: MetadataRoute.Sitemap = posts.rows.map((row) => ({
+      url: `${siteUrl}/m/${row.handle}/${row.slug}`,
+      lastModified: row.postedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    }));
+
+    return [...handlePages, ...postPages];
+  } catch {
+    return [];
+  }
 }

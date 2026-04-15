@@ -35,28 +35,34 @@ function getSmallAvatar(url: string): string {
   return url;
 }
 
-function Avatar({ image, name, size = 40 }: { image: string | null; name: string | null; size?: number }) {
-  const src = image && !image.startsWith("data:") ? getSmallAvatar(image) : null;
-  if (src) {
+function Avatar({ image, name, xUsername, size = 40 }: { image: string | null; name: string | null; xUsername?: string | null; size?: number }) {
+  const dbSrc = image && !image.startsWith("data:") ? getSmallAvatar(image) : null;
+  const [stage, setStage] = useState<0 | 1 | 2>(dbSrc ? 0 : xUsername ? 1 : 2);
+
+  if (stage === 2) {
     return (
-      <img
-        src={src}
-        alt={name || "User avatar"}
-        width={size}
-        height={size}
-        loading="lazy"
-        className="rounded-full object-cover"
-        style={{ width: size, height: size }}
-      />
+      <div
+        className="rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary"
+        style={{ width: size, height: size, fontSize: size * 0.35 }}
+      >
+        {name?.charAt(0)?.toUpperCase() || "?"}
+      </div>
     );
   }
+
+  const src = stage === 0 ? dbSrc! : `https://unavatar.io/x/${xUsername}?fallback=false`;
+
   return (
-    <div
-      className="rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary"
-      style={{ width: size, height: size, fontSize: size * 0.35 }}
-    >
-      {name?.charAt(0)?.toUpperCase() || "?"}
-    </div>
+    <img
+      src={src}
+      alt={name || "User avatar"}
+      width={size}
+      height={size}
+      loading="lazy"
+      onError={() => setStage(stage === 0 && xUsername ? 1 : 2)}
+      className="rounded-full object-cover"
+      style={{ width: size, height: size }}
+    />
   );
 }
 
@@ -164,7 +170,7 @@ export default function LeaderboardTable({ apiUrl = "/api/leaderboard", currentU
                 </div>
 
                 <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                  <Avatar image={user.image} name={user.name} size={36} />
+                  <Avatar image={user.image} name={user.name} xUsername={user.xUsername} size={36} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">
                       {user.name || "Anonymous"}
