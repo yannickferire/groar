@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = `Celebrate @${handle}'s milestone: ${display} ${label}. Create your own milestone visual with GROAR.`;
 
   const bgColor = encodeURIComponent(bgToColor(post.bg || "noisy-lights"));
-  const ogImage = `/api/card?template=milestone&m1=${post.metric}:${post.value}&bg=${post.bg || "noisy-lights"}&color=${bgColor}&font=${post.font || "bricolage"}&emoji=${encodeURIComponent(post.emoji || "🎉")}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}`;
+  const ogImage = `/api/card?template=milestone&m1=${post.metric}:${post.value}&bg=${post.bg || "noisy-lights"}&color=${bgColor}&font=${post.font || "bricolage"}&emoji=${encodeURIComponent(post.emoji || "🎉")}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}&watermark=true`;
 
   return {
     title,
@@ -88,7 +88,7 @@ export default async function MilestonePostPage({ params }: Props) {
 
   const display = formatDisplay(post.value);
   const label = metricLabel(post.metric);
-  const cardImageUrl = `/api/card?template=milestone&m1=${post.metric}:${post.value}&bg=${post.bg || "noisy-lights"}&color=${encodeURIComponent(bgToColor(post.bg || "noisy-lights"))}&font=${post.font || "bricolage"}&emoji=${encodeURIComponent(post.emoji || "🎉")}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}`;
+  const cardImageUrl = `/api/card?template=milestone&m1=${post.metric}:${post.value}&bg=${post.bg || "noisy-lights"}&color=${encodeURIComponent(bgToColor(post.bg || "noisy-lights"))}&font=${post.font || "bricolage"}&emoji=${encodeURIComponent(post.emoji || "🎉")}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}&watermark=true`;
 
   return (
     <div className="flex flex-col min-h-screen px-4">

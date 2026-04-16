@@ -52,6 +52,45 @@ const EXPORT_MILESTONES = [1, 10, 50, 100, 200, 500, 1_000];
 export const REVENUE_MILESTONES = generateThresholds(10_000_000);
 
 /**
+ * Follower milestones celebrated by the GROAR bot (tweet posted to @GROAR_app).
+ * More selective than STAT_MILESTONES to keep each tweet impactful and control
+ * X API costs (each post ~$0.01–0.02 pay-per-use).
+ *
+ *   50, 100 → 1000 step 100,
+ *   1000 → 2000 step 200,
+ *   2000 → 3000 step 250,
+ *   3000 → 5000 step 500,
+ *   5000 → 20000 step 1000,
+ *   20000 → 50000 step 5000,
+ *   50000 → ∞ step 10000.
+ */
+function generateBotFollowerMilestones(maxValue: number = 10_000_000): number[] {
+  const thresholds: number[] = [50];
+
+  // 100 → 1000, step 100
+  for (let v = 100; v <= 1000; v += 100) thresholds.push(v);
+
+  const ranges: [number, number, number][] = [
+    [1000, 2000, 200],
+    [2000, 3000, 250],
+    [3000, 5000, 500],
+    [5000, 20_000, 1000],
+    [20_000, 50_000, 5000],
+    [50_000, maxValue, 10_000],
+  ];
+
+  for (const [from, to, step] of ranges) {
+    for (let v = from + step; v <= to; v += step) {
+      thresholds.push(v);
+    }
+  }
+
+  return thresholds;
+}
+
+export const BOT_FOLLOWER_MILESTONES = generateBotFollowerMilestones();
+
+/**
  * Get the next milestone threshold above the given value for a metric.
  */
 export function getNextMilestone(
@@ -182,16 +221,22 @@ async function insertMilestoneNotifications(
   hits: MilestoneHit[]
 ): Promise<void> {
   const userResult = await pool.query(
-    `SELECT u.email, u.name, u."emailMilestones", u."xUsername", u."botMilestones", s.plan, s.status, s."externalCustomerId"
+    `SELECT u.email, u.name, u."emailMilestones", u."xUsername", u."botMilestones", s.plan, s.status, s."trialEnd", s."externalCustomerId"
      FROM "user" u
      LEFT JOIN subscription s ON s."userId" = u.id
      WHERE u.id = $1`,
     [userId]
   );
   const user = userResult.rows[0];
+  // Trial is only valid if trialEnd is still in the future
+  const trialActive =
+    user?.plan === "pro" &&
+    user?.status === "trialing" &&
+    user?.trialEnd &&
+    new Date(user.trialEnd) > new Date();
   const isPro = user && (
     (user.plan === "pro" && user.status === "active") ||
-    (user.plan === "pro" && user.status === "trialing") ||
+    trialActive ||
     user.plan === "friend"
   );
 
@@ -303,12 +348,13 @@ async function insertMilestoneNotifications(
     }
   }
 
-  // Bot milestone post for opted-in Pro users
-  // Default opt-in: only false explicitly disables it
-  const BOT_METRICS: MilestoneHit["metric"][] = ["followers", "mrr"];
+  // Bot milestone post for opted-in Pro users (followers only, curated thresholds)
+  // Default opt-in: only false explicitly disables it.
+  // We filter to BOT_FOLLOWER_MILESTONES to keep each tweet impactful and API
+  // costs under control ($0.01–0.02 per tweet pay-per-use).
   if (isPro && user.botMilestones !== false && user.xUsername) {
     for (const hit of highestPerMetric.values()) {
-      if (BOT_METRICS.includes(hit.metric)) {
+      if (hit.metric === "followers" && BOT_FOLLOWER_MILESTONES.includes(hit.milestone)) {
         import("./groar-bot").then(({ postMilestoneAsBot }) => {
           postMilestoneAsBot(userId, user.xUsername, hit.metric, hit.milestone).catch((e) => {
             console.error("[groar-bot] Error:", e);

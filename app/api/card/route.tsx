@@ -531,8 +531,11 @@ export async function GET(request: NextRequest) {
   // Auth — internal requests (dashboard, auto-post) bypass API key entirely
   const key = params.get("key");
   const referer = request.headers.get("referer") || "";
+  const userAgent = request.headers.get("user-agent") || "";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
-  const isInternal = referer.startsWith(siteUrl) || referer.startsWith("http://localhost");
+  // Social media crawlers fetching OG preview images — they don't send a referer
+  const isSocialCrawler = /Twitterbot|facebookexternalhit|LinkedInBot|Slackbot|WhatsApp|TelegramBot|Discordbot|Pinterest|Applebot|Googlebot|Bingbot|DuckDuckBot|redditbot|Mastodon|Bluesky|SkypeUriPreview/i.test(userAgent);
+  const isInternal = referer.startsWith(siteUrl) || referer.startsWith("http://localhost") || isSocialCrawler;
 
   let authResult: { valid: boolean; userId: string | null };
   if (isInternal) {
@@ -628,9 +631,10 @@ export async function GET(request: NextRequest) {
   const showLogo = brandingParam !== "false" && brandingParam !== "0";
   const watermarkParam = params.get("watermark");
   // Free tier: watermark always on, paid tiers: watermark off by default (opt-in)
-  // Internal requests (dashboard/auto-post) never show watermark
+  // Internal requests (dashboard/auto-post) default to settings.showWatermark,
+  // but an explicit ?watermark=true always forces it on (used for milestone OG cards).
   const showWatermark = isInternal
-    ? !!settings.showWatermark
+    ? !!settings.showWatermark || watermarkParam === "true" || watermarkParam === "1"
     : externalTierWatermark || watermarkParam === "true" || watermarkParam === "1";
 
   // Random support

@@ -191,7 +191,7 @@ export default async function ProfilePage({ params }: Props) {
                   <h2 className="text-lg font-semibold text-muted-foreground">Milestones</h2>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {milestones.map((m) => {
-                    const cardUrl = `/api/card?template=milestone&m1=${m.metric}:${m.value}&bg=${m.bg || "noisy-lights"}&color=${encodeURIComponent(bgToColor(m.bg || "noisy-lights"))}&font=${m.font || "bricolage"}&emoji=${encodeURIComponent(m.emoji || "🎉")}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}`;
+                    const cardUrl = `/api/card?template=milestone&m1=${m.metric}:${m.value}&bg=${m.bg || "noisy-lights"}&color=${encodeURIComponent(bgToColor(m.bg || "noisy-lights"))}&font=${m.font || "bricolage"}&emoji=${encodeURIComponent(m.emoji || "🎉")}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}&watermark=true`;
                     return (
                       <Link
                         key={m.slug}

@@ -3,7 +3,8 @@ import { pool } from "@/lib/db";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 
 const FONTS = ["bricolage", "inter", "space-grotesk"];
-const EMOJIS = ["🎉", "🚀", "🔥", "⭐", "🏆", "💪", "✨", "🎯"];
+// Only include emojis that exist in /api/card EMOJI_IMAGES (app/api/card/route.tsx)
+const EMOJIS = ["🎉", "🚀", "🔥", "✨", "🎯", "🎈"];
 const ENCOURAGEMENTS = [
   "Keep building!",
   "Big things ahead.",
