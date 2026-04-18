@@ -61,7 +61,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = `Celebrate @${handle}'s milestone: ${display} ${label}. Create your own milestone visual with GROAR.`;
 
   const bgColor = encodeURIComponent(bgToColor(post.bg || "noisy-lights"));
-  const ogImage = `/api/card?template=milestone&m1=${post.metric}:${post.value}&bg=${post.bg || "noisy-lights"}&color=${bgColor}&font=${post.font || "bricolage"}&emoji=${encodeURIComponent(post.emoji || "🎉")}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}&watermark=true`;
+  const ogToken = process.env.CARD_OG_TOKEN || "";
+  const ogImage = `/api/card?template=milestone&m1=${post.metric}:${post.value}&bg=${post.bg || "noisy-lights"}&color=${bgColor}&font=${post.font || "bricolage"}&emoji=${encodeURIComponent(post.emoji || "🎉")}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}&watermark=true&ogtoken=${ogToken}`;
 
   return {
     title,

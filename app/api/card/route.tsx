@@ -535,7 +535,11 @@ export async function GET(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
   // Social media crawlers fetching OG preview images — they don't send a referer
   const isSocialCrawler = /Twitterbot|facebookexternalhit|LinkedInBot|Slackbot|WhatsApp|TelegramBot|Discordbot|Pinterest|Applebot|Googlebot|Bingbot|DuckDuckBot|redditbot|Mastodon|Bluesky|SkypeUriPreview/i.test(userAgent);
-  const isInternal = referer.startsWith(siteUrl) || referer.startsWith("http://localhost") || isSocialCrawler;
+  // Internal OG token: used by milestone pages for OG images fetched by social crawlers.
+  // The token is server-side only (rendered into meta tags), watermark is always forced.
+  const ogToken = params.get("ogtoken");
+  const validOgToken = ogToken && process.env.CARD_OG_TOKEN && ogToken === process.env.CARD_OG_TOKEN;
+  const isInternal = referer.startsWith(siteUrl) || referer.startsWith("http://localhost") || isSocialCrawler || !!validOgToken;
 
   let authResult: { valid: boolean; userId: string | null };
   if (isInternal) {
@@ -633,9 +637,12 @@ export async function GET(request: NextRequest) {
   // Free tier: watermark always on, paid tiers: watermark off by default (opt-in)
   // Internal requests (dashboard/auto-post) default to settings.showWatermark,
   // but an explicit ?watermark=true always forces it on (used for milestone OG cards).
-  const showWatermark = isInternal
-    ? !!settings.showWatermark || watermarkParam === "true" || watermarkParam === "1"
-    : externalTierWatermark || watermarkParam === "true" || watermarkParam === "1";
+  // OG token access always gets watermark (prevents abuse).
+  const showWatermark = validOgToken
+    ? true
+    : isInternal
+      ? !!settings.showWatermark || watermarkParam === "true" || watermarkParam === "1"
+      : externalTierWatermark || watermarkParam === "true" || watermarkParam === "1";
 
   // Random support
   const imageBackgrounds = BACKGROUNDS.filter(b => b.image);
