@@ -6,7 +6,6 @@ import { BACKGROUNDS } from "@/lib/backgrounds";
 import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
 import { AspectRatioType } from "@/components/editor/types";
 import { pool } from "@/lib/db";
-import sharp from "sharp";
 import { METRIC_ICONS } from "@/lib/metric-icons";
 import { API_TIERS, getApiGraceLimit } from "@/lib/plans";
 import type { ApiTier } from "@/lib/plans";
