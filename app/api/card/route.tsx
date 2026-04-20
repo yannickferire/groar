@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import sharp from "sharp";
 import { METRIC_LABELS, MetricType } from "@/components/editor/types";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 import { ASPECT_RATIOS } from "@/lib/aspect-ratios";
@@ -1129,15 +1130,32 @@ export async function GET(request: NextRequest) {
     </div>
   );
 
-  return new ImageResponse(image, {
+  const pngResponse = new ImageResponse(image, {
     width,
     height,
     fonts: [
       { name: fontFamily, data: fontRegular, style: "normal", weight: 400 },
       { name: fontFamily, data: fontBold, style: "normal", weight: 700 },
     ],
-    headers: {
-      "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
-    },
+  });
+
+  const cacheHeaders = {
+    "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+  };
+
+  // Convert to JPEG by default (~90% smaller than PNG)
+  // PNG only if explicitly requested (e.g. for transparency needs)
+  const formatParam = params.get("format");
+  const pngBuffer = Buffer.from(await pngResponse.arrayBuffer());
+
+  if (formatParam === "png") {
+    return new Response(pngBuffer, {
+      headers: { "Content-Type": "image/png", ...cacheHeaders },
+    });
+  }
+
+  const jpegBuffer = await sharp(pngBuffer).jpeg({ quality: 85 }).toBuffer();
+  return new Response(jpegBuffer, {
+    headers: { "Content-Type": "image/jpeg", ...cacheHeaders },
   });
 }
