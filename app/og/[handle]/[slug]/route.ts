@@ -67,7 +67,7 @@ export async function GET(
     jpegBuffer = await sharp(buffer).jpeg({ quality: 85 }).toBuffer();
   }
 
-  return new Response(jpegBuffer, {
+  return new Response(new Uint8Array(jpegBuffer), {
     headers: {
       "Content-Type": "image/jpeg",
       // Long cache: the image is stable (bg/font/emoji stored in DB)

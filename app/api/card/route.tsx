@@ -1148,13 +1148,13 @@ export async function GET(request: NextRequest) {
   const pngBuffer = Buffer.from(await pngResponse.arrayBuffer());
 
   if (formatParam === "png") {
-    return new Response(pngBuffer, {
+    return new Response(new Uint8Array(pngBuffer), {
       headers: { "Content-Type": "image/png", ...cacheHeaders },
     });
   }
 
   const jpegBuffer = await sharp(pngBuffer).jpeg({ quality: 85 }).toBuffer();
-  return new Response(jpegBuffer, {
+  return new Response(new Uint8Array(jpegBuffer), {
     headers: { "Content-Type": "image/jpeg", ...cacheHeaders },
   });
 }
