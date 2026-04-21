@@ -26,6 +26,11 @@ async function getUserPlan(userId: string): Promise<PlanType> {
 
 export const auth = betterAuth({
   database: pool,
+  trustedOrigins: [
+    process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ],
   account: {
     accountLinking: {
       enabled: true,
