@@ -631,7 +631,7 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
   ), [autoFillMap]);
 
   return (
-    <aside className="w-full min-[940px]:w-96 flex flex-col gap-6 p-4 border rounded-3xl bg-card min-h-full">
+    <aside className="w-full md:w-96 flex flex-col gap-6 p-4 border rounded-3xl bg-card min-h-full">
       {/* Template Selector */}
         <div className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">

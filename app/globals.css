@@ -223,6 +223,9 @@ input.gooey:focus {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
   }

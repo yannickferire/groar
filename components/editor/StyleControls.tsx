@@ -320,7 +320,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
   const nextPresetNumber = presets.length + 1;
 
   return (
-    <div ref={bgWrapperRef} className="flex flex-col items-center gap-3">
+    <div ref={bgWrapperRef} className="flex flex-col items-start md:items-center gap-3 w-full overflow-hidden">
       {/* Row 1: Background presets */}
       {(() => {
         if (bgPerRow === 0) return <div className="h-10" />; // placeholder while measuring
@@ -379,7 +379,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
         return (
           <div className="w-full flex flex-col items-center gap-2 py-1">
             {/* First row: fixed — images + solid + expand/collapse button */}
-            <div className="flex items-center gap-2 justify-center flex-nowrap">
+            <div className="flex items-center gap-2 justify-center flex-wrap md:flex-nowrap">
               {firstRowRegular.map(renderImageBg)}
               {newBgs.map(renderImageBg)}
               {solidPreset && (
@@ -548,9 +548,9 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
       </div>
 
       {/* Row 3: Aspect ratio */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-col items-start gap-1.5 w-full">
         <span className="text-xs text-muted-foreground">Size</span>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {ASPECT_RATIO_LIST.map((ratio) => {
             const isSelected = (settings.aspectRatio || "post") === ratio.id;
 
@@ -582,9 +582,10 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
 
       {/* Row 4: Presets (Pro only) */}
       {isPremium && (
-        <div className="flex flex-col items-center gap-2 w-full mt-1">
+        <div className="flex flex-col items-start gap-2 w-full mt-1">
+          <span className="text-xs text-muted-foreground shrink-0 md:hidden">Preset</span>
           <div className="flex items-center gap-2 w-full max-w-md">
-            <span className="text-xs text-muted-foreground shrink-0">Preset</span>
+            <span className="text-xs text-muted-foreground shrink-0 hidden md:inline">Preset</span>
             {showPresetInput ? (
               <form
                 className="flex-1 flex items-center gap-2"
@@ -606,10 +607,10 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
                   onKeyDown={(e) => { if (e.key === "Escape") { setShowPresetInput(false); setPresetName(""); } }}
                   className="flex-1 h-9 text-sm"
                 />
-                <Button type="submit" size="sm" variant="default" disabled={!presetName.trim() || isSavingPreset} className="h-9 px-3 text-xs shrink-0">
+                <Button type="submit" size="sm" variant="default" disabled={!presetName.trim() || isSavingPreset} className="h-9 px-3 md:px-3 text-xs shrink-0">
                   {isSavingPreset ? <HugeiconsIcon icon={Loading03Icon} size={14} className="animate-spin" /> : <>
                     <HugeiconsIcon icon={FloppyDiskIcon} size={14} strokeWidth={1.5} />
-                    Save
+                    <span className="hidden md:inline">Save</span>
                   </>}
                 </Button>
                 <Button type="button" size="sm" variant="ghost" onClick={() => { setShowPresetInput(false); setPresetName(""); }} className="h-9 px-2 shrink-0">
@@ -749,7 +750,7 @@ export default function StyleControls({ settings, onSettingsChange, backgrounds,
                     title="Save current style as new preset"
                   >
                     <HugeiconsIcon icon={FloppyDiskIcon} size={14} strokeWidth={1.5} />
-                    Save
+                    <span className="hidden md:inline">Save</span>
                   </Button>
                 )}
               </>

@@ -81,69 +81,6 @@ function buildOAuthHeader(method: string, url: string): string {
   return `OAuth ${headerString}`;
 }
 
-// ─── Generate milestone card image ────────────────────────────────
-
-async function generateMilestoneCard(
-  metric: string,
-  value: number,
-  bg: string,
-  font: string,
-  emoji: string,
-  handle: string
-): Promise<Buffer | null> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://groar.app";
-  const color = encodeURIComponent(COLORS[bg] || "#ffffff");
-  const cardUrl = `${siteUrl}/api/card?template=milestone&m1=${metric}:${value}&bg=${bg}&color=${color}&font=${font}&emoji=${encodeURIComponent(emoji)}&emojiCount=5&handle=${encodeURIComponent(`@${handle}`)}&watermark=true`;
-
-  try {
-    const res = await fetch(cardUrl, {
-      headers: { Referer: siteUrl },
-    });
-    if (!res.ok) {
-      console.error("[groar-bot] Card generation failed:", res.status);
-      return null;
-    }
-    const arrayBuffer = await res.arrayBuffer();
-    return Buffer.from(arrayBuffer);
-  } catch (err) {
-    console.error("[groar-bot] Card generation error:", err);
-    return null;
-  }
-}
-
-// ─── Upload media to X as bot (OAuth 1.0a) ───────────────────────
-
-async function uploadMediaAsBot(imageBuffer: Buffer): Promise<string | null> {
-  const url = "https://upload.twitter.com/1.1/media/upload.json";
-
-  try {
-    const blob = new Blob([new Uint8Array(imageBuffer)], { type: "image/png" });
-    const formData = new FormData();
-    formData.append("media_data", imageBuffer.toString("base64"));
-    formData.append("media_category", "tweet_image");
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: buildOAuthHeader("POST", url),
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[groar-bot] Media upload failed:", response.status, errorText);
-      return null;
-    }
-
-    const data = await response.json();
-    return data.media_id_string || String(data.media_id) || null;
-  } catch (err) {
-    console.error("[groar-bot] Media upload error:", err);
-    return null;
-  }
-}
-
 // ─── Post tweet as bot ─────────────────────────────────────────────
 
 async function postTweetAsBot(text: string, mediaId?: string): Promise<{ tweetId: string } | { error: string }> {

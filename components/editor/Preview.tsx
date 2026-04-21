@@ -324,7 +324,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                       const count = columnsMetrics.length;
                       const baseValue = hasHeading
                         ? (isBanner ? 5 / Math.max(count * 0.3, 1) : sq(7) / Math.max(count * 0.3, 1))
-                        : (isBanner ? 6.5 / Math.max(count * 0.3, 1) : sq(8.5) / Math.max(count * 0.3, 1));
+                        : (isBanner ? 5.8 / Math.max(count * 0.3, 1) : sq(7.5) / Math.max(count * 0.3, 1));
                       const valueSize = `${isMain ? baseValue * 1.2 : baseValue}cqi`;
                       const baseLabel = hasHeading
                         ? (isBanner ? 1.8 : sq(2.3))
@@ -347,20 +347,6 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                             />
                           )}
                           <div className="flex flex-col items-center" style={{ flex: 1, gap: 0 }}>
-                            <span className="font-bold" style={{ fontSize: valueSize, lineHeight: isBanner ? "6cqi" : `${sq(8.5)}cqi` }}>
-                              {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)}
-                            </span>
-                            <p className="opacity-60 font-medium flex items-center" style={{ fontSize: labelSize, lineHeight: isBanner ? "3cqi" : `${sq(4)}cqi`, gap: isBanner ? "0.3cqi" : "0.5cqi" }}>
-                              {metric.type !== "custom" && (
-                                <HugeiconsIcon
-                                  icon={METRIC_ICONS[metric.type]}
-                                  style={{ width: iconSize, height: iconSize }}
-                                  strokeWidth={2}
-                                  color="currentColor"
-                                />
-                              )}
-                              {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
-                            </p>
                             {metric.previousValue !== undefined && metric.value > metric.previousValue && (() => {
                               const trendSize = isMain
                                 ? (isBanner ? "2.3cqi" : `${sq(2.9)}cqi`)
@@ -368,7 +354,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                               const pct = metric.previousValue > 0 ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100) : null;
                               if (pct === 0) return null;
                               return (
-                                <span style={{ fontSize: trendSize, marginTop: "0.15cqi" }} className="flex items-center gap-[0.1cqi] text-emerald-400 font-semibold">
+                                <span style={{ fontSize: trendSize, marginBottom: "0.15cqi" }} className="flex items-center gap-[0.1cqi] text-emerald-400 font-semibold">
                                   <HugeiconsIcon
                                     icon={TradeUpIcon}
                                     style={{ width: trendSize, height: trendSize }}
@@ -379,6 +365,20 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                                 </span>
                               );
                             })()}
+                            <span className="font-bold" style={{ fontSize: valueSize, lineHeight: isBanner ? "6cqi" : `${sq(8.5)}cqi`, whiteSpace: "nowrap" }}>
+                              {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)}
+                            </span>
+                            <p className="opacity-60 font-medium flex items-center" style={{ fontSize: labelSize, lineHeight: isBanner ? "3cqi" : `${sq(4)}cqi`, gap: isBanner ? "0.3cqi" : "0.5cqi", whiteSpace: "nowrap" }}>
+                              {metric.type !== "custom" && (
+                                <HugeiconsIcon
+                                  icon={METRIC_ICONS[metric.type]}
+                                  style={{ width: iconSize, height: iconSize }}
+                                  strokeWidth={2}
+                                  color="currentColor"
+                                />
+                              )}
+                              {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
+                            </p>
                           </div>
                         </div>
                       );
@@ -393,17 +393,58 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                   const hasHeading = !!settings.heading;
                   const primarySize = hasHeading
                     ? (isBanner ? "5.2cqi" : `${sq(6.4)}cqi`)
-                    : (isBanner ? "7.5cqi" : `${sq(9.5)}cqi`);
+                    : (isBanner ? "6.5cqi" : `${sq(8.2)}cqi`);
                   const secondarySize = hasHeading
                     ? (isBanner ? "3cqi" : `${sq(3.7)}cqi`)
                     : (isBanner ? "3.5cqi" : `${sq(4.4)}cqi`);
                   const primaryIcon = hasHeading
                     ? (isBanner ? "3.6cqi" : `${sq(parseFloat(iconSizes.primaryWithPeriod))}cqi`)
-                    : (isBanner ? "5.2cqi" : `${sq(parseFloat(iconSizes.primaryNoPeriod))}cqi`);
+                    : (isBanner ? "4.5cqi" : `${sq(parseFloat(iconSizes.primaryNoPeriod) * 0.87)}cqi`);
                   const secondaryIcon = hasHeading
                     ? (isBanner ? "2.6cqi" : `${sq(parseFloat(iconSizes.secondaryWithPeriod))}cqi`)
                     : (isBanner ? "3.4cqi" : `${sq(parseFloat(iconSizes.secondaryNoPeriod))}cqi`);
-                  return (
+                  const showTrendAbove = index === 0 && !hasHeading && metric.previousValue !== undefined && metric.value > metric.previousValue;
+                  const trendSize = index === 0
+                    ? (isBanner ? "2.6cqi" : `${sq(3.25)}cqi`)
+                    : (isBanner ? "1.8cqi" : `${sq(2.3)}cqi`);
+                  const trendPct = metric.previousValue !== undefined && metric.previousValue > 0
+                    ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100)
+                    : null;
+                  const trendElement = metric.previousValue !== undefined && metric.value > metric.previousValue && trendPct !== 0 ? (
+                    <span style={{ fontSize: trendSize, marginLeft: showTrendAbove ? undefined : "0.4cqi" }} className="flex items-center gap-[0.15cqi] text-emerald-400 font-semibold">
+                      <HugeiconsIcon
+                        icon={TradeUpIcon}
+                        style={{ width: trendSize, height: trendSize }}
+                        strokeWidth={2.5}
+                        color="currentColor"
+                      />
+                      {trendPct !== null && `+${trendPct}%`}
+                    </span>
+                  ) : null;
+
+                  return showTrendAbove ? (
+                    <div key={metric.id} className={`flex flex-col ${align === "left" ? "items-start" : "items-center"}`} style={{ gap: 0 }}>
+                      {trendElement}
+                      <p
+                        className="flex items-center font-semibold"
+                        style={{
+                          fontSize: primarySize,
+                          gap: isBanner ? "0.6cqi" : "1cqi",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {metric.type !== "custom" && (
+                          <HugeiconsIcon
+                            icon={METRIC_ICONS[metric.type]}
+                            style={{ width: primaryIcon, height: primaryIcon }}
+                            strokeWidth={2}
+                            color="currentColor"
+                          />
+                        )}
+                        {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
+                      </p>
+                    </div>
+                  ) : (
                     <p
                       key={metric.id}
                       className={index === 0 ? "flex items-center font-semibold" : "opacity-80 flex items-center font-medium"}
@@ -411,6 +452,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                         fontSize: index === 0 ? primarySize : secondarySize,
                         gap: index === 0 ? (isBanner ? "0.6cqi" : "1cqi") : (isBanner ? "0.7cqi" : "1.2cqi"),
                         marginTop: index > 0 ? (isBanner ? "-0.3cqi" : "-0.5cqi") : undefined,
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {metric.type !== "custom" && (
@@ -425,24 +467,7 @@ const Preview = forwardRef<HTMLDivElement, PreviewProps>(function Preview({ sett
                         />
                       )}
                       {formatMetricValue(metric.type, metric.value, abbreviate, metric.prefix)} {metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type]}
-                      {metric.previousValue !== undefined && metric.value > metric.previousValue && (() => {
-                        const trendSize = index === 0
-                          ? (isBanner ? "2.6cqi" : `${sq(3.25)}cqi`)
-                          : (isBanner ? "1.8cqi" : `${sq(2.3)}cqi`);
-                        const pct = metric.previousValue > 0 ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100) : null;
-                        if (pct === 0) return null;
-                        return (
-                          <span style={{ fontSize: trendSize, marginLeft: "0.4cqi" }} className="flex items-center gap-[0.15cqi] text-emerald-400 font-semibold">
-                            <HugeiconsIcon
-                              icon={TradeUpIcon}
-                              style={{ width: trendSize, height: trendSize }}
-                              strokeWidth={2.5}
-                              color="currentColor"
-                            />
-                            {pct !== null && `+${pct}%`}
-                          </span>
-                        );
-                      })()}
+                      {trendElement}
                     </p>
                   );
                 })}

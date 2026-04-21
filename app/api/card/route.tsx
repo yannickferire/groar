@@ -932,7 +932,7 @@ export async function GET(request: NextRequest) {
             const count = ordered.length;
             const baseValue = hasHeading
               ? (isBanner ? 5 / Math.max(count * 0.3, 1) : sq(7) / Math.max(count * 0.3, 1))
-              : (isBanner ? 6.5 / Math.max(count * 0.3, 1) : sq(8.5) / Math.max(count * 0.3, 1));
+              : (isBanner ? 5.8 / Math.max(count * 0.3, 1) : sq(7.5) / Math.max(count * 0.3, 1));
             const valueSize = unit * (isMain ? baseValue * 1.2 : baseValue);
             const baseLabel = hasHeading ? (isBanner ? 1.8 : sq(2.3)) : (isBanner ? 2.1 : sq(2.7));
             const labelSize = unit * (isMain ? baseLabel * 1.2 : baseLabel);
@@ -946,7 +946,7 @@ export async function GET(request: NextRequest) {
                   <div style={{ width: isBanner ? 1 : 1.5, height: isBanner ? unit * 4 : unit * sq(5), borderRadius: 1, background: textColor, opacity: 0.15, flexShrink: 0 }} />
                 )}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, gap: 0 }}>
-                  <span style={{ fontWeight: 700, fontSize: valueSize, lineHeight: isBanner ? `${unit * 6}px` : `${unit * sq(8.5)}px` }}>
+                  <span style={{ fontWeight: 700, fontSize: valueSize, lineHeight: isBanner ? `${unit * 6}px` : `${unit * sq(8.5)}px`, whiteSpace: "nowrap" }}>
                     {fmtMetric(metric.type, metric.value, abbreviate, metric.prefix)}
                   </span>
                   <div style={{ opacity: 0.6, fontWeight: 500, fontSize: labelSize, lineHeight: isBanner ? `${unit * 3}px` : `${unit * sq(4)}px`, display: "flex", alignItems: "center", gap: isBanner ? unit * 0.3 : unit * 0.5 }}>
@@ -978,10 +978,10 @@ export async function GET(request: NextRequest) {
         <div style={{ display: "flex", flexDirection: "column", alignItems: align === "left" ? "flex-start" : "center", gap: 0 }}>
           {displayMetrics.map((metric, index) => {
             const isPrimary = index === 0;
-            const primarySize = hasHeading ? (isBanner ? unit * 5.2 : unit * sq(6.4)) : (isBanner ? unit * 7.5 : unit * sq(9.5));
+            const primarySize = hasHeading ? (isBanner ? unit * 5.2 : unit * sq(6.4)) : (isBanner ? unit * 6.5 : unit * sq(8.2));
             const secondarySize = hasHeading ? (isBanner ? unit * 3 : unit * sq(3.7)) : (isBanner ? unit * 3.5 : unit * sq(4.4));
             const fontSize = isPrimary ? primarySize : secondarySize;
-            const primaryIcon = hasHeading ? (isBanner ? unit * 3.6 : unit * sq(4.5)) : (isBanner ? unit * 5.2 : unit * sq(6.5));
+            const primaryIcon = hasHeading ? (isBanner ? unit * 3.6 : unit * sq(4.5)) : (isBanner ? unit * 4.5 : unit * sq(parseFloat("6.5") * 0.87));
             const secondaryIcon = hasHeading ? (isBanner ? unit * 2.6 : unit * sq(3.2)) : (isBanner ? unit * 3.4 : unit * sq(4.2));
             const iconSize = isPrimary ? primaryIcon : secondaryIcon;
             const label = metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type as MetricType] || metric.type;
@@ -995,6 +995,7 @@ export async function GET(request: NextRequest) {
                 fontSize,
                 gap: isPrimary ? (isBanner ? unit * 0.6 : unit * 1) : (isBanner ? unit * 0.7 : unit * 1.2),
                 marginTop: index > 0 ? (isBanner ? -unit * 0.3 : -unit * 0.5) : 0,
+                whiteSpace: "nowrap",
               }}>
                 {renderIcon(metric.type, iconSize, textColor)}
                 {fmtMetric(metric.type, metric.value, abbreviate, metric.prefix)} {label}

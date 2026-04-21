@@ -461,13 +461,13 @@ async function executePost(
   try {
     let mediaIds: string[] | undefined;
     if (imageBuffer) {
-      const mediaResult = await uploadMedia(accessToken, imageBuffer, "image/png");
+      const mediaResult = await uploadMedia(accessToken, imageBuffer, "image/jpeg");
 
       if (typeof mediaResult === "object" && "error" in mediaResult && isTokenExpired(mediaResult as XApiError)) {
         const newToken = await ensureValidToken(account);
         if (!newToken) { error = "Failed to refresh token"; throw new Error(error); }
         accessToken = newToken;
-        const retryMedia = await uploadMedia(accessToken, imageBuffer, "image/png");
+        const retryMedia = await uploadMedia(accessToken, imageBuffer, "image/jpeg");
         if (typeof retryMedia === "object" && "error" in retryMedia) {
           error = (retryMedia as XApiError).error; throw new Error(error);
         }
