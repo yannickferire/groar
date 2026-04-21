@@ -1,8 +1,6 @@
 import { NextRequest } from "next/server";
 import { pool } from "@/lib/db";
 import sharp from "sharp";
-import { ImageResponse } from "next/og";
-import { BACKGROUNDS } from "@/lib/backgrounds";
 
 /**
  * Public OG image endpoint for milestone posts.
@@ -64,7 +62,7 @@ export async function GET(
   if (contentType.includes("jpeg")) {
     jpegBuffer = buffer;
   } else {
-    jpegBuffer = await sharp(buffer).jpeg({ quality: 85 }).toBuffer();
+    jpegBuffer = await sharp(buffer).jpeg({ quality: 90 }).toBuffer();
   }
 
   return new Response(new Uint8Array(jpegBuffer), {

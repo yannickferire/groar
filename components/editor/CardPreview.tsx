@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import Preview from "./Preview";
-import { ALL_BACKGROUNDS } from "./utils";
+import { useCardImage } from "@/hooks/useCardImage";
 import type { EditorSettings, TemplateType, FontFamily, AspectRatioType, MetricType } from "./types";
 import type { AutomationVisualSettings, AutoPostCardTemplate } from "@/lib/auto-post-shared";
 
@@ -18,13 +17,15 @@ export type CardPreviewProps = {
   handle?: string;
   isPremium?: boolean;
   className?: string;
-  /** Override Preview rounding. Use "none" for thumbnails. */
+  /** Override rounding. Use "none" for thumbnails. */
   rounded?: "none" | "lg" | "3xl";
   /** When true, the preview fills its parent height and auto-sizes width via aspect-ratio. */
   fill?: boolean;
   /** Heading text to display (e.g. "Day 13", "Week 5") */
   headingText?: string;
 };
+
+const ROUNDED_CLASSES = { none: "", lg: "rounded-lg", "3xl": "rounded-3xl" } as const;
 
 export default function CardPreview({
   metric,
@@ -36,13 +37,12 @@ export default function CardPreview({
   handle,
   isPremium = true,
   className,
-  rounded,
+  rounded = "3xl",
   fill,
   headingText,
 }: CardPreviewProps) {
   const settings = useMemo<EditorSettings>(() => {
     const vs = visualSettings;
-    // Support both array and legacy single-value fields
     const bgId = vs?.backgrounds?.[0] || vs?.background || "noisy-lights";
     const font = (vs?.fonts?.[0] || vs?.font || "bricolage") as FontFamily;
     const textColor = vs?.textColor || "#ffffff";
@@ -50,8 +50,6 @@ export default function CardPreview({
     const template = cardTemplate as TemplateType;
     const emoji = vs?.emojis?.[0] || { emoji: vs?.milestoneEmoji || "🎉", unified: vs?.milestoneEmojiUnified || "1f389", name: vs?.milestoneEmojiName || "Party Popper" };
 
-    // Build metrics array: primary + extras
-    // Note: don't pass prefix for mrr/revenue — formatMetricValue already adds $ for financial types
     const allMetrics = [
       { id: "preview", type: metric, value },
       ...(extraMetrics || []).map((m, i) => {
@@ -87,20 +85,22 @@ export default function CardPreview({
     };
   }, [metric, extraMetrics, value, goal, cardTemplate, visualSettings, handle, headingText]);
 
-  // When fill is true, propagate h-full down through Preview's DOM:
-  // CardPreview div > Preview flex-col > overflow wrapper > aspect-ratio container
-  const fillClasses = fill
-    ? " h-full [&>div]:h-full [&>div>div]:h-full [&>div>div>div]:h-full [&>div>div>div]:w-auto"
-    : "";
+  const { imageUrl, isLoading } = useCardImage(settings, 500);
+
+  const fillClass = fill ? " h-full" : "";
 
   return (
-    <div className={`${className || ""}${fillClasses}`}>
-      <Preview
-        settings={settings}
-        backgrounds={ALL_BACKGROUNDS}
-        isPremium={isPremium}
-        {...(rounded ? { rounded } : {})}
-      />
+    <div className={`${className || ""}${fillClass} ${ROUNDED_CLASSES[rounded]} overflow-hidden bg-sidebar`}>
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt="Card preview"
+          className={`w-full h-auto block transition-opacity duration-200 ${isLoading ? "opacity-60" : "opacity-100"}${fill ? " h-full object-cover" : ""}`}
+          draggable={false}
+        />
+      ) : (
+        <div className="aspect-video animate-pulse" />
+      )}
     </div>
   );
 }

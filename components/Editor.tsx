@@ -2,8 +2,6 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { toJpeg } from "html-to-image";
-import { inlineBackgroundImages, inlineExternalImages, buildFontEmbedCSS } from "@/lib/export-preprocess";
 import Sidebar from "./editor/Sidebar";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
@@ -16,7 +14,6 @@ import { useToast } from "@/components/ui/toast";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
 import UpgradeModal from "@/components/UpgradeModal";
 import { FREE_WEEKLY_LIMIT } from "@/lib/plans";
 import TrialSignupModal from "@/components/TrialSignupModal";
@@ -24,7 +21,7 @@ import { checkPremiumFeatures } from "@/lib/premium-check";
 import posthog from "posthog-js";
 import XIcon from "@/components/icons/XIcon";
 import { getStartOfWeek } from "@/lib/week";
-import { dataURLtoFile, ALL_BACKGROUNDS, defaultSettings, loadSettings, saveSettings } from "./editor/utils";
+import { ALL_BACKGROUNDS, defaultSettings, loadSettings, saveSettings } from "./editor/utils";
 import { METRIC_LABELS, type EditorSettings, type FontFamily, type TemplateType, type MetricType } from "./editor/types";
 
 // Re-export types and constants so existing imports from "@/components/Editor" still work
@@ -130,8 +127,26 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   const [trialReason, setTrialReason] = useState<"limit" | "premium-features" | undefined>();
   const [premiumFeaturesList, setPremiumFeaturesList] = useState<string[]>([]);
   const [weekExportCount, setWeekExportCount] = useState(0);
+  // Fetch card image from /api/card on demand (called at export time, not continuously)
+  const fetchCardImage = useCallback(async (): Promise<Blob | null> => {
+    const exportSettings = {
+      ...settings,
+      showWatermark: isPremium ? (settings.showWatermark || false) : true,
+    };
+    try {
+      const res = await fetch("/api/card", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(exportSettings),
+      });
+      if (!res.ok) return null;
+      return await res.blob();
+    } catch {
+      return null;
+    }
+  }, [settings, isPremium]);
   const previewRef = useRef<HTMLDivElement>(null);
-  const shareToXRef = useRef<((exportDataUrl: string, toastId?: string | number) => Promise<void>) | null>(null);
+  const shareToXRef = useRef<((toastId?: string | number) => Promise<void>) | null>(null);
   const exportToastIdRef = useRef<string | number | null>(null);
   const { showToast } = useToast();
 
@@ -271,7 +286,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   }, []);
 
   const handleExport = useCallback(async (copyOnly = false) => {
-    if (!previewRef.current || cooldown > 0) return;
+    if (cooldown > 0) return;
 
     // Dismiss previous export toast if any
     if (exportToastIdRef.current) {
@@ -323,142 +338,40 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     }
 
     setIsExporting(true);
-    let injectedWatermark: HTMLElement | null = null;
 
     try {
-      // For non-premium users: ensure watermark is present in export
-      if (!isPremium) {
-        const existingWatermark = previewRef.current.querySelector(".groar-watermark") as HTMLElement;
-        const isWatermarkVisible = existingWatermark &&
-          existingWatermark.offsetParent !== null &&
-          getComputedStyle(existingWatermark).display !== "none" &&
-          getComputedStyle(existingWatermark).visibility !== "hidden";
-
-        // If watermark is missing or hidden, inject one
-        if (!isWatermarkVisible) {
-          injectedWatermark = document.createElement("footer");
-          injectedWatermark.style.cssText = "position: absolute; bottom: 3%; right: 3%; z-index: 10;";
-          const p = document.createElement("p");
-          p.style.cssText = "text-shadow: 0 1px 2px rgba(0,0,0,0.15); font-size: 1.3rem; white-space: nowrap; opacity: 0.5; display: flex; align-items: center; gap: 0.2em;";
-          p.style.color = settings.textColor;
-          const img = document.createElement("img");
-          img.src = "/emoji-tiger.png";
-          img.alt = "";
-          img.style.cssText = "width: 1.2em; height: 1.2em; margin-right: 0.25rem; margin-top: 0.25rem;";
-          p.appendChild(img);
-          p.appendChild(document.createTextNode("groar.app"));
-          injectedWatermark.appendChild(p);
-          previewRef.current.appendChild(injectedWatermark);
-        }
-      }
-
-      // Get export dimensions based on aspect ratio
-      const aspectRatio = settings.aspectRatio || "post";
-      const { width: exportWidth, height: exportHeight } = ASPECT_RATIOS[aspectRatio];
-
-      // All iOS browsers (Chrome, Safari, Firefox) use WebKit under the hood.
-      // WebKit silently fails to fetch resources in html-to-image's SVG foreignObject.
-      // We pre-inline background images + fonts as base64 on WebKit.
-      const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) ||
-        (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
-      const isDesktopSafari = !isIOS && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      const isWebKit = isIOS || isDesktopSafari;
-
-      // Ensure the selected font is fully loaded before export (deferred fonts may not be ready yet)
-      const selectedFontId = settings.font || "bricolage";
-      const fontVar = FONTS[selectedFontId]?.variable || "--font-bricolage";
-      const computedFamily = getComputedStyle(document.documentElement).getPropertyValue(fontVar).trim();
-      if (computedFamily) {
-        await document.fonts.load(`16px ${computedFamily}`);
-      }
-
-      // Replace CSS variable with resolved font family on the export target.
-      // html-to-image's SVG foreignObject context can't resolve CSS variables
-      // from the parent document, causing fallback to Times New Roman.
-      const exportTarget = previewRef.current;
-      const originalFontFamily = exportTarget.style.fontFamily;
-      if (computedFamily) {
-        exportTarget.style.fontFamily = `${computedFamily}, sans-serif`;
-      } else {
-        exportTarget.style.fontFamily = `${originalFontFamily}, sans-serif`;
-      }
-
-      const restoreBackgrounds = await inlineBackgroundImages(previewRef.current);
-      const restoreImages = await inlineExternalImages(previewRef.current);
-      const fontEmbedCSS = isWebKit ? await buildFontEmbedCSS() : undefined;
-
-      const baseOptions: Record<string, unknown> = {
-        canvasWidth: exportWidth,
-        canvasHeight: exportHeight,
-        quality: 0.92,
-        cacheBust: true,
-        skipAutoScale: true,
-        pixelRatio: 3,
-        includeQueryParams: true,
-        filter: (node: Element) => {
-          const tagName = node.tagName;
-          if (tagName === "SCRIPT" || tagName === "NOSCRIPT") {
-            return false;
-          }
-          return true;
-        },
-      };
-
-      // Only pass fontEmbedCSS on WebKit — on Chrome/Firefox desktop html-to-image
-      // handles fonts natively and our custom CSS breaks it
-      if (fontEmbedCSS) {
-        baseOptions.fontEmbedCSS = fontEmbedCSS;
-      }
-
-      // WebKit (iOS + desktop Safari) needs a warm-up render: the first call
-      // caches resources in the SVG foreignObject context, the second produces
-      // correct output. Without this, backgrounds and fonts silently fail.
-      if (isWebKit) {
-        try {
-          await toJpeg(previewRef.current, { ...baseOptions, skipFonts: false });
-        } catch {}
-      }
-
-      let dataUrl: string;
-      try {
-        dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: false });
-      } catch {
-        // Firefox often fails with font embedding - retry without fonts
-        // Firefox often fails with font embedding — retry without
-        dataUrl = await toJpeg(previewRef.current, { ...baseOptions, skipFonts: true });
-      }
-
-      // Restore original font family and background image URLs
-      exportTarget.style.fontFamily = originalFontFamily;
-      restoreBackgrounds();
-      restoreImages();
-
-      // Remove injected watermark if we added one
-      if (injectedWatermark) {
-        injectedWatermark.remove();
+      const cardImageBlob = await fetchCardImage();
+      if (!cardImageBlob) {
+        showToast("Failed to generate image. Please try again.", "error");
+        setIsExporting(false);
+        return;
       }
 
       // Download file (skip for copy-only mode)
       if (!copyOnly) {
+        const url = URL.createObjectURL(cardImageBlob);
         const link = document.createElement("a");
         link.download = `groar-${settings.handle.replace("@", "")}-${Date.now()}.jpg`;
-        link.href = dataUrl;
+        link.href = url;
         link.click();
+        URL.revokeObjectURL(url);
       }
 
-      // Copy image to clipboard as PNG
+      // Copy image to clipboard as PNG (clipboard API requires PNG format)
       try {
+        const blobUrl = URL.createObjectURL(cardImageBlob);
         const pngBlob = await new Promise<Blob>((resolve, reject) => {
           const img = new window.Image();
           img.onload = () => {
+            URL.revokeObjectURL(blobUrl);
             const canvas = document.createElement("canvas");
             canvas.width = img.width;
             canvas.height = img.height;
             canvas.getContext("2d")!.drawImage(img, 0, 0);
             canvas.toBlob((b) => b ? resolve(b) : reject(), "image/png");
           };
-          img.onerror = reject;
-          img.src = dataUrl;
+          img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(); };
+          img.src = blobUrl;
         });
         await navigator.clipboard.write([
           new ClipboardItem({ "image/png": pngBlob }),
@@ -470,7 +383,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
       // Save to database if logged in (premium)
       if (isPremium) {
         try {
-          const file = dataURLtoFile(dataUrl, `export-${Date.now()}.jpg`);
+          const file = new File([cardImageBlob], `export-${Date.now()}.jpg`, { type: "image/jpeg" });
           const formData = new FormData();
           formData.append("image", file);
           formData.append("metrics", JSON.stringify(settings));
@@ -504,6 +417,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         if (ua.includes("Safari")) return "Safari";
         return "Other";
       };
+      const isIOS = /iP(hone|od|ad)/.test(ua) || (ua.includes("Mac") && navigator.maxTouchPoints > 1);
       const detectOS = () => {
         if (isIOS) return "iOS";
         if (ua.includes("Android")) return "Android";
@@ -524,9 +438,9 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
           backgroundId: settings.background.presetId,
           template: settings.template,
           handle: settings.handle,
-          font: selectedFontId,
-          fontResolved: !!computedFamily,
-          isWebkit: isWebKit,
+          font: settings.font || "bricolage",
+          fontResolved: true,
+          isWebkit: false,
           isIos: isIOS,
           browser: detectBrowser(),
           os: detectOS(),
@@ -601,7 +515,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
             </div>
             <p className="hidden md:block text-xs text-muted-foreground -mt-1">If you tag <a href="https://x.com/yannick_ferire" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@yannick_ferire</a> on your post with 🐯 GROAR visual, I&apos;ll repost you!</p>
             <button
-              onClick={() => shareToXRef.current?.(dataUrl, id)}
+              onClick={() => shareToXRef.current?.(id)}
               className="w-full flex items-center justify-center gap-2 bg-foreground text-background rounded-xl px-4 py-2 md:py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               <XIcon className="w-4 h-4 fill-current" />
@@ -626,17 +540,13 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         }
       }
     } catch {
-      // Export failed — clean up injected watermark
-      if (injectedWatermark) {
-        injectedWatermark.remove();
-      }
       showToast("Export failed. Please try again.", "error");
     } finally {
       setIsExporting(false);
     }
-  }, [settings, isPremium, isDashboard, hideUpgradeModal, hasUsedTrial, showToast, cooldown, getWeekExportCount, incrementExportCount]);
+  }, [settings, isPremium, isDashboard, hideUpgradeModal, hasUsedTrial, showToast, cooldown, getWeekExportCount, incrementExportCount, fetchCardImage]);
 
-  const shareToX = useCallback(async (exportDataUrl: string, toastId?: string | number) => {
+  const shareToX = useCallback(async (toastId?: string | number) => {
     const mainMetric = settings.metrics[0];
     const template = settings.template || "metrics";
     let metricLine = "";
@@ -678,31 +588,36 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     window.open(intentUrl, "_blank", "noopener");
 
     // Copy image to clipboard as PNG (clipboard API requires PNG)
-    try {
-      const pngBlob = await new Promise<Blob>((resolve, reject) => {
-        const img = new window.Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          canvas.getContext("2d")!.drawImage(img, 0, 0);
-          canvas.toBlob((b) => b ? resolve(b) : reject(), "image/png");
-        };
-        img.onerror = reject;
-        img.src = exportDataUrl;
-      });
-      await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": pngBlob }),
-      ]);
-    } catch {
-      // Clipboard not supported — image was already downloaded
+    const shareBlob = await fetchCardImage();
+    if (shareBlob) {
+      try {
+        const blobUrl = URL.createObjectURL(shareBlob);
+        const pngBlob = await new Promise<Blob>((resolve, reject) => {
+          const img = new window.Image();
+          img.onload = () => {
+            URL.revokeObjectURL(blobUrl);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext("2d")!.drawImage(img, 0, 0);
+            canvas.toBlob((b) => b ? resolve(b) : reject(), "image/png");
+          };
+          img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(); };
+          img.src = blobUrl;
+        });
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": pngBlob }),
+        ]);
+      } catch {
+        // Clipboard not supported
+      }
     }
     if (toastId) {
       toast.dismiss(toastId);
       exportToastIdRef.current = null;
     }
     posthog.capture("share_to_x", { source: isDashboard ? "dashboard" : "landing" });
-  }, [settings.metrics, settings.template, settings.heading, isDashboard]);
+  }, [settings.metrics, settings.template, settings.heading, isDashboard, fetchCardImage]);
   shareToXRef.current = shareToX;
 
   const handleCopy = useCallback(() => handleExport(true), [handleExport]);
@@ -800,26 +715,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         hasUsedTrial={hasUsedTrial}
       />
       <div className="flex-1 flex flex-col gap-3">
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div
-              key="skeleton"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="aspect-video rounded-3xl bg-sidebar"
-            />
-          ) : (
-            <motion.div
-              key="preview"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} isPremium={isPremium} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <Preview ref={previewRef} settings={settings} backgrounds={ALL_BACKGROUNDS} isPremium={isPremium} />
         <StyleControls
           settings={settings}
           onSettingsChange={setSettings}

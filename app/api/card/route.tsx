@@ -523,7 +523,25 @@ function parseMetrics(params: URLSearchParams): { type: string; value: number; p
   return metrics;
 }
 
-// ─── Main route ─────────────────────────────────────────────────────────────
+// ─── POST handler (used by editor export — avoids URL length limits) ────────
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const encoded = Buffer.from(JSON.stringify(body)).toString("base64");
+    const url = new URL(request.url);
+    url.searchParams.set("s", encoded);
+    const getRequest = new NextRequest(url, {
+      method: "GET",
+      headers: request.headers,
+    });
+    return GET(getRequest);
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { "Content-Type": "application/json" } });
+  }
+}
+
+// ─── Main route ���────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -729,7 +747,6 @@ export async function GET(request: NextRequest) {
 
   // ── Resolve branding logo ────────────────────────────────────────────────
   const branding = settings.branding;
-  console.log("[card] branding settings:", JSON.stringify(branding), "showLogo:", showLogo);
   let logoDataUrl: string | null = null;
   if (showLogo && branding?.logoUrl && branding?.enabled !== false) {
     logoDataUrl = await convertLogoToDataUrl(branding.logoUrl);
@@ -738,7 +755,9 @@ export async function GET(request: NextRequest) {
   const logoSize = branding?.logoSize ?? 30;
 
   const aspectConfig = ASPECT_RATIOS[sizeParam] || ASPECT_RATIOS.post;
-  const { width, height } = aspectConfig;
+  const scale = 2; // 2x resolution for retina sharpness
+  const width = aspectConfig.width * scale;
+  const height = aspectConfig.height * scale;
   const isBanner = sizeParam === "banner";
   const isSquare = sizeParam === "square";
   const sq = (base: number) => isSquare ? base * 1.15 : base;
@@ -763,8 +782,8 @@ export async function GET(request: NextRequest) {
   const handleSize = isBanner ? unit * 2.1 : unit * sq(2.4);
   const textShadow = "0 1px 2px rgba(0,0,0,0.15)";
 
-  // Date label: only shown if explicitly passed via `date` param
-  const headerDate = dateParam || null;
+  // Date label: explicit param takes priority, otherwise compute from heading settings
+  const headerDate = dateParam || getHeaderDateLabel(settings);
 
   // Handle display
   const handle = handleParam && handleParam !== "@your_handle" ? handleParam : null;
@@ -986,6 +1005,39 @@ export async function GET(request: NextRequest) {
             const iconSize = isPrimary ? primaryIcon : secondaryIcon;
             const label = metric.type === "custom" && metric.customLabel ? metric.customLabel : METRIC_LABELS[metric.type as MetricType] || metric.type;
 
+            const showTrendAbove = isPrimary && !hasHeading && metric.previousValue !== undefined && metric.value > metric.previousValue;
+            const trendSize = isPrimary
+              ? (isBanner ? unit * 2.6 : unit * sq(3.25))
+              : (isBanner ? unit * 1.8 : unit * sq(2.3));
+            const trendPct = metric.previousValue !== undefined && metric.previousValue > 0
+              ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100)
+              : null;
+            const trendEl = metric.previousValue !== undefined && metric.value > metric.previousValue && trendPct !== 0 ? (
+              <span style={{ fontSize: trendSize, fontWeight: 600, marginLeft: showTrendAbove ? 0 : unit * 0.4, color: "#34d399", display: "flex", alignItems: "center", gap: unit * 0.15 }}>
+                {renderTrendArrow(trendSize, true, "#34d399")}
+                {trendPct !== null && `+${trendPct}%`}
+              </span>
+            ) : null;
+
+            if (showTrendAbove) {
+              return (
+                <div key={`${metric.type}-${index}`} style={{ display: "flex", flexDirection: "column", alignItems: align === "left" ? "flex-start" : "center", gap: 0 }}>
+                  {trendEl}
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontWeight: 600,
+                    fontSize,
+                    gap: isBanner ? unit * 0.6 : unit * 1,
+                    whiteSpace: "nowrap",
+                  }}>
+                    {renderIcon(metric.type, iconSize, textColor)}
+                    {fmtMetric(metric.type, metric.value, abbreviate, metric.prefix)} {label}
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div key={`${metric.type}-${index}`} style={{
                 display: "flex",
@@ -999,19 +1051,7 @@ export async function GET(request: NextRequest) {
               }}>
                 {renderIcon(metric.type, iconSize, textColor)}
                 {fmtMetric(metric.type, metric.value, abbreviate, metric.prefix)} {label}
-                {metric.previousValue !== undefined && metric.value > metric.previousValue && (() => {
-                  const trendSize = isPrimary
-                    ? (isBanner ? unit * 2.6 : unit * sq(3.25))
-                    : (isBanner ? unit * 1.8 : unit * sq(2.3));
-                  const pct = metric.previousValue > 0 ? Math.round(((metric.value - metric.previousValue) / metric.previousValue) * 100) : null;
-                  if (pct === 0) return null;
-                  return (
-                    <span style={{ fontSize: trendSize, fontWeight: 600, marginLeft: unit * 0.4, color: "#34d399", display: "flex", alignItems: "center", gap: unit * 0.15 }}>
-                      {renderTrendArrow(trendSize, true, "#34d399")}
-                      {pct !== null && `+${pct}%`}
-                    </span>
-                  );
-                })()}
+                {trendEl}
               </div>
             );
           })}
@@ -1154,7 +1194,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const jpegBuffer = await sharp(pngBuffer).jpeg({ quality: 85 }).toBuffer();
+  const jpegBuffer = await sharp(pngBuffer).jpeg({ quality: 90 }).toBuffer();
   return new Response(new Uint8Array(jpegBuffer), {
     headers: { "Content-Type": "image/jpeg", ...cacheHeaders },
   });
