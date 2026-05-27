@@ -12,8 +12,8 @@ export const dailyAnalyticsFetch = inngest.createFunction(
     id: "daily-analytics-fetch",
     name: "Daily X Analytics Fetch",
     retries: 3,
+    triggers: [{ cron: "0 0,6,12,18 * * *" }], // 0am, 6am, 12pm, 6pm UTC (2h, 8h, 14h, 20h CET)
   },
-  { cron: "0 0,6,12,18 * * *" }, // 0am, 6am, 12pm, 6pm UTC (2h, 8h, 14h, 20h CET)
   async ({ step, logger }) => {
     const accounts = await step.run("get-all-accounts", async () => {
       return await getAllXAccounts();
@@ -109,8 +109,8 @@ export const dailyTrustMRRFetch = inngest.createFunction(
     id: "daily-trustmrr-fetch",
     name: "Daily TrustMRR Fetch",
     retries: 2,
+    triggers: [{ cron: "0 23,5,11,17 * * *" }], // 1h before analytics cron (0,6,12,18 UTC)
   },
-  { cron: "0 23,5,11,17 * * *" }, // 1h before analytics cron (0,6,12,18 UTC)
   async ({ step, logger }) => {
     const tmrrSummary = await step.run("fetch-all-trustmrr", async () => {
       const users = await getUsersForTrustMRR();
@@ -151,8 +151,8 @@ export const trialEmailSequence = inngest.createFunction(
       // Cancel if user subscribes to a paid plan
       { event: "subscription/activated", match: "data.userId" },
     ],
+    triggers: [{ event: "trial/started" }],
   },
-  { event: "trial/started" },
   async ({ event, step, logger }) => {
     const { userId, email, name, trialEnd } = event.data;
     const trialEndDate = new Date(trialEnd);
@@ -336,8 +336,8 @@ export const batchReengage = inngest.createFunction(
     id: "batch-reengage",
     name: "Batch Re-engage Old Leads",
     retries: 1,
+    triggers: [{ event: "admin/batch-reengage" }],
   },
-  { event: "admin/batch-reengage" },
   async ({ step, logger }) => {
     // Find old leads: trial expired > 10 days ago, never paid, no second trial yet
     const leads = await step.run("find-eligible-leads", async () => {
