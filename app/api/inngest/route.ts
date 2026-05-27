@@ -6,6 +6,6 @@ import { functions } from "@/inngest/functions";
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions,
-  serveHost: "https://groar.app",
+  serveOrigin: "https://groar.app",
   servePath: "/api/inngest",
 });
