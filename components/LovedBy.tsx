@@ -11,6 +11,8 @@ type LovedByData = {
 };
 
 const numberFormatter = new Intl.NumberFormat("fr-FR");
+const DISPLAY_COUNT = 5;
+
 export default function LovedBy() {
   const [lovedBy, setLovedBy] = useState<LovedByData>({
     totalUsers: 0,
@@ -46,30 +48,37 @@ export default function LovedBy() {
     };
   }, []);
 
+  const displayed: Array<{ image: string; name: string | null; originalIndex: number }> = [];
+  for (let i = 0; i < lovedBy.avatars.length && displayed.length < DISPLAY_COUNT; i++) {
+    if (!failed[i]) {
+      displayed.push({ ...lovedBy.avatars[i], originalIndex: i });
+    }
+  }
+
   return (
     <div className="flex items-center justify-center">
       <div className="flex items-center -space-x-2">
         {loading ? (
-          [...Array(5)].map((_, index) => (
+          [...Array(DISPLAY_COUNT)].map((_, index) => (
             <div
               key={`avatar-skeleton-${index}`}
               className="h-9 w-9 rounded-full bg-sidebar"
             />
           ))
         ) : (
-          lovedBy.avatars.map((avatar, index) => (
+          displayed.map((avatar) => (
             <div
-              key={`avatar-${index}-${avatar.image}`}
+              key={`avatar-${avatar.originalIndex}-${avatar.image}`}
               className="h-9 w-9 rounded-full overflow-hidden border border-border bg-sidebar flex items-center justify-center"
             >
-              {avatar.image && !failed[index] ? (
+              {avatar.image ? (
                 <Image
                   src={avatar.image}
                   alt={avatar.name || "Avatar"}
                   width={36}
                   height={36}
                   className="h-full w-full object-cover"
-                  onError={() => setFailed((prev) => ({ ...prev, [index]: true }))}
+                  onError={() => setFailed((prev) => ({ ...prev, [avatar.originalIndex]: true }))}
                 />
               ) : (
                 <HugeiconsIcon icon={UserCircleIcon} size={22} strokeWidth={1.5} />
@@ -80,7 +89,7 @@ export default function LovedBy() {
       </div>
       {loading ? (
         <div className="ml-3 h-6 w-36 rounded-full bg-sidebar animate-pulse" />
-      ) : lovedBy.totalUsers > lovedBy.avatars.length ? (
+      ) : lovedBy.totalUsers > DISPLAY_COUNT ? (
         <span className="ml-3 px-2.5 py-1 rounded-full border border-border text-xs font-medium text-muted-foreground">
           {Math.floor(lovedBy.totalUsers / 10) * 10}+ creators<span className="hidden md:inline">, join them!</span>
         </span>

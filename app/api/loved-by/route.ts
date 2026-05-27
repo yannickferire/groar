@@ -27,7 +27,7 @@ export async function GET() {
        WHERE u."image" IS NOT NULL
          AND u."image" LIKE '%pbs.twimg.com%'
        ORDER BY u."id", has_twitter DESC
-       LIMIT 5`
+       LIMIT 10`
     );
 
     // Re-sort: Twitter accounts with most followers first
