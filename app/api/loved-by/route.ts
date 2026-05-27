@@ -39,7 +39,7 @@ export async function GET() {
     return NextResponse.json({
       totalUsers,
       avatars: sorted.map(({ image, name }) => ({
-        image: image.replace(/_normal\./, '_200x200.'),
+        image: image.replace(/_normal\./, '_400x400.'),
         name,
       })),
     });

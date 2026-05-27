@@ -63,6 +63,7 @@ type SidebarProps = {
   onSettingsChange: (settings: EditorSettings) => void;
   onExport: () => void;
   onCopy: () => void;
+  onPrefetch?: () => void;
   isExporting: boolean;
   cooldown?: number;
   isPremium?: boolean;
@@ -313,7 +314,7 @@ type ConnectedAccount = {
   } | null;
 };
 
-export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock, exportsThisWeek = 0, maxExportsPerWeek = null, hasUsedTrial = false }: SidebarProps) {
+export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, onPrefetch, isExporting, cooldown = 0, isPremium = false, lockPremiumFeatures = false, onPremiumBlock, exportsThisWeek = 0, maxExportsPerWeek = null, hasUsedTrial = false }: SidebarProps) {
   const isMobile = useIsMobile(940);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [deletingLogoId, setDeletingLogoId] = useState<string | null>(null);
@@ -1895,6 +1896,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
       <div className="flex gap-2">
         <Button
           onClick={onExport}
+          onMouseEnter={onPrefetch}
+          onTouchStart={onPrefetch}
           disabled={isExporting || cooldown > 0}
           size="xl"
           className="flex-1 group transition-[transform,box-shadow] duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
@@ -1907,6 +1910,8 @@ export default function Sidebar({ settings, onSettingsChange, onExport, onCopy, 
         </Button>
         <Button
           onClick={onCopy}
+          onMouseEnter={onPrefetch}
+          onTouchStart={onPrefetch}
           disabled={isExporting || cooldown > 0}
           size="xl"
           className="shrink-0 gradient-muted text-foreground border shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),inset_0_-1px_0_0_rgba(0,0,0,0.06)] hover:brightness-[1.03] hover:scale-[1.02] active:scale-[0.98] transition-[transform,filter] duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]"

@@ -17,6 +17,7 @@ export default function LovedBy() {
     avatars: [],
   });
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -61,13 +62,14 @@ export default function LovedBy() {
               key={`avatar-${index}-${avatar.image}`}
               className="h-9 w-9 rounded-full overflow-hidden border border-border bg-sidebar flex items-center justify-center"
             >
-              {avatar.image ? (
+              {avatar.image && !failed[index] ? (
                 <Image
                   src={avatar.image}
                   alt={avatar.name || "Avatar"}
                   width={36}
                   height={36}
                   className="h-full w-full object-cover"
+                  onError={() => setFailed((prev) => ({ ...prev, [index]: true }))}
                 />
               ) : (
                 <HugeiconsIcon icon={UserCircleIcon} size={22} strokeWidth={1.5} />

@@ -128,11 +128,24 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
   const [premiumFeaturesList, setPremiumFeaturesList] = useState<string[]>([]);
   const [weekExportCount, setWeekExportCount] = useState(0);
   // Fetch card image from /api/card on demand (called at export time, not continuously)
+  // Pre-fetched card image blob — populated on button hover, used on click
+  const prefetchedBlobRef = useRef<{ blob: Blob; settingsKey: string } | null>(null);
+  const prefetchingRef = useRef(false);
+
+  const getExportSettings = useCallback(() => ({
+    ...settings,
+    showWatermark: isPremium ? (settings.showWatermark || false) : true,
+  }), [settings, isPremium]);
+
   const fetchCardImage = useCallback(async (): Promise<Blob | null> => {
-    const exportSettings = {
-      ...settings,
-      showWatermark: isPremium ? (settings.showWatermark || false) : true,
-    };
+    const exportSettings = getExportSettings();
+    const settingsKey = JSON.stringify(exportSettings);
+
+    // Use pre-fetched blob if settings haven't changed since hover
+    if (prefetchedBlobRef.current?.settingsKey === settingsKey) {
+      return prefetchedBlobRef.current.blob;
+    }
+
     try {
       const res = await fetch("/api/card", {
         method: "POST",
@@ -144,7 +157,28 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
     } catch {
       return null;
     }
-  }, [settings, isPremium]);
+  }, [getExportSettings]);
+
+  // Pre-fetch card image on hover — so it's ready when user clicks
+  const prefetchCardImage = useCallback(() => {
+    if (prefetchingRef.current) return;
+    const exportSettings = getExportSettings();
+    const settingsKey = JSON.stringify(exportSettings);
+    if (prefetchedBlobRef.current?.settingsKey === settingsKey) return; // already cached
+
+    prefetchingRef.current = true;
+    fetch("/api/card", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(exportSettings),
+    })
+      .then((res) => res.ok ? res.blob() : null)
+      .then((blob) => {
+        if (blob) prefetchedBlobRef.current = { blob, settingsKey };
+      })
+      .catch(() => {})
+      .finally(() => { prefetchingRef.current = false; });
+  }, [getExportSettings]);
   const previewRef = useRef<HTMLDivElement>(null);
   const shareToXRef = useRef<((toastId?: string | number) => Promise<void>) | null>(null);
   const exportToastIdRef = useRef<string | number | null>(null);
@@ -339,8 +373,45 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
 
     setIsExporting(true);
 
+    // Helper: convert JPEG blob to PNG blob (clipboard API requires PNG)
+    const jpegToPng = (jpeg: Blob): Promise<Blob> => new Promise((resolve, reject) => {
+      const blobUrl = URL.createObjectURL(jpeg);
+      const img = new window.Image();
+      img.onload = () => {
+        URL.revokeObjectURL(blobUrl);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0);
+        canvas.toBlob((b) => b ? resolve(b) : reject(), "image/png");
+      };
+      img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(); };
+      img.src = blobUrl;
+    });
+
+    // Single fetch — shared between clipboard and download
+    let cardImageBlob: Blob | null = null;
+    const cardPromise = fetchCardImage().then((blob) => { cardImageBlob = blob; return blob; });
+
+    // Strategy 1 (modern browsers): call clipboard.write IMMEDIATELY in gesture
+    // context with a Promise<Blob> — the browser resolves it async.
+    // This works in Chrome 97+, Safari 15.4+.
+    let clipboardDone = false;
     try {
-      const cardImageBlob = await fetchCardImage();
+      const pngPromise = cardPromise.then((blob) => {
+        if (!blob) throw new Error("fetch failed");
+        return jpegToPng(blob);
+      });
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": pngPromise }),
+      ]);
+      clipboardDone = true;
+    } catch {
+      // Promise-based ClipboardItem not supported or failed — will retry below
+    }
+
+    try {
+      await cardPromise;
       if (!cardImageBlob) {
         showToast("Failed to generate image. Please try again.", "error");
         setIsExporting(false);
@@ -357,28 +428,20 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         URL.revokeObjectURL(url);
       }
 
-      // Copy image to clipboard as PNG (clipboard API requires PNG format)
-      try {
-        const blobUrl = URL.createObjectURL(cardImageBlob);
-        const pngBlob = await new Promise<Blob>((resolve, reject) => {
-          const img = new window.Image();
-          img.onload = () => {
-            URL.revokeObjectURL(blobUrl);
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            canvas.getContext("2d")!.drawImage(img, 0, 0);
-            canvas.toBlob((b) => b ? resolve(b) : reject(), "image/png");
-          };
-          img.onerror = () => { URL.revokeObjectURL(blobUrl); reject(); };
-          img.src = blobUrl;
-        });
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": pngBlob }),
-        ]);
-      } catch {
-        // Clipboard not supported — image was already downloaded
+      // Strategy 2 fallback: if Promise-based clipboard failed, try direct write.
+      // Works if the blob was pre-fetched (hover) and the gesture context is still valid.
+      if (!clipboardDone) {
+        try {
+          const pngBlob = await jpegToPng(cardImageBlob);
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": pngBlob }),
+          ]);
+        } catch {
+          // Both strategies failed — clipboard not available
+        }
       }
+
+
 
       // Save to database if logged in (premium)
       if (isPremium) {
@@ -705,6 +768,7 @@ export default function Editor({ isPremium = false, isDashboard = false }: Edito
         onSettingsChange={setSettings}
         onExport={() => handleExport(false)}
         onCopy={handleCopy}
+        onPrefetch={prefetchCardImage}
         isExporting={isExporting}
         cooldown={cooldown}
         isPremium={isPremium}
